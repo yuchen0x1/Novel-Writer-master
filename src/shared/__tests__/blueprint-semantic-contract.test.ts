@@ -50,6 +50,17 @@ describe('blueprint semantic contract', () => {
       .toThrow(/code=invalid_json path=\$/u)
   })
 
+  it('accepts reasoning-style draft+revised consecutive objects and keeps the last', () => {
+    const draft = JSON.stringify({ blueprints: [{ ...validBlueprint(), purpose: '（草稿）' }] })
+    const revised = JSON.stringify({ blueprints: [validBlueprint()] })
+    const decoded = parseBlueprintSemanticResponseText(`${draft}\n${revised}`, [1])
+    expect(decoded).toHaveLength(1)
+    expect(decoded[0].purpose).toBe('让主角接下无法回避的委托')
+    // 多对象之间夹带说明文字仍然拒绝
+    expect(() => parseBlueprintSemanticResponseText(`${draft}\n说明：${revised}`, [1]))
+      .toThrow(/code=invalid_json path=\$/u)
+  })
+
   it.each([
     ['title', '标题'],
     ['role', '章节功能'],

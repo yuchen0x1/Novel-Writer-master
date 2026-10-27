@@ -264,8 +264,53 @@ export function decodeBlueprintSemanticPayload(
 }
 
 /**
+ * 解析推理型模型的「草稿 + 修订」输出：整段必须是空白分隔的连续完整 JSON 对象，
+ * 返回全部对象（取最后一个即为最终答案）；夹带说明文字、截断或坏对象都返回 null。
+ */
+function parseConsecutiveJsonObjects(text: string): unknown[] | null {
+  const objects: unknown[] = []
+  let index = 0
+  while (index < text.length) {
+    while (index < text.length && /\s/u.test(text[index] ?? '')) index++
+    if (index >= text.length) break
+    if (text[index] !== '{') return null
+    const start = index
+    let depth = 0
+    let inString = false
+    let escaped = false
+    for (; index < text.length; index++) {
+      const character = text[index] ?? ''
+      if (inString) {
+        if (escaped) escaped = false
+        else if (character === '\\') escaped = true
+        else if (character === '"') inString = false
+        continue
+      }
+      if (character === '"') inString = true
+      else if (character === '{') depth++
+      else if (character === '}') {
+        depth--
+        if (depth === 0) {
+          index++
+          break
+        }
+      }
+    }
+    if (depth !== 0 || inString) return null
+    try {
+      objects.push(JSON.parse(text.slice(start, index)))
+    } catch {
+      return null
+    }
+  }
+  return objects.length > 0 ? objects : null
+}
+
+/**
  * Accepts exactly one JSON root or one complete Markdown JSON fence. It never
- * searches narrative prose for a nested JSON fragment.
+ * searches narrative prose for a nested JSON fragment. Reasoning models may
+ * emit a draft JSON object followed by a revised one; the last complete object
+ * wins in that case.
  */
 function parseBlueprintJsonText(text: string): unknown {
   const trimmed = text.trim()
@@ -274,13 +319,12 @@ function parseBlueprintJsonText(text: string): unknown {
   if (!candidate || !/^[{[]/u.test(candidate)) {
     throw new StructuredContractDiagnostic('invalid_envelope', '$')
   }
-  let parsed: unknown
   try {
-    parsed = JSON.parse(candidate)
-  } catch {
-    throw new StructuredContractDiagnostic('invalid_json', '$')
-  }
-  return parsed
+    return JSON.parse(candidate)
+  } catch { /* 连续「草稿+修订」对象走下面的提取兜底 */ }
+  const objects = parseConsecutiveJsonObjects(candidate)
+  if (objects) return objects[objects.length - 1]
+  throw new StructuredContractDiagnostic('invalid_json', '$')
 }
 
 export function parseBlueprintSemanticResponseText(text: string, expectedChapterNumbers: readonly number[]): BlueprintSemanticItem[] {

@@ -24,6 +24,7 @@ import {
 } from '../bounded-completion'
 import { workflowUiText, workflowWritingLanguage } from '../workflow-project-session'
 import { localize } from '../../../i18n/core'
+import { extractSingleCompleteJsonObject } from '../../../shared/character-proposal-parser'
 import type { Locale } from '../../../i18n/types'
 import type { WritingSkillStage } from '../../../shared/writing-skills'
 import { ipc } from '../../ipc-client'
@@ -622,6 +623,11 @@ export abstract class BaseWorkflowCommand<TResult = string> {
    * 自动剥离 Markdown ```json 代码块并处理尾随逗号等常见大模型幻觉
    */
   protected parseJSON<T>(text: string, uiLocale: Locale): T {
+    const malformed = () => new Error(localize(
+      uiLocale,
+      `AI 返回的数据格式乱码，无法解析为有效层级结构。尝试解析内容末端: ${text.slice(-100)}`,
+      `The AI returned malformed data that could not be parsed into a valid structure. End of the attempted content: ${text.slice(-100)}`,
+    ))
     try {
       // 1. 剥离 Markdown 块
       let cleanText = text.replace(/```json?\n?/gi, '').replace(/```\n?/gi, '').trim()
@@ -636,14 +642,14 @@ export abstract class BaseWorkflowCommand<TResult = string> {
       } else if (firstBracket !== -1 && lastBracket !== -1) {
         cleanText = cleanText.substring(firstBracket, lastBracket + 1)
       }
-      
+
       return JSON.parse(cleanText) as T
+    } catch { /* 常规解析失败，走多对象提取兜底 */ }
+    // 推理型模型常先输出一版草稿 JSON 再输出修订版（连续多个完整对象）；取最后一个完整对象。
+    try {
+      return JSON.parse(extractSingleCompleteJsonObject(text, false, value => Boolean(value) && typeof value === 'object')) as T
     } catch {
-      throw new Error(localize(
-        uiLocale,
-        `AI 返回的数据格式乱码，无法解析为有效层级结构。尝试解析内容末端: ${text.slice(-100)}`,
-        `The AI returned malformed data that could not be parsed into a valid structure. End of the attempted content: ${text.slice(-100)}`,
-      ))
+      throw malformed()
     }
   }
 

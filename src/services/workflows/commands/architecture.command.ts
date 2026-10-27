@@ -1,6 +1,6 @@
 import { parsePlanningTargetUnits, planningTargetInstruction, DEFAULT_PLANNING_ACTION_CHAPTERS } from '../../../shared/plot-outline-contract'
 import type { CharacterProposalChoices } from '../../character-proposal-choices'
-import { decodeCharacterIdentityManifest, decodeCharacterDetails, validateCharacterDetail, type CharacterIdentitySlot, type CharacterDetailOutput } from '../../../shared/character-proposal-parser'
+import { decodeCharacterIdentityManifest, decodeCharacterDetails, validateCharacterDetail, extractSingleCompleteJsonObject, type CharacterIdentitySlot, type CharacterDetailOutput } from '../../../shared/character-proposal-parser'
 import type { CharacterProposalBatch } from '../../../shared/character-proposal'
 import { defaultCharacterProposalRelationships, defaultCharacterProposalSelections, formatCharacterProposalPreview } from '../character-proposal-preview'
 import type { MainGenerationRunHandle } from '../../generation/generation-runtime'
@@ -525,9 +525,8 @@ function decodeCompleteNovelConfig(
 ): NovelConfig {
   let value: unknown
   try {
-    const trimmed = content.trim()
-    const fenced = /^```json[ \t]*\r?\n([\s\S]*?)\r?\n```$/iu.exec(trimmed)
-    value = JSON.parse(fenced?.[1].trim() ?? trimmed)
+    // 推理型模型常先输出一版草稿 JSON 再输出修订版；提取器取最后一个完整的 JSON 对象。
+    value = JSON.parse(extractSingleCompleteJsonObject(content, false, isRecord))
   } catch {
     throw new Error(text('AI 返回的小说配置不是完整 JSON 对象', 'The AI novel configuration is not a complete JSON object.'))
   }
