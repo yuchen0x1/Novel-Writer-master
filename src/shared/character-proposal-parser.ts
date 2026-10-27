@@ -20,7 +20,9 @@ export function parseArchitectureCharacterProposal(input: {
   const slots = decodeCharacterIdentityManifest(input.manifest.text)
   const byId = new Map(slots.map(slot => [slot.slotId, slot]))
   const records = input.details.flatMap(artifact => {
-    const root = JSON.parse(extractSingleCompleteJsonObject(artifact.text)) as Record<string, unknown>
+    // 与 decodeCharacterDetails 同一信封校验：推理型模型的「草稿+修订」双对象取最后一版。
+    const root = JSON.parse(extractSingleCompleteJsonObject(artifact.text, false, value =>
+      Object.keys(value).every(key => key === 'entries') && Array.isArray(value.entries))) as Record<string, unknown>
     if (Object.keys(root).some(key => key !== 'entries')) throw new Error('CHARACTER_PROPOSAL_ENVELOPE_INVALID')
     const decoded = decodeCharacterDetails(artifact.text, version)
     if (!decoded.length) throw new Error('CHARACTER_PROPOSAL_EMPTY_DETAILS')

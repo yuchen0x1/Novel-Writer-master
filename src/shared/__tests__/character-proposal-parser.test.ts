@@ -41,6 +41,18 @@ describe('main-safe source-local character proposal parsing', () => {
     expect(extractSingleCompleteJsonObject(`说明\n${object}\n结束`, true)).toBe(object)
     expect(extractSingleCompleteJsonObject(`说明中的数组 []\n${object}\n结束`, true)).toBe(object)
   })
+  it('accepts reasoning-style draft+revised detail artifacts and keeps the last', () => {
+    const fixture = architecture()
+    const detailText = fixture.details[0].text
+    const manifestText = fixture.manifest.text
+    // 推理型模型常见输出：同一契约对象连写两遍（草稿 + 修订），解析取最后一版
+    fixture.details[0].text = `${detailText}\n${detailText}`
+    expect(parseArchitectureCharacterProposal(fixture).length).toBeGreaterThan(0)
+    // 混排形态：草稿 slots 对象在前也不影响 entries 提取
+    fixture.details[0].text = `${manifestText}\n${detailText}`
+    expect(parseArchitectureCharacterProposal(fixture).length).toBeGreaterThan(0)
+    fixture.details[0].text = detailText
+  })
   it('keeps equal names distinct, exact slot relationships and raw dynamic provenance', () => {
     const fixture = architecture(), result = parseArchitectureCharacterProposal(fixture)
     expect(result.map(item => item.fields.name)).toEqual(['同名', '同名', '反派'])
