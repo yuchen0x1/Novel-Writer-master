@@ -9,10 +9,16 @@ export type ReviewFindingStatus = 'unverified' | 'unresolved' | 'unknown' | 'res
 
 export interface ReviewCenterIssue {
   index: number
+  /** 周期 findingId；旧报告没有时由 reviewId 与条目序号生成。 */
+  findingId: string
   category: string
   severity: ReviewCenterSeverity
   description: string
   quote?: string
+  /** 审稿时正文的 SHA-256；存在时定位前必须校验当前稿未变。 */
+  sourceContentHash?: string
+  /** 引文在审稿源稿中的出现序号；只有唯一可定位的引文才提供。 */
+  quoteOccurrence?: number
   /** 跨章核对来源章：这条问题对照的是第几章的事实。 */
   sourceChapter?: number
   /** 审稿周期里的处理状态；报告没有进入周期时缺省。 */

@@ -32,6 +32,14 @@
   <img src="docs/assets/readme/v130-hero-en.webp" alt="Pagekin 1.3.0: product summary on the left and real screenshots of the library, chapter view, blueprint, run sheet, architecture, and cast on the right" width="100%" />
 </p>
 
+> ## What's new in 1.7.1
+>
+> - Scene cards are now available in each chapter blueprint with persisted location, time, participants, goals, conflicts, and transitions.
+> - Chinese projects gain an objective Chinese proofreading dimension, and review-center navigation lands on the quoted source anchor.
+> - Fixed mixed JSON configuration parsing, stale scene data during project switches, and release preflight issues.
+>
+> See the [1.7.1 release notes](https://github.com/lenmo181/AI-Novel-Writer/releases/tag/v1.7.1) for details.
+>
 > ## What's new in 1.4.0
 >
 > - Plot outlines continue automatically through the configured sub-chapters, with checkpoint recovery and bounded retries.

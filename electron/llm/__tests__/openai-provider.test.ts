@@ -1102,3 +1102,55 @@ describe('OpenAIProvider opencode Go compatibility', () => {
     expect(headers).not.toHaveProperty('User-Agent')
   })
 })
+
+describe('OpenAI /v1/responses visible-only streaming', () => {
+  const responsesModel = (): ModelProfile => ({
+    ...novelAIModel,
+    id: 'responses-model',
+    name: 'Responses Model',
+    provider: 'custom',
+    protocol: 'openai-responses',
+    modelName: 'gpt-5',
+    baseUrl: 'https://api.openai.com/v1',
+  })
+
+  it('delivers the answer once when deltas and a terminal response payload coexist', async () => {
+    // 官方 /v1/responses 同时给 output_text.delta 与 response.completed.output；
+    // visible-only 模式下若把终态文本再推一遍，整章正文会变成两倍。
+    const reader = sseReader(
+      'data: {"type":"response.output_text.delta","delta":"甲"}\n\n',
+      'data: {"type":"response.output_text.delta","delta":"乙"}\n\n',
+      'data: {"type":"response.completed","response":{"output":[{"content":[{"type":"output_text","text":"甲乙"}]}]}}\n\n',
+    )
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, body: { getReader: () => reader } }))
+
+    const chunks: string[] = []
+    const onDone = vi.fn()
+    const onError = vi.fn()
+    await new OpenAIProvider().generateStream(responsesModel(), [{ role: 'user', content: '写一段' }], {
+      temperature: 0, maxTokens: 512, signal: new AbortController().signal, visibleOnly: true,
+      onChunk: chunk => { chunks.push(chunk) }, onDone, onError,
+    })
+
+    expect(chunks.join('')).toBe('甲乙')
+    expect(onDone).toHaveBeenCalledExactlyOnceWith('甲乙', undefined, 'stop')
+    expect(onError).not.toHaveBeenCalled()
+  })
+
+  it('still recovers a gateway that only reports text on the terminal payload', async () => {
+    const reader = sseReader(
+      'data: {"type":"response.completed","response":{"output":[{"content":[{"type":"output_text","text":"只有终态"}]}]}}\n\n',
+    )
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, body: { getReader: () => reader } }))
+
+    const chunks: string[] = []
+    const onDone = vi.fn()
+    await new OpenAIProvider().generateStream(responsesModel(), [{ role: 'user', content: '写一段' }], {
+      temperature: 0, maxTokens: 512, signal: new AbortController().signal, visibleOnly: true,
+      onChunk: chunk => { chunks.push(chunk) }, onDone, onError: vi.fn(),
+    })
+
+    expect(chunks.join('')).toBe('只有终态')
+    expect(onDone).toHaveBeenCalledExactlyOnceWith('只有终态', undefined, 'stop')
+  })
+})

@@ -14,6 +14,7 @@ const PAGE_TABS: Partial<Record<WorkStage | ResourcePage, (text: Text) => void>>
   history: text => openBuiltinEditor('version-history', text('版本历史', 'Version history'), 'version-history'),
   search: text => openBuiltinEditor('book-search', text('全书检索', 'Book search'), 'book-search'),
   stats: text => openBuiltinEditor('writing-stats', text('写作统计', 'Writing stats'), 'writing-stats'),
+  timeline: text => openBuiltinEditor('timeline', text('时间线', 'Timeline'), 'timeline'),
   setup: text => {
     const projectKey = useProjectStore.getState().currentProject?.path
     if (projectKey) useEditorStore.getState().openFile({ id: 'config', name: text('小说配置', 'Novel configuration'), type: 'config', projectKey })

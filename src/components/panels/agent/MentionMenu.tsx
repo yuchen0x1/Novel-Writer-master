@@ -4,6 +4,7 @@
  * 用户输入 @ 时弹出的上下文资源选择面板。
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { isImeComposing } from '../../../shared/ime'
 import {
   BookOpen,
   ClipboardCheck,
@@ -52,6 +53,8 @@ export default function MentionMenu({ query, onSelect, onClose, position }: Prop
   }
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // 组字中的方向键/回车/Esc 属于输入法，菜单不接管。
+    if (isImeComposing(e)) return
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       setSelectedIndex(i => Math.min(i + 1, results.length - 1))

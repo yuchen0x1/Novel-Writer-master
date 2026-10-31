@@ -227,7 +227,7 @@ describe('GenerateWorldBuildingCommand 截断恢复', () => {
       .execute({ step: {}, context: context(), callbacks: callbacks() }))
       .rejects.toThrow('模型请求失败')
 
-    expect(requestStartWrites).toEqual([0, 1])
+    expect(requestStartWrites).toEqual([0, 1, 1])
     expect(recoverableWorldBuildingCandidate(partialFile)).toBe('已收到的世界观首段。')
     expect(formalWorldbuilding).toBe(original)
     expect(formalWrites).toHaveLength(0)

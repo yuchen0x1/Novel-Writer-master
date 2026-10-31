@@ -4,6 +4,7 @@
  * 用户输入 / 时弹出的命令搜索和选择面板。
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { isImeComposing } from '../../../shared/ime'
 import { Sparkles, Zap } from 'lucide-react'
 import { searchSlashCommands, type SlashCommand } from '../../../services/agent/intent-router'
 import { useLocaleStore } from '../../../stores/locale-store'
@@ -37,6 +38,8 @@ export default function SlashCommandMenu({ query, onSelect, onClose, position }:
 
   // 键盘导航
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // 组字中的方向键/回车/Esc 属于输入法，菜单不接管。
+    if (isImeComposing(e)) return
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       setSelectedIndex(i => Math.min(i + 1, results.length - 1))

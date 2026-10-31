@@ -21,10 +21,11 @@ export function commandLabel(letter: string, mac = IS_MAC): string {
   return mac ? `⌘${letter.toUpperCase()}` : `Ctrl ${letter.toUpperCase()}`
 }
 
-/** 输入法正在组字时，回车、方向键与 Esc 属于输入法（例如拼音选词），快捷键与列表都不接管。 */
-export function isComposing(event: { isComposing?: boolean; keyCode: number }): boolean {
-  return Boolean(event.isComposing) || event.keyCode === 229
-}
+/**
+ * 输入法正在组字时，回车、方向键与 Esc 属于输入法（例如拼音选词），快捷键与列表都不接管。
+ * 判定本身是不带浏览器依赖的纯函数，渲染层与测试共用同一份实现。
+ */
+export { isImeComposing as isComposing } from '../../shared/ime'
 
 const MODAL_SELECTOR = '[role="dialog"]:not(.pi-popover), [role="alertdialog"]'
 

@@ -1,6 +1,6 @@
 import { parsePlanningTargetUnits, planningTargetInstruction, DEFAULT_PLANNING_ACTION_CHAPTERS } from '../../../shared/plot-outline-contract'
 import type { CharacterProposalChoices } from '../../character-proposal-choices'
-import { decodeCharacterIdentityManifest, decodeCharacterDetails, validateCharacterDetail, extractSingleCompleteJsonObject, type CharacterIdentitySlot, type CharacterDetailOutput } from '../../../shared/character-proposal-parser'
+import { decodeCharacterIdentityManifest, decodeCharacterDetails, validateCharacterDetail, type CharacterIdentitySlot, type CharacterDetailOutput } from '../../../shared/character-proposal-parser'
 import type { CharacterProposalBatch } from '../../../shared/character-proposal'
 import { defaultCharacterProposalRelationships, defaultCharacterProposalSelections, formatCharacterProposalPreview } from '../character-proposal-preview'
 import type { MainGenerationRunHandle } from '../../generation/generation-runtime'
@@ -517,6 +517,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
+function extractStrictNovelConfigJson(content: string): string {
+  const source = stripThinkingTags(content).trim()
+  const fenced = source.match(/^```json[ \t]*\r?\n([\s\S]*?)\r?\n```$/iu)
+  if (fenced?.[1]) return fenced[1].trim()
+  if (source.includes('```') || !source.startsWith('{') || !source.endsWith('}')) {
+    throw new Error('NOVEL_CONFIG_JSON_ONLY')
+  }
+  return source
+}
+
 function decodeCompleteNovelConfig(
   content: string,
   expectedTotalChapters: number,
@@ -526,7 +536,7 @@ function decodeCompleteNovelConfig(
   let value: unknown
   try {
     // 推理型模型常先输出一版草稿 JSON 再输出修订版；提取器取最后一个完整的 JSON 对象。
-    value = JSON.parse(extractSingleCompleteJsonObject(content, false, isRecord))
+    value = JSON.parse(extractStrictNovelConfigJson(content))
   } catch {
     throw new Error(text('AI 返回的小说配置不是完整 JSON 对象', 'The AI novel configuration is not a complete JSON object.'))
   }

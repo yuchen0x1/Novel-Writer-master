@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { countDraftUnits } from '../../../shared/draft-units'
 import { formatResourceUri } from '../../../shared/project-paths'
 import type { EditorTab } from '../../../stores/editor-store'
@@ -7,6 +7,7 @@ import { useLocaleStore } from '../../../stores/locale-store'
 import { chapterPhase } from '../../../stores/navigation/stage-progress'
 import { useStageStore } from '../../../stores/navigation/stage-store'
 import { useProjectStore } from '../../../stores/project-store'
+import { toast } from '../../ui/Toast'
 import type { ReviewEntry } from '../../../services/draft-index'
 import { ipc } from '../../../services/ipc-client'
 import { confirmationSourceReviewId, parseHumanConfirmedReviewSnapshot } from '../../../shared/human-confirmed-review'
@@ -80,6 +81,12 @@ function DraftChapter({ tab, filePath, projectKey }: { tab: EditorTab; filePath:
   const text = useLocaleStore(s => s.text)
   const locale = useLocaleStore(s => s.locale)
   const focus = useStageStore(s => s.focus)
+  const reviewTargetState = useStageStore(s => s.reviewTarget)
+  const reviewTarget = reviewTargetState
+    && reviewTargetState.filePath === filePath
+    && Boolean(session && sameProjectSessionContext(reviewTargetState.session, session))
+    ? reviewTargetState.target
+    : null
   const request = useStageStore(s => s.chapterRequest)
   const draft = useDraftActions({ tabId: tab.id, filePath, content: tab.content ?? '', projectKey })
   const chapterNumber = draft.meta?.chapterNumber ?? tab.chapterNumber
@@ -117,6 +124,14 @@ function DraftChapter({ tab, filePath, projectKey }: { tab: EditorTab; filePath:
         : stage === 'revised' ? text(`修稿已合并 v${draft.meta.version} · ${units} 字`, `Revised v${draft.meta.version} · ${units} ${pluralEn(charCount, 'word')}`)
           : text(`草稿 v${draft.meta.version} · ${units} 字`, `Draft v${draft.meta.version} · ${units} ${pluralEn(charCount, 'word')}`)
   const editable = !draft.isReadonly && !draft.isChapterBusy
+  const finishReviewTarget = useCallback((findingId: string) => {
+    const current = useStageStore.getState().reviewTarget
+    if (current?.target.findingId === findingId) useStageStore.setState({ reviewTarget: null })
+  }, [])
+  const failReviewTarget = useCallback((findingId: string) => {
+    toast.warning(text('原稿已变化或引文不唯一，无法自动定位这条审稿意见；请在审稿报告中手动核对。', 'The source draft changed or the quote is ambiguous, so this finding could not be located automatically. Check the review report manually.'))
+    finishReviewTarget(findingId)
+  }, [finishReviewTarget, text])
 
   return (
     <div className="stage-ch" data-focus={focus || undefined}>
@@ -162,6 +177,9 @@ function DraftChapter({ tab, filePath, projectKey }: { tab: EditorTab; filePath:
                 editable={editable}
                 hideStatusBar
                 onCharCountChange={setCharCount}
+                reviewTarget={reviewTarget ?? undefined}
+                onReviewTargetFailure={failReviewTarget}
+                onReviewTargetComplete={finishReviewTarget}
                 onChange={draft.onBodyChange}
                 onSave={body => draft.save(body)}
               />

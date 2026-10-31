@@ -679,7 +679,7 @@ describe('review/revision consumers using the main contract (synthetic transport
   })
 
   it('recovers broken stop JSON with a separate replacement attempt, retaining the original artifact', async () => {
-    const f = setup([{ content: '{"summary":', finishReason: 'stop' }, new Error('synthetic network failure'), { content: review, finishReason: 'stop' }])
+    const f = setup([{ content: '{"summary":', finishReason: 'stop' }, new Error('synthetic provider failure'), { content: review, finishReason: 'stop' }])
     const command = f.command('review-chapter')
     await expect(command.execute(f.args)).rejects.toThrow()
     const broken = f.fixture.recovery!.latestArtifact!
@@ -731,7 +731,7 @@ describe('review/revision consumers using the main contract (synthetic transport
 
   it('continues the persisted revision composition after a network failure without regenerating its prefix', async () => {
     const prefix = '前半段修订正文。'.repeat(30)
-    const f = setup([{ content: prefix, finishReason: 'length' }, new Error('synthetic network failure'), { content: '新增结尾。'.repeat(30), finishReason: 'stop' }])
+    const f = setup([{ content: prefix, finishReason: 'length' }, new Error('synthetic provider failure'), { content: '新增结尾。'.repeat(30), finishReason: 'stop' }])
     const command = f.command('refine-draft')
     await expect(command.execute(f.args)).rejects.toThrow()
     const priorId = f.fixture.recovery!.composition!.artifactIds[0]

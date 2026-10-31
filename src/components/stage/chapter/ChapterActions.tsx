@@ -73,6 +73,7 @@ export default function ChapterActions({ sheetSlot, tab, stage, chapterNumber, t
   const models = useLLMStore(s => s.models)
   const defaultModelId = useLLMStore(s => s.defaultModelId)
   const { chapters } = useStageView()
+  const writingLanguage = useProjectStore(s => s.currentProject?.novelConfig?.writingLanguage)
   const filePath = tab.filePath!
   const projectKey = tab.projectKey!
   const meta = draft.meta!
@@ -87,7 +88,7 @@ export default function ChapterActions({ sheetSlot, tab, stage, chapterNumber, t
     cycle: review?.cycle ?? null,
     reloadCycle: review?.reloadCycle ?? (async () => null),
   })
-  const dims = reviewDimensions(text)
+  const dims = reviewDimensions(text, writingLanguage ?? 'zh-CN')
   const [checkedDims, setCheckedDims] = useState<Record<string, boolean>>(() => Object.fromEntries(dims.map(dim => [dim.key, true])))
   const [reviseModelId, setReviseModelId] = useState<string | null>(null)
   const [ask, setAsk] = useState<Ask>(null)

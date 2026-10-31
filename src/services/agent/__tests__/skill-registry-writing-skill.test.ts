@@ -160,7 +160,7 @@ it('pure builtin data preserves all registry metadata, inspections and localized
   await skillRegistry.loadAll()
   const data = getBuiltinWritingSkills()
   expect(data).toHaveLength(9)
-  expect(createHash('sha256').update(JSON.stringify(data)).digest('hex')).toMatchInlineSnapshot(`"627c59172c6f3273b50b0f84f60b93368c4d77e79bacb46c9deca0f8f3900093"`)
+  expect(createHash('sha256').update(JSON.stringify(data)).digest('hex')).toMatchInlineSnapshot(`"bcb54522b5567e599e81d649d4607114a4915b596c23a42c3e10bca7ab26bf19"`)
   for (const entry of data) {
     expect(skillRegistry.getById(`builtin:${entry.metadata.name}`)).toMatchObject(entry)
     for (const language of ['zh-CN', 'en-US'] as const) {

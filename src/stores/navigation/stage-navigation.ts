@@ -11,7 +11,7 @@ import { useLocaleStore } from '../locale-store'
 import { displayedErrorMessage } from '../../i18n/app-errors'
 import { openDraftTab } from '../open-draft-tab'
 import { useProjectStore } from '../project-store'
-import type { NavigationIntent } from './navigation-intents'
+import type { NavigationIntent, ReviewNavigationTarget } from './navigation-intents'
 import { openPageTab } from './page-tabs'
 import { deriveChapters, focusChapter } from './stage-progress'
 import { useStageStore } from './stage-store'
@@ -66,7 +66,11 @@ export function openChapterPlan(chapterNumber: number, title: string, session: P
  * 连续点几章时只有最后一次生效；读取失败时提示作者，而不是点了没反应。
  * 自动打开传入 stillIntended，读取期间它变成 false 就放弃。返回这一章最后有没有切到前台。
  */
-export async function openChapter(chapterNumber: number, stillIntended: () => boolean = () => true): Promise<boolean> {
+export async function openChapter(
+  chapterNumber: number,
+  stillIntended: () => boolean = () => true,
+  reviewTarget?: ReviewNavigationTarget,
+): Promise<boolean> {
   const request = ++openChapterRequest
   const session = currentSession()
   if (!session) return false
@@ -84,6 +88,7 @@ export async function openChapter(chapterNumber: number, stillIntended: () => bo
     })
     const draft = row?.draft
     if (!draft) {
+      if (reviewTarget) useStageStore.setState({ reviewTarget: null })
       openChapterPlan(chapterNumber, row?.title ?? '', session)
       return true
     }
@@ -91,11 +96,18 @@ export async function openChapter(chapterNumber: number, stillIntended: () => bo
     if (useStageStore.getState().writeRequest?.chapterNumber === chapterNumber) useStageStore.setState({ writeRequest: null })
     const editor = useEditorStore.getState()
     const open = editor.tabs.find(tab => tab.type === 'chapter' && tab.projectKey === session.projectPath && tab.filePath === draft.filePath)
+    const setReviewTarget = () => {
+      if (reviewTarget) useStageStore.setState({ reviewTarget: { session, filePath: draft.filePath, target: reviewTarget } })
+      else useStageStore.setState({ reviewTarget: null })
+    }
     if (open) {
       editor.setActiveTab(open.id)
+      setReviewTarget()
       return true
     }
-    return await openDraftTab(draft, chapterTabName(chapterNumber, row.title, text), session, stillWanted)
+    const opened = await openDraftTab(draft, chapterTabName(chapterNumber, row.title, text), session, stillWanted)
+    if (opened) setReviewTarget()
+    return opened
   } catch (error) {
     if (!stillWanted()) return false
     const reason = displayedErrorMessage(useLocaleStore.getState().locale, error)
@@ -108,9 +120,10 @@ export async function openChapter(chapterNumber: number, stillIntended: () => bo
 // 审稿侧页按稿的 filePath 归属，稿 id 在各作品里各自递增会撞，换作品或重新打开时一并收起。
 useProjectStore.subscribe(({ currentProject }, previous) => {
   const session = projectSessionContextFromProject(currentProject)
-  const { writeRequest, chapterRequest, sheet } = useStageStore.getState()
+  const { writeRequest, chapterRequest, reviewTarget, sheet } = useStageStore.getState()
   if (writeRequest && !sameProjectSessionContext(writeRequest.session, session)) useStageStore.setState({ writeRequest: null })
   if (chapterRequest && !sameProjectSessionContext(chapterRequest.session, session)) useStageStore.setState({ chapterRequest: null })
+  if (reviewTarget && !sameProjectSessionContext(reviewTarget.session, session)) useStageStore.setState({ reviewTarget: null })
   if (sheet?.kind === 'review' && !sameProjectSessionContext(projectSessionContextFromProject(previous.currentProject), session)) useStageStore.setState({ sheet: null })
 })
 
@@ -198,6 +211,6 @@ function arrive(intent: Exclude<NavigationIntent, { kind: 'settings' }>): void {
       useStageStore.setState({ sheet: { kind: 'run', tab: intent.facet === 'log' || intent.facet === 'models' ? 'diagnostics' : 'active', runId: intent.runId } })
       return
     case 'chapter':
-      void openChapter(intent.chapterNumber)
+      void openChapter(intent.chapterNumber, () => true, intent.reviewTarget)
   }
 }

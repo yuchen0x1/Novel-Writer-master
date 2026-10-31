@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import type { ProjectSessionContext } from '../../shared/ipc-channels'
 import type { ChapterFacts } from './stage-progress'
 
+import type { ReviewNavigationTarget } from './navigation-intents'
+
 /** 运行侧页的分页：进行中（步骤、实时输出、等确认、可恢复）、历史、诊断（宽版：日志与模型调用）。 */
 export type RunSheetTab = 'active' | 'history' | 'diagnostics'
 
@@ -37,6 +39,7 @@ interface StageState {
   writeRequest: { session: ProjectSessionContext; chapterNumber: number } | null
   /** 审稿或修稿刚生成，要这一稿的单章视图重读数据；视图接手后清空。只属于发出时的那次打开，换作品或重新打开即清掉。 */
   chapterRequest: { session: ProjectSessionContext; filePath: string } | null
+  reviewTarget: { session: ProjectSessionContext; filePath: string; target: ReviewNavigationTarget } | null
   /** 各稿的审稿与修稿记录（按稿 id），流程脊与单章视图据此判断一章走到哪一步；只属于读出它的那次打开。 */
   chapterFacts: { session: ProjectSessionContext; byDraft: Readonly<Record<number, ChapterFacts>> } | null
   /** 流程脊为这次打开读完过一遍各稿的审稿与修稿记录。没读完时流程脊不列阶段与章节，章节阶段不会先按稿状态估计再改。 */
@@ -52,6 +55,7 @@ export const useStageStore = create<StageState>()(() => ({
   closingTabId: null,
   writeRequest: null,
   chapterRequest: null,
+  reviewTarget: null,
   chapterFacts: null,
   spineFacts: null,
 }))

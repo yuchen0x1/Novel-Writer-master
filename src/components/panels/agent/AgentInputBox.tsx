@@ -16,6 +16,7 @@ import SlashCommandMenu from './SlashCommandMenu'
 import MentionMenu from './MentionMenu'
 import type { SlashCommand, MentionTarget } from '../../../services/agent/intent-router'
 import { useLocaleStore } from '../../../stores/locale-store'
+import { submitsOnEnter } from '../../../shared/ime'
 import { useProjectStore } from '../../../stores/project-store'
 import { registerProjectTransitionDraft } from '../../../services/project-transition'
 
@@ -225,10 +226,10 @@ export default function AgentInputBox() {
         return
       }
     }
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSendOrStop()
-    }
+    // 输入法选词时的回车属于输入法：不拦截、不发送，否则拼音会被当成消息发出去。
+    if (!submitsOnEnter({ key: e.key, shiftKey: e.shiftKey, isComposing: e.nativeEvent.isComposing, keyCode: e.keyCode })) return
+    e.preventDefault()
+    handleSendOrStop()
   }
 
   const canSend = !generating && inputText.trim().length > 0

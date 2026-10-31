@@ -32,13 +32,22 @@ import {
 type Text = (zh: string, en: string) => string
 
 /** 审稿的检查维度。promptLabel 是交给工作流的固定中文名，不随界面语言变化。 */
-export function reviewDimensions(text: Text) {
-  return [
+export function reviewDimensions(text: Text, writingLanguage = 'zh-CN') {
+  const dimensions = [
     { key: 'continuity', label: text('剧情连贯性', 'Story continuity'), desc: text('与前文是否矛盾', 'Consistency with earlier chapters'), promptLabel: '剧情连贯性' },
     { key: 'logic', label: text('剧情合理性', 'Story logic'), desc: text('因果逻辑、动机、常识', 'Causality, motivation, and plausibility'), promptLabel: '剧情合理性' },
     { key: 'character', label: text('角色状态', 'Character state'), desc: text('能力/位置/情感一致性', 'Ability, location, and emotional consistency'), promptLabel: '角色状态' },
     { key: 'foreshadow', label: text('前后章节串联', 'Chapter connections'), desc: text('伏笔、悬念连贯', 'Foreshadowing and suspense continuity'), promptLabel: '前后章节串联' },
   ]
+  if (writingLanguage.toLowerCase().startsWith('zh')) {
+    dimensions.push({
+      key: 'chinese-proofreading',
+      label: text('中文校对', 'Chinese proofreading'),
+      desc: text('错别字、标点、语病和明显搭配错误', 'Typos, punctuation, grammar, and clear wording errors'),
+      promptLabel: '中文校对',
+    })
+  }
+  return dimensions
 }
 
 export type DraftChapterMeta = DraftMeta & { chapterTitle?: string; filePath?: string }

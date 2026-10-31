@@ -540,7 +540,103 @@
   background: var(--paper);
 }
 
-/* ================= 窄宽度（按蓝图页自身的宽度，运行侧页并排时也成立） ================= */
+.stage-bp-detail {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.stage-scene-panel {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: 20px 36px 48px;
+  border-left: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--sunken) 35%, transparent);
+}
+
+.stage-scene-head,
+.stage-scene-item-head,
+.stage-scene-editor-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+
+.stage-scene-head {
+  justify-content: space-between;
+  max-width: 760px;
+  margin-bottom: var(--s-4);
+}
+
+.stage-scene-head h2,
+.stage-scene-editor-head h3,
+.stage-scene-item h3 {
+  margin: 0;
+  color: var(--ink);
+  font: 600 var(--fs-16) var(--font-display);
+}
+
+.stage-scene-head p,
+.stage-scene-item-head p,
+.stage-scene-empty {
+  margin: 4px 0 0;
+  color: var(--ink-3);
+  font-size: var(--fs-12);
+}
+
+.stage-scene-error { color: var(--danger); }
+
+.stage-scene-list {
+  display: grid;
+  gap: var(--s-2);
+  max-width: 760px;
+}
+
+.stage-scene-item,
+.stage-scene-editor {
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.stage-scene-order {
+  flex: none;
+  width: 24px;
+  color: var(--accent);
+  font: italic 18px var(--font-num);
+}
+
+.stage-scene-spacer { flex: 1; }
+.stage-scene-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: var(--s-3) 0 0 36px;
+  font-size: var(--fs-12);
+}
+.stage-scene-facts dt { color: var(--ink-3); }
+.stage-scene-facts dd { margin: 0; color: var(--ink-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.stage-scene-editor { max-width: 760px; margin-top: var(--s-4); }
+.stage-scene-editor-head { justify-content: space-between; align-items: center; margin-bottom: var(--s-3); }
+.stage-scene-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); margin-bottom: var(--s-3); }
+.stage-scene-grid label { display: grid; gap: 5px; color: var(--ink-2); font-size: var(--fs-12); }
+.stage-scene-grid input,
+.stage-scene-grid textarea { width: 100%; box-sizing: border-box; padding: 7px 9px; border: 1px solid var(--rule-strong); border-radius: var(--radius-sm); background: var(--paper); color: var(--ink); font: inherit; resize: vertical; }
+
+@container (width < 760px) {
+  .stage-scene-panel { padding: 20px 24px 40px; border-left: 0; border-top: 1px solid var(--rule); }
+}
+
+@container (width < 520px) {
+  .stage-scene-grid { grid-template-columns: 1fr; }
+}
+
+
 @container (width < 760px) {
   .stage-bp-plan {
     width: 240px;

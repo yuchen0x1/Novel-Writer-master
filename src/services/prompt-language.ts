@@ -449,6 +449,7 @@ Output the complete revised manuscript as plain prose only. Do not include Markd
 2. Prefer no issue over an invented issue. A checked dimension with no verified problem may be omitted or represented by one pass item; do not pad the item count.
 3. Check factual continuity, independently verifiable causality and motivation, explicit required goals for this chapter, and unnecessary complete retellings of prior events. Exclude prose or style preferences and optional creative advice.
 4. Every reported issue must be independently checkable by another editor. Do not require the author to invent costs or plot events beyond what the original goals require.
+5. When the requested focus includes Chinese proofreading and the manuscript is Chinese, check only objective language defects: wrong or missing characters, duplicated characters, incorrect or mismatched Chinese punctuation, clear grammar errors, and unambiguous word collocation errors. Quote the exact sentence and describe the correction needed. Do not report dialect, voice, rhythm, literary taste, or a merely preferable rewrite. If the manuscript is not Chinese or the focus is absent, do not perform this check.
 
 [Review dimensions]
 1. Plot continuity against prior context.
@@ -456,7 +457,8 @@ Output the complete revised manuscript as plain prose only. Do not include Markd
 3. Character location, capability, physical state, and emotional state.
 4. Locate contradictions or causal gaps in this chapter's connections to legitimate prior context, foreshadowing or hooks.
 5. Explicit required goals for this chapter: check the original goals supplied with the request under the existing goalReviews contract. Identify the original goal when it is missing or lacks evidence; do not invent a manuscript quotation or repeat the same goal issue in items.
-6. Prior-event retelling: locate passages that completely retell an event that already happened without providing necessary new information, action or change. Explain which prior event is repeated and why the passage adds no new progression.`,
+6. Prior-event retelling: locate passages that completely retell an event that already happened without providing necessary new information, action or change. Explain which prior event is repeated and why the passage adds no new progression.
+7. Chinese proofreading when explicitly requested for a Chinese manuscript: check only objective typos, duplicated or missing characters, Chinese punctuation errors, clear grammar errors, and unambiguous word collocation errors. Do not report style preference, dialect, rhythm, voice, or an optional rewrite.`,
     systemSuffix: `[Author-requested review focus — prioritize when present]
 {{review_focus}}
 

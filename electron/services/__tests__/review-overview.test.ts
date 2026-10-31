@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createRequire } from 'node:module'
+import { createHash } from 'node:crypto'
 import type BetterSqlite3 from 'better-sqlite3'
 
 import { reviewCenterOverview } from '../review-overview'
@@ -47,14 +48,14 @@ function report(summary: string, items: unknown[]): string {
 
 function insertReview(
   db: BetterSqlite3.Database,
-  options: { chapter: number; draftId?: number; reviewIndex?: number; body: string; createdAt?: string },
+  options: { chapter: number; draftId?: number; reviewIndex?: number; body: string; sourceContent?: string; createdAt?: string },
 ): number {
   const draftId = options.draftId ?? db.prepare('INSERT INTO drafts (chapter_number) VALUES (?)').run(options.chapter).lastInsertRowid as number
   const contentId = db.prepare('INSERT INTO contents (body) VALUES (?)').run(options.body).lastInsertRowid as number
   const reviewIndex = options.reviewIndex ?? 1
   const result = db.prepare(`
-    INSERT INTO reviews (base_draft_id, review_index, content_id, created_at) VALUES (?, ?, ?, ?)
-  `).run(draftId, reviewIndex, contentId, options.createdAt ?? '2026-01-01 08:00:00')
+    INSERT INTO reviews (base_draft_id, review_index, content_id, source_content, created_at) VALUES (?, ?, ?, ?, ?)
+  `).run(draftId, reviewIndex, contentId, options.sourceContent ?? null, options.createdAt ?? '2026-01-01 08:00:00')
   return Number(result.lastInsertRowid)
 }
 
@@ -106,6 +107,23 @@ describe('reviewCenterOverview', () => {
     expect(chapter?.items[0]).toMatchObject({ sourceChapter: 1, quote: '铃力代价' })
   })
 
+  it('keeps a stable finding identity and verifiable quote anchor', () => {
+    const db = createDb()
+    const source = '雨停了。她推开门，看见站台空无一人。'
+    insertReview(db, {
+      chapter: 1,
+      sourceContent: source,
+      body: report('可定位', [{ category: '语言', severity: 'warning', description: '引文需核对', quote: '她推开门，看见站台空无一人。' }]),
+    })
+
+    const [chapter] = reviewCenterOverview(db)
+    expect(chapter?.items[0]).toMatchObject({
+      findingId: 'review:1:item:0',
+      sourceContentHash: createHash('sha256').update(source, 'utf8').digest('hex'),
+      quoteOccurrence: 1,
+    })
+  })
+
   it('treats a summary-only report as valid instead of a parse error', () => {
     const db = createDb()
     insertReview(db, { chapter: 1, body: '这不是 JSON' })
@@ -144,8 +162,8 @@ describe('reviewCenterOverview', () => {
     })
 
     const [chapter] = reviewCenterOverview(db)
-    expect(chapter?.items[0]).toMatchObject({ status: 'resolved' })
-    expect(chapter?.items[1]).toMatchObject({ status: 'unresolved' })
+    expect(chapter?.items[0]).toMatchObject({ findingId: 'f1', status: 'resolved' })
+    expect(chapter?.items[1]).toMatchObject({ findingId: 'f2', status: 'unresolved' })
   })
 
   it('still lists issues when the review-cycle repository rejects legacy reports', () => {

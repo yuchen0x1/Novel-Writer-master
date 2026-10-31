@@ -48,6 +48,21 @@ describe('project-scoped IPC session transport', () => {
     expect(invoke).not.toHaveBeenCalled()
   })
 
+  it('treats timeline channels as project-scoped so the main process receives the lease', async () => {
+    invoke.mockResolvedValue({ version: 1, lanes: [], events: [] })
+
+    await ipc.invokeWithProjectSession(
+      { projectId: 'project-A', leaseId: 'lease-A', projectPath: 'C:/projects/A' },
+      'timeline:read',
+      'C:/projects/A',
+    )
+
+    expect(invoke).toHaveBeenCalledWith(
+      'timeline:read',
+      'C:/projects/A',
+      { projectId: 'project-A', leaseId: 'lease-A', projectPath: 'C:/projects/A' },
+    )
+  })
   it('appends the frozen active session to a project database request', async () => {
     invoke.mockResolvedValue([])
 

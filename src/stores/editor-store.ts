@@ -3,6 +3,8 @@ import { create } from 'zustand'
 import type { DraftStatus } from '../shared/draft-status'
 import { sameProjectPathKey } from '../shared/project-session-context'
 import { countUnsavedEditorItems, countUnsavedEditorItemsForProject } from './editor-unsaved'
+import { useWritingGoalStore } from './writing-goal-store'
+import { countDraftUnits } from '../shared/draft-units'
 import { useLocaleStore } from './locale-store'
 import { canonicalResourceUri } from '../shared/project-paths'
 import type { GenerationRecoveryContext } from '../shared/generation-owner-contract'
@@ -53,7 +55,7 @@ export interface EditorTab {
   id: string
   name: string
   /** 知识库页的标签。 */
-  type: 'chapter' | 'outline' | 'character' | 'config' | 'diff' | 'chapter-card' | 'world-building' | 'arch-file' | 'version-history' | 'review-report' | 'narrative-thread' | 'knowledge' | 'review-center' | 'book-search' | 'writing-stats'
+  type: 'chapter' | 'outline' | 'character' | 'config' | 'diff' | 'chapter-card' | 'world-building' | 'arch-file' | 'version-history' | 'review-report' | 'narrative-thread' | 'knowledge' | 'review-center' | 'book-search' | 'writing-stats' | 'timeline'
   filePath?: string
   content?: string
   /** 架构文档已持久化的基准内容，用于跨 Tab/项目切换后恢复脏状态。 */
@@ -419,6 +421,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   },
 
   updateTabContent: (tabId, content) => {
+    const previousTab = get().tabs.find(t => t.id === tabId)
     set((s) => ({
       tabs: s.tabs.map((t) => t.id === tabId
         ? {
@@ -429,6 +432,12 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
           }
         : t),
     }))
+    // 写作目标只记正文章节的净增长：配置/大纲页的编辑不算写作，删改不回扣，
+    // AI 静默刷新（syncTabContent）也不计入。
+    if (previousTab?.type === 'chapter') {
+      const delta = countDraftUnits(content) - countDraftUnits(previousTab.content ?? '')
+      if (delta > 0) useWritingGoalStore.getState().recordWords(delta)
+    }
   },
 
   // 静默刷新内容（不改变 dirty 标记，用于 AI 生成后刷新、打开文件同步等场景）

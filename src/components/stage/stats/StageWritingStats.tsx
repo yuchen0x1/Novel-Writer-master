@@ -5,6 +5,16 @@ import { useLocaleStore } from '../../../stores/locale-store'
 import { useProjectStore } from '../../../stores/project-store'
 import { projectSessionContextFromProject } from '../../../shared/project-session-context'
 import type { WritingStatsChapter, WritingStatsDay, WritingStatsOverview } from '../../../shared/writing-stats'
+import {
+  currentStreak,
+  goalPercent,
+  heatmapCells,
+  localDayKey,
+  wordsOn,
+  WRITING_GOAL_MAX,
+  WRITING_GOAL_MIN,
+} from '../../../shared/writing-goal'
+import { useWritingGoalStore } from '../../../stores/writing-goal-store'
 import { pluralEn } from '../../../shared/plural-en'
 
 type Text = (zh: string, en: string) => string
@@ -80,6 +90,84 @@ function DailyBars({ daily, text, locale }: { daily: WritingStatsDay[]; text: Te
   )
 }
 
+/** 今日目标卡：本地账本（本机日期 → 当天新增字数）+ 目标 + 连续天数 + 12 周热力图。 */
+function GoalSection({ text, locale }: { text: Text; locale: string }) {
+  const dailyGoal = useWritingGoalStore(s => s.dailyGoal)
+  const ledger = useWritingGoalStore(s => s.ledger)
+  const setDailyGoal = useWritingGoalStore(s => s.setDailyGoal)
+
+  const now = new Date()
+  const todayWords = wordsOn(ledger, localDayKey(now))
+  const streak = currentStreak(ledger, now)
+  const percent = goalPercent(todayWords, dailyGoal)
+  const cells = heatmapCells(ledger, now, dailyGoal)
+
+  return (
+    <section className="stage-stats-goal" aria-labelledby="stage-stats-goal-title">
+      <div className="stage-stats-goal-head">
+        <h3 id="stage-stats-goal-title" className="stage-stats-goal-title">
+          {text('今日写作', "Today's writing")}
+        </h3>
+        <label className="stage-stats-goal-target">
+          {text('每日目标', 'Daily goal')}
+          <input
+            type="number"
+            min={WRITING_GOAL_MIN}
+            max={WRITING_GOAL_MAX}
+            step={100}
+            value={dailyGoal}
+            onChange={event => setDailyGoal(Number(event.target.value))}
+          />
+        </label>
+      </div>
+
+      <p className="stage-stats-goal-value">
+        <strong>{formatCount(todayWords, locale)}</strong>
+        <span className="stage-stats-goal-of"> / {formatCount(dailyGoal, locale)} {text('字', 'words')}</span>
+        <span className="stage-stats-goal-percent">{percent}%</span>
+      </p>
+
+      <div
+        className="stage-stats-goal-track"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={dailyGoal}
+        aria-valuenow={Math.min(todayWords, dailyGoal)}
+        aria-label={text('今日写作目标进度', "Today's writing goal")}
+      >
+        <span style={{ width: `${percent}%` }} />
+      </div>
+
+      <p className="stage-stats-goal-streak">
+        {streak > 0
+          ? text(`已连续写作 ${streak} 天`, `${streak}-day writing streak`)
+          : text('今天写下第一句，连续记录就开始了', 'Write one sentence today to start a streak')}
+      </p>
+
+      <div
+        className="stage-stats-heatmap"
+        role="img"
+        aria-label={text(
+          `最近 12 周写作热力图，今日 ${todayWords} 字`,
+          `Writing heatmap for the last 12 weeks; ${todayWords} ${pluralEn(todayWords, 'word')} today`,
+        )}
+      >
+        {cells.map(cell => (
+          <span
+            key={cell.date}
+            className="stage-stats-heatmap-cell"
+            data-level={cell.level}
+            title={text(`${cell.date}：${cell.words} 字`, `${cell.date}: ${cell.words} ${pluralEn(cell.words, 'word')}`)}
+          />
+        ))}
+      </div>
+      <p className="stage-stats-help">
+        {text('热力图按每日目标着色，记录只存在本机。', 'The heatmap is coloured against your daily goal; the ledger stays on this machine.')}
+      </p>
+    </section>
+  )
+}
+
 /** 写作统计：全部数字来自本地数据库已有事实，只读展示。载入结果按租约归属，换作品自动失效。 */
 export default function StageWritingStats() {
   const text = useLocaleStore(s => s.text)
@@ -123,6 +211,8 @@ export default function StageWritingStats() {
       <p className="stage-stats-help">
         {text('数字全部来自这部作品的本地记录：草稿、定稿与 AI 调用日志。', 'Every number comes from this book’s local records: drafts, finalizations and AI call logs.')}
       </p>
+
+      <GoalSection text={text} locale={locale} />
 
       {failed && <p className="stage-stats-failed" role="alert">{text('读取统计失败：', 'Could not load stats: ')}{failed}</p>}
       {loading && <p className="stage-stats-help" role="status">{text('正在读取…', 'Loading…')}</p>}

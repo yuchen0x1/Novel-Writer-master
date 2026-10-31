@@ -30,6 +30,7 @@ import { commitAuthorCharacterRoster } from '../services/character-roster-author
 import { CharacterRosterRepository } from '../repositories/character-roster-repository'
 import type { CharacterRosterCommitRequest } from '../../src/shared/character-roster'
 import { DraftRepository } from '../repositories/draft-repository'
+import { SceneCardRepository } from '../repositories/scene-card-repository'
 import type { DraftSourceDependency } from '../../src/shared/draft-source-dependency'
 import { FinalizedDraftImportRepository } from '../repositories/finalized-draft-import-repository'
 import { FinalizationRepository } from '../repositories/finalization-repository'
@@ -107,6 +108,9 @@ const MUTATING_DATABASE_CHANNELS = new Set([
   'db:blueprint-update-notes',
   'db:blueprint-delete',
   'db:blueprint-clear-all',
+  'db:scene-card-upsert',
+  'db:scene-card-delete',
+  'db:scene-card-clear-all',
   'db:character-roster-commit',
   'db:draft-import-finalized-batch',
   'db:draft-create',
@@ -674,6 +678,7 @@ export function registerDatabaseController(options: DatabaseControllerOptions = 
     try {
       assertRequiredExpectedProjectPath(getCurrentProjectPath(), expectedProjectPath)
       BlueprintRepository.delete(chapterNumber)
+      SceneCardRepository.deleteByChapter(chapterNumber)
       return { success: true }
     } catch (err) {
       return { success: false, error: String(err) }
@@ -684,10 +689,38 @@ export function registerDatabaseController(options: DatabaseControllerOptions = 
     try {
       assertRequiredExpectedProjectPath(getCurrentProjectPath(), expectedProjectPath)
       BlueprintRepository.clearAll()
+      SceneCardRepository.clearAll()
       return { success: true }
     } catch (err) {
       return { success: false, error: String(err) }
     }
+  })
+
+  ipcMain.handle('db:scene-card-get-all', async (_event, expectedProjectPath: string) => {
+    assertRequiredExpectedProjectPath(getCurrentProjectPath(), expectedProjectPath)
+    return SceneCardRepository.getAll()
+  })
+
+  ipcMain.handle('db:scene-card-get-by-chapter', async (_event, chapterNumber: number, expectedProjectPath: string) => {
+    assertRequiredExpectedProjectPath(getCurrentProjectPath(), expectedProjectPath)
+    return SceneCardRepository.getByChapter(chapterNumber)
+  })
+
+  ipcMain.handle('db:scene-card-upsert', async (_event, data: import('../../src/shared/scene-cards').SceneCard, expectedProjectPath: string) => {
+    assertRequiredExpectedProjectPath(getCurrentProjectPath(), expectedProjectPath)
+    return { success: true, scene: SceneCardRepository.upsert(data) }
+  })
+
+  ipcMain.handle('db:scene-card-delete', async (_event, id: string, expectedProjectPath: string) => {
+    assertRequiredExpectedProjectPath(getCurrentProjectPath(), expectedProjectPath)
+    SceneCardRepository.delete(id)
+    return { success: true }
+  })
+
+  ipcMain.handle('db:scene-card-clear-all', async (_event, expectedProjectPath: string) => {
+    assertRequiredExpectedProjectPath(getCurrentProjectPath(), expectedProjectPath)
+    SceneCardRepository.clearAll()
+    return { success: true }
   })
 
   // ============================================================

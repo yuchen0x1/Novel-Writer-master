@@ -47,7 +47,10 @@ export default defineConfig({
     port: 5180,
     strictPort: true,
     watch: {
-      ignored: ['**/docs/**']
+      // docs 是资料，不进构建；.runtime 是测试产物与临时浏览器配置，内容随时被其它进程锁住；
+      // 原子写留下的 *.tmpdir 与 *.tmp 只存在一瞬。监听这些都会在 Windows 上撞 EBUSY，
+      // 一撞就把 dev server 整个打挂（保存一次文件就可能触发）。
+      ignored: ['**/docs/**', '**/.runtime/**', '**/*.tmpdir/**', '**/*.tmp'],
     }
   },
   define: {

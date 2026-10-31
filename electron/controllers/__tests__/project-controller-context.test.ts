@@ -59,6 +59,10 @@ const mocks = vi.hoisted(() => ({
     peek: vi.fn(),
     readCurrent: vi.fn(),
   },
+  chapterDeletions: {
+    listIncomplete: vi.fn((): Array<{ operationId: string }> => []),
+    retry: vi.fn(async () => ({ success: true, committed: true })),
+  },
 }))
 
 vi.mock('electron', () => ({
@@ -188,6 +192,10 @@ vi.mock('../../services/external-file-grant-service', () => ({
 
 vi.mock('../../services/legacy-project-copy-import', () => ({
   importLegacyProjectCopy: mocks.importLegacyProjectCopy,
+}))
+
+vi.mock('../../services/chapter-deletion-service', () => ({
+  chapterDeletionService: mocks.chapterDeletions,
 }))
 
 import { registerProjectController } from '../project-controller'
@@ -474,6 +482,17 @@ describe('project controller project identity', () => {
     expect(mocks.projectAccess.adoptLegacyProject).toHaveBeenCalled()
     expect(mocks.projectAccess.beginSession).toHaveBeenCalled()
     expect(mocks.createCalls).toEqual([])
+  })
+
+  it('resumes unfinished chapter deletions after opening a project', async () => {
+    mocks.chapterDeletions.listIncomplete.mockReturnValueOnce([{ operationId: 'op-1' }, { operationId: 'op-2' }])
+
+    await expect(handler('project:open')({ sender: { id: 17 } }, selectedProject(projectB), 'request-open-resume', projectA))
+      .resolves.toMatchObject({ success: true })
+
+    expect(mocks.chapterDeletions.listIncomplete).toHaveBeenCalledWith(projectB)
+    expect(mocks.chapterDeletions.retry).toHaveBeenNthCalledWith(1, projectB, 'op-1')
+    expect(mocks.chapterDeletions.retry).toHaveBeenNthCalledWith(2, projectB, 'op-2')
   })
 
   it('opens a complete imported target after its publish ACK is lost and adds it to recent projects', async () => {
@@ -1160,6 +1179,30 @@ describe('project controller project identity', () => {
     ])
     expect(mocks.removeDirectoryWithWindowsRetry).not.toHaveBeenCalled()
     expect(mocks.projectAccess.assertCurrentProjectContext).not.toHaveBeenCalled()
+  })
+
+  it('serializes deletion before a queued open and preserves the queued project session', async () => {
+    let releaseDelete!: () => void
+    const deleteGate = new Promise<void>(resolve => { releaseDelete = resolve })
+    mocks.removeDirectoryWithWindowsRetry.mockImplementationOnce(async (target: string) => {
+      await deleteGate
+      mocks.existingPaths.delete(path.resolve(target))
+    })
+
+    const deleting = handler('project:delete')({}, projectA, 'project-A', 'lease-project-A', projectSession())
+    await Promise.resolve()
+    const opening = handler('project:open')({ sender: { id: 17 } }, selectedProject(projectB), 'queued-open-B', projectA)
+
+    // 删除仍在等待时，队列中的打开不能初始化 B。
+    expect(mocks.initCalls).not.toContain(projectB)
+    releaseDelete()
+
+    const [deleteResult, openResult] = await Promise.all([deleting, opening])
+    expect(deleteResult).toMatchObject({ success: true, directoryDeleted: true })
+    expect(openResult).toMatchObject({ success: true, project: { id: 'project-B', path: projectB } })
+    expect(mocks.currentProjectPath).toBe(projectB)
+    expect(mocks.activeSession?.projectId).toBe('project-B')
+    expect(mocks.projectAccess.invalidateCurrentSession).toHaveBeenCalledOnce()
   })
 
   it('reopens the active database and reports failure when the project directory remains', async () => {

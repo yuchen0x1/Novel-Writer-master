@@ -22,6 +22,7 @@ import StageKnowledge from './knowledge/StageKnowledge'
 import StagePlot from './plot/StagePlot'
 import StageBookSearch from './search/StageBookSearch'
 import StageWritingStats from './stats/StageWritingStats'
+import StageTimeline from './timeline/StageTimeline'
 import ReviewCenter from './review/ReviewCenter'
 import StageTabMenu, { CloseTabsConfirm } from './StageTabMenu'
 import StageTabs from './StageTabs'
@@ -53,6 +54,7 @@ function TabContent({ tab, project }: { tab: EditorTab; project: ProjectData }) 
   if (tab.type === 'knowledge' && sameProject) return <StageKnowledge tabId={tab.id} />
   if (tab.type === 'book-search' && sameProject) return <StageBookSearch />
   if (tab.type === 'writing-stats' && sameProject) return <StageWritingStats />
+  if (tab.type === 'timeline' && sameProject) return <StageTimeline />
   if (tab.type === 'narrative-thread' && sameProject) {
     return <StagePlot projectKey={project.path} initialView={tab.narrativeThreadView ?? 'plans'} viewRequest={tab.narrativeThreadViewRequest} />
   }

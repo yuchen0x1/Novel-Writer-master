@@ -103,7 +103,8 @@
   justify-content: center;
 }
 
-.stage-search {
+/* 类名与全书检索面板的 .stage-search 区分开，避免两套样式互相层叠泄漏 */
+.stage-search-trigger {
   width: 340px;
   min-width: 0;
   height: 30px;
@@ -120,7 +121,7 @@
   transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
-.stage-search:hover {
+.stage-search-trigger:hover {
   border-color: var(--rule-strong);
   color: var(--ink-2);
 }

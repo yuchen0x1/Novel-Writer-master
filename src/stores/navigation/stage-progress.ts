@@ -190,6 +190,7 @@ const TAB_LOCATION: Record<EditorTab['type'], StageLocation> = {
   'version-history': { kind: 'resource', page: 'history' },
   'book-search': { kind: 'resource', page: 'search' },
   'writing-stats': { kind: 'resource', page: 'stats' },
+  'timeline': { kind: 'resource', page: 'timeline' },
   'review-center': { kind: 'resource', page: 'review-center' },
 }
 

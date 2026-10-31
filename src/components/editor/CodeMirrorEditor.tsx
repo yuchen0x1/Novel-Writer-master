@@ -15,6 +15,7 @@ import { useLLMStore } from '../../stores/llm-store'
 import type { GenerationReasoningStage } from '../../shared/reasoning-types'
 import { countDraftUnits } from '../../shared/draft-units'
 import { useLocaleStore } from '../../stores/locale-store'
+import { locateReviewQuote } from '../../shared/review-anchor'
 import { getActiveProjectSessionContext } from '../../shared/project-session-context'
 import { livePreview, paperHeadFacet, type PaperHead } from './live-preview'
 
@@ -35,6 +36,15 @@ export type CodeMirrorEditorProps = {
   fitContent?: boolean
   /** 段落首行缩进两字（只是显示，见 paragraph-indent）。 */
   paragraphIndent?: boolean
+  /** 从全文审稿中心传来的引文定位目标；源稿哈希不匹配时拒绝静默定位。 */
+  reviewTarget?: {
+    findingId: string
+    quote: string
+    sourceContentHash?: string
+    quoteOccurrence?: number
+  }
+  onReviewTargetFailure?: (findingId: string) => void
+  onReviewTargetComplete?: (findingId: string) => void
 }
 
 type EditorAIAction = {
@@ -51,6 +61,11 @@ const AI_ACTIONS = [
   { key: 'dialogue', label: ['改成对话', 'To dialogue'], prompt: ['将这部分改写为有区分度、能推动冲突的自然对话。', 'Rewrite this passage as distinct, natural dialogue that advances the conflict.'], reasoningStage: 'drafting' },
 ] satisfies readonly EditorAIAction[]
 
+async function sha256Hex(value: string): Promise<string> {
+  const bytes = new TextEncoder().encode(value)
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes)
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('')
+}
 export default function CodeMirrorEditor({
   content,
   filePath,
@@ -65,6 +80,9 @@ export default function CodeMirrorEditor({
   paperHead = null,
   fitContent = false,
   paragraphIndent: indentParagraphs = false,
+  reviewTarget,
+  onReviewTargetFailure,
+  onReviewTargetComplete,
 }: CodeMirrorEditorProps) {
   const inkThemeName = useThemeStore(s => s.resolvedTheme)
   const uiText = useLocaleStore(s => s.text)
@@ -121,7 +139,51 @@ export default function CodeMirrorEditor({
     }
   }, [content, onCharCountChange])
 
-  // ===== Bubble Menu 逻辑 =====
+  useEffect(() => {
+    if (!reviewTarget) return
+    let cancelled = false
+    let attempts = 0
+    const finish = (success: boolean) => {
+      if (cancelled) return
+      if (!success) onReviewTargetFailure?.(reviewTarget.findingId)
+      onReviewTargetComplete?.(reviewTarget.findingId)
+    }
+    const focus = async () => {
+      const view = editorRef.current?.view
+      const currentContent = view?.state.doc.toString() ?? editorContent
+      if (reviewTarget.sourceContentHash) {
+        try {
+          if (await sha256Hex(currentContent) !== reviewTarget.sourceContentHash) {
+            finish(false)
+            return
+          }
+        } catch {
+          finish(false)
+          return
+        }
+      }
+      if (cancelled) return
+      const range = locateReviewQuote(currentContent, reviewTarget.quote, reviewTarget.quoteOccurrence)
+      if (!range || !view) {
+        if (!view && attempts < 20) {
+          attempts += 1
+          window.setTimeout(() => { void focus() }, 16)
+          return
+        }
+        finish(false)
+        return
+      }
+      view.dispatch({
+        selection: { anchor: range.from, head: range.to },
+        effects: EditorView.scrollIntoView(range.from, { y: 'center' }),
+      })
+      finish(true)
+    }
+    void focus()
+    return () => { cancelled = true }
+  }, [editorContent, onReviewTargetComplete, onReviewTargetFailure, reviewTarget])
+
+
   const [bubbleOpen, setBubbleOpen] = useState(false)
   const [bubblePos, setBubblePos] = useState({ top: 0, left: 0 })
   const [aiResult, setAiResult] = useState<string | null>(null)

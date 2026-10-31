@@ -5,7 +5,7 @@ import { useProjectStore } from './project-store'
 export function openBuiltinEditor(
   id: string,
   name: string,
-  type: 'chapter-card' | 'character' | 'world-building' | 'version-history' | 'narrative-thread' | 'book-search' | 'writing-stats',
+  type: 'chapter-card' | 'character' | 'world-building' | 'version-history' | 'narrative-thread' | 'book-search' | 'writing-stats' | 'timeline',
   narrativeThreadView?: 'plot-tree' | 'plans',
   chapterNumber?: number,
 ): void {

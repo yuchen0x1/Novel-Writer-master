@@ -27,9 +27,11 @@ import type { WritingLanguage } from '../shared/writing-language'
 import { randomUUID } from '../utils/id'
 import { pluralEn } from '../shared/plural-en'
 import { buildEpub, epubBytesToBase64, type EpubChapterInput } from '../shared/epub-builder'
+import { buildDocx } from '../shared/docx-builder'
+import { buildPrintHtml } from '../shared/pdf-html'
 
 
-export type ExportFormat = 'merged-md' | 'split-md' | 'txt' | 'epub'
+export type ExportFormat = 'merged-md' | 'split-md' | 'txt' | 'epub' | 'docx' | 'pdf'
 
 /** 只导出第 from 到 to 章（含两端）；缺省为全书。 */
 export interface ExportChapterRange {
@@ -495,6 +497,94 @@ export async function exportNovel(
         }
         break
       }
+
+      case 'pdf': {
+        // PDF：渲染层给静态 HTML，主进程的 Chromium 排版后 printToPDF，再按授权落盘。
+        const html = buildPrintHtml({
+          title: project.name,
+          language: project.novelConfig.writingLanguage,
+          chapters: scopedContents.map(ch => ({
+            chapterNumber: ch.chapterNumber,
+            title: ch.title,
+            content: ch.content,
+          })),
+        })
+        outputPath = `${projectFileStem}.pdf`
+        const authorityCurrent = await ipc.invokeWithProjectSession(
+          projectSession,
+          'db:draft-export-authority-current',
+          authorityReceipt,
+          projectSession.projectPath,
+        )
+        if (!isProjectSessionCurrent(projectSession)) return staleExportResult(uiLocale)
+        if (!authorityCurrent) return changedFinalizationResult(uiLocale)
+        const rendered = await ipc.invoke('export:pdf-render', html)
+        if (!rendered.success) {
+          const renderError = displayedErrorMessage(uiLocale, rendered.error, text('生成 PDF 失败，请稍后重试。', 'Failed to render the PDF. Please try again.'))
+          return {
+            success: false,
+            error: renderError,
+          }
+        }
+        if (!isProjectSessionCurrent(projectSession)) return staleExportResult(uiLocale)
+        activeWritePath = outputPath
+        const writeResult = await ipc.invoke(
+          'fs:grant-write-file-base64',
+          options.grantId,
+          outputPath,
+          rendered.base64,
+        )
+        requireExportWriteSuccess(
+          writeResult,
+          text('写入导出文件', 'Write export file'),
+          text('写入导出文件失败', 'Failed to write the exported file.'),
+        )
+        activeWritePath = undefined
+        if (!isProjectSessionCurrent(projectSession)) {
+          return staleCommittedSingleExportResult(uiLocale, outputPath)
+        }
+        break
+      }
+
+      case 'docx': {
+        // Word 文档：投稿与打印稿的主流格式，正文按空行分段、中文首行缩进两字。
+        const docxBytes = buildDocx({
+          title: project.name,
+          language: project.novelConfig.writingLanguage,
+          chapters: scopedContents.map(ch => ({
+            chapterNumber: ch.chapterNumber,
+            title: ch.title,
+            content: ch.content,
+          })),
+          createdIso: new Date().toISOString(),
+        })
+        outputPath = `${projectFileStem}.docx`
+        const authorityCurrent = await ipc.invokeWithProjectSession(
+          projectSession,
+          'db:draft-export-authority-current',
+          authorityReceipt,
+          projectSession.projectPath,
+        )
+        if (!isProjectSessionCurrent(projectSession)) return staleExportResult(uiLocale)
+        if (!authorityCurrent) return changedFinalizationResult(uiLocale)
+        activeWritePath = outputPath
+        const writeResult = await ipc.invoke(
+          'fs:grant-write-file-base64',
+          options.grantId,
+          outputPath,
+          epubBytesToBase64(docxBytes),
+        )
+        requireExportWriteSuccess(
+          writeResult,
+          text('写入导出文件', 'Write export file'),
+          text('写入导出文件失败', 'Failed to write the exported file.'),
+        )
+        activeWritePath = undefined
+        if (!isProjectSessionCurrent(projectSession)) {
+          return staleCommittedSingleExportResult(uiLocale, outputPath)
+        }
+        break
+      }
     }
 
     if (!isProjectSessionCurrent(projectSession)) return staleExportResult(uiLocale)
@@ -552,6 +642,8 @@ function formatLabel(format: ExportFormat, locale: Locale): string {
     'split-md': ['分章 Markdown', 'Split Markdown'],
     'txt': ['纯文本 TXT', 'Plain text (TXT)'],
     'epub': ['EPUB 电子书', 'EPUB e-book'],
+    'docx': ['Word 文档', 'Word document'],
+    'pdf': ['PDF 文稿', 'PDF manuscript'],
   }
   return labels[format][locale === 'en-US' ? 1 : 0]
 }

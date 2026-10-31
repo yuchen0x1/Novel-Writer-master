@@ -73,9 +73,18 @@ function IssueRow({ issue, chapterNumber, text }: { issue: ReviewCenterIssue; ch
         <button
           type="button"
           className="stage-review-locate"
-          onClick={() => navigate({ kind: 'chapter', chapterNumber })}
+          onClick={() => navigate({
+            kind: 'chapter',
+            chapterNumber,
+            reviewTarget: issue.quote ? {
+              findingId: issue.findingId,
+              quote: issue.quote,
+              ...(issue.sourceContentHash ? { sourceContentHash: issue.sourceContentHash } : {}),
+              ...(issue.quoteOccurrence ? { quoteOccurrence: issue.quoteOccurrence } : {}),
+            } : undefined,
+          })}
         >
-          {text(`打开第 ${chapterNumber} 章`, `Open ${chapterLabel(chapterNumber, text)}`)}
+          {issue.quote ? text('定位到引文', 'Locate quote') : text(`打开第 ${chapterNumber} 章`, `Open ${chapterLabel(chapterNumber, text)}`)}
         </button>
       </div>
       <p className="stage-review-description">{issue.description}</p>

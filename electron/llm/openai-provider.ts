@@ -349,8 +349,12 @@ export class OpenAIProvider implements ILLMProvider {
           }
           if (type === 'response.completed' || type === 'response.incomplete') {
             // Some compatible gateways omit delta events and return the final
-            // text only on the terminal response object.
-            if (!fullText) {
+            // text only on the terminal response object. `fullText` stays empty
+            // in visible-only mode, so judge by what was actually delivered:
+            // otherwise the terminal text is pushed after the deltas and the
+            // whole answer is duplicated.
+            const delivered = opts.visibleOnly ? visible.text : fullText
+            if (!delivered) {
               const finalText = responsesOutputText(response)
               if (finalText) {
                 inBandReasoning.push(finalText)

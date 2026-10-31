@@ -14,6 +14,8 @@ import type { CmCloudChannels } from './cm-cloud'
 import type { ProjectOverview } from './project-overview'
 import type { BookSearchResult } from './book-search'
 import type { WritingStatsOverview } from './writing-stats'
+import type { TimelineDocument } from './timeline'
+import type { SceneCard } from './scene-cards'
 /**
  * IPC 频道定义 — 渲染进程与主进程的类型安全通信契约
  * 所有 IPC 调用都通过此文件定义频道名和参数/返回值类型
@@ -544,6 +546,11 @@ export interface FileChannels {
     args: []
     return: ExternalDirectoryGrant | null
   }
+  /** 打印用 HTML 交给主进程的 Chromium 排成 PDF；返回 base64，由渲染层按授权写入。 */
+  'export:pdf-render': {
+    args: [html: string]
+    return: { success: true; base64: string } | { success: false; error: string }
+  }
 }
 
 // ===== LLM 调用 =====
@@ -1031,6 +1038,11 @@ export interface DatabaseChannels {
   'db:blueprint-update-notes': { args: [chapterNumber: number, notes: string, expectedProjectPath: string]; return: { success: boolean; updated?: boolean; error?: string } }
   'db:blueprint-delete': { args: [chapterNumber: number, expectedProjectPath: string]; return: { success: boolean; error?: string } }
   'db:blueprint-clear-all': { args: [expectedProjectPath: string]; return: { success: boolean; error?: string } }
+  'db:scene-card-get-all': { args: [expectedProjectPath: string]; return: SceneCard[] }
+  'db:scene-card-get-by-chapter': { args: [chapterNumber: number, expectedProjectPath: string]; return: SceneCard[] }
+  'db:scene-card-upsert': { args: [data: SceneCard, expectedProjectPath: string]; return: { success: boolean; scene?: SceneCard; error?: string } }
+  'db:scene-card-delete': { args: [id: string, expectedProjectPath: string]; return: { success: boolean; error?: string } }
+  'db:scene-card-clear-all': { args: [expectedProjectPath: string]; return: { success: boolean; error?: string } }
 
   // 3. characters
   'db:character-get-all': { args: [expectedProjectPath: string]; return: CharacterData[] }
@@ -1239,6 +1251,15 @@ export interface DatabaseChannels {
   'db:writing-stats': {
     args: [expectedProjectPath: string]
     return: WritingStatsOverview
+  }
+  /** 时间线：按线索编排的故事内事件，存在作品目录的 timeline.json 里。 */
+  'timeline:read': {
+    args: [expectedProjectPath: string]
+    return: TimelineDocument
+  }
+  'timeline:save': {
+    args: [document: TimelineDocument, expectedProjectPath: string]
+    return: TimelineDocument
   }
   'db:save-summary-snapshot': { args: [chapterNumber: number, characterStates: string, expectedProjectPath: string]; return: { success: boolean } }
   'db:get-latest-summary': { args: [expectedProjectPath: string]; return: { characterStates: string; chapterNumber: number } | null }

@@ -8,6 +8,8 @@ import './styles/paper-ink/index.css'
 import './index.css'
 // 外壳样式同样只在入口引入，排在全局样式之后，颜色桥接才能覆盖 index.css 里的 --color-*。
 import './components/stage/stage.css'
+// 玻璃材质层最后加载：它与各组件选择器同权重，靠顺序覆盖外壳与浮层的表面。
+import './styles/paper-ink/glass.css'
 
 
 installMainGenerationTransport(mainGenerationTransport)

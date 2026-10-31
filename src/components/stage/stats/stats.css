@@ -191,3 +191,117 @@
   color: var(--danger);
   font-size: var(--fs-13);
 }
+
+/* ================= 今日目标与热力图 ================= */
+/* 数据来自渲染层的本地账本（不是数据库），所以这块与是否打开过作品无关。 */
+.stage-stats-goal {
+  margin: 0 0 var(--s-5);
+  padding: var(--s-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-panel);
+  background: var(--glass-raised, var(--paper));
+  box-shadow: var(--glass-inner, none);
+}
+
+.stage-stats-goal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.stage-stats-goal-title {
+  margin: 0;
+  font: 600 var(--fs-14)/1.4 var(--font-display);
+  color: var(--ink);
+}
+
+.stage-stats-goal-target {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--ink-3);
+  font-size: var(--fs-12);
+}
+
+.stage-stats-goal-target input {
+  width: 84px;
+  height: 28px;
+  padding: 0 var(--s-2);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.stage-stats-goal-target input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.stage-stats-goal-value {
+  margin: var(--s-3) 0 var(--s-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.stage-stats-goal-value strong {
+  font: 600 var(--fs-24)/1.2 var(--font-num);
+  color: var(--ink);
+}
+
+.stage-stats-goal-of {
+  color: var(--ink-3);
+  font-size: var(--fs-12);
+}
+
+.stage-stats-goal-percent {
+  margin-left: var(--s-3);
+  color: var(--accent);
+  font-size: var(--fs-12);
+  font-weight: 600;
+}
+
+.stage-stats-goal-track {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--track);
+  overflow: hidden;
+}
+
+.stage-stats-goal-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--paint-jade, var(--ok)));
+  transition: width var(--dur) var(--ease);
+}
+
+.stage-stats-goal-streak {
+  margin: var(--s-2) 0 0;
+  color: var(--ink-2);
+  font-size: var(--fs-12);
+}
+
+.stage-stats-heatmap {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 10px);
+  gap: 3px;
+  width: max-content;
+  margin-top: var(--s-3);
+}
+
+.stage-stats-heatmap-cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--track);
+}
+
+.stage-stats-heatmap-cell[data-level='1'] { background: color-mix(in srgb, var(--accent) 24%, var(--track)); }
+.stage-stats-heatmap-cell[data-level='2'] { background: color-mix(in srgb, var(--accent) 45%, var(--track)); }
+.stage-stats-heatmap-cell[data-level='3'] { background: color-mix(in srgb, var(--accent) 72%, var(--track)); }
+.stage-stats-heatmap-cell[data-level='4'] { background: color-mix(in srgb, var(--paint-jade, var(--ok)) 78%, var(--track)); }

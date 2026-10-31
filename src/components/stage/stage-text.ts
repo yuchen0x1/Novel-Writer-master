@@ -36,6 +36,7 @@ export const RESOURCE_NAMES: Record<ResourcePage, [string, string]> = {
   search: ['全书检索', 'Book search'],
   stats: ['写作统计', 'Writing stats'],
   'review-center': ['全文审稿', 'Full review'],
+  timeline: ['时间线', 'Timeline'],
 }
 
 /** 阶段、资料页与角色名单的标签用固定的名字（阶段与资料页取流程脊上的名字），同一个页面只有一个名字。 */
@@ -50,6 +51,7 @@ const PAGE_TAB_NAMES: Partial<Record<EditorTab['type'], [string, string]>> = {
   'book-search': RESOURCE_NAMES.search,
   'writing-stats': RESOURCE_NAMES.stats,
   'review-center': RESOURCE_NAMES['review-center'],
+  'timeline': RESOURCE_NAMES.timeline,
 }
 
 /** 标签显示的名字。正文、审稿报告与恢复草稿等标签沿用各自的名字。 */

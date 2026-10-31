@@ -201,6 +201,9 @@ export function clearBlueprintFactsWithinTransaction(
     }
     db.prepare('DELETE FROM blueprint_character_sync_operations').run()
     db.prepare('DELETE FROM blueprint_commit_operations').run()
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='scene_cards'").get()) {
+        db.prepare('DELETE FROM scene_cards').run()
+    }
     db.prepare('DELETE FROM blueprints').run()
 }
 

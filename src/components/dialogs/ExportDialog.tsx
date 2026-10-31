@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BookOpen, CheckCircle2, Download, FileText, Files, Type, XCircle } from 'lucide-react'
+import { BookOpen, CheckCircle2, Download, FileText, FileType, Files, Type, XCircle } from 'lucide-react'
 import { useProjectStore } from '../../stores/project-store'
 import {
   exportNovel,
@@ -115,6 +115,8 @@ export default function ExportDialog({ isOpen, onClose }: Props) {
     { value: 'split-md', label: text('分章 Markdown', 'Chapter Markdown'), desc: text('每章一个独立 .md 文件', 'Create one .md file per chapter'), icon: <Files size={18} /> },
     { value: 'txt', label: text('纯文本 TXT', 'Plain text'), desc: text('去除格式标记的纯文本', 'Export plain text without formatting'), icon: <Type size={18} /> },
     { value: 'epub', label: text('EPUB 电子书', 'EPUB e-book'), desc: text('可在阅读器里打开的 .epub，带目录', 'An .epub with a table of contents for e-readers'), icon: <BookOpen size={18} /> },
+    { value: 'docx', label: text('Word 文档', 'Word document'), desc: text('可直接投稿或打印的 .docx，含章节标题', 'A .docx with chapter headings for submission or print'), icon: <FileType size={18} /> },
+    { value: 'pdf', label: text('PDF 文稿', 'PDF manuscript'), desc: text('A4 排版、章章分页的 .pdf', 'A4 pages with every chapter starting on a new page'), icon: <FileType size={18} /> },
   ]
 
   return (

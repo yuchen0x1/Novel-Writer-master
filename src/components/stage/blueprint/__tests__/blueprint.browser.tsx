@@ -50,6 +50,9 @@ function project(): ProjectData {
 function installIpc() {
   invoke = vi.fn(async (channel: string, ...args: unknown[]) => {
     if (channel === 'db:blueprint-get-all') return stored
+    if (channel === 'db:scene-card-get-all') return []
+    if (channel === 'db:scene-card-upsert') return { success: true, scene: args[0] }
+    if (channel === 'db:scene-card-delete' || channel === 'db:scene-card-clear-all') return { success: true }
     if (channel === 'db:draft-authority-sequence') return {
       status: 'continuous', lastChapterNumber: nextChapter - 1, nextChapterNumber: nextChapter, duplicateChapterNumbers: [], authorityFingerprint: 'a'.repeat(64),
     }

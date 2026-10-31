@@ -5,10 +5,17 @@ import { stageNavigate } from './stage-navigation'
 export type WorkStage = 'setup' | 'architecture' | 'blueprint' | 'manuscript'
 
 /** 流程脊下方的作品资料页；全文审稿中心是资料页里的跨章工作台。 */
-export type ResourcePage = 'plot' | 'knowledge' | 'history' | 'search' | 'stats' | 'review-center'
+export type ResourcePage = 'plot' | 'knowledge' | 'history' | 'search' | 'stats' | 'review-center' | 'timeline'
 
 /** 运行侧页的分页：实时输出、任务进度、诊断里的日志与模型调用。 */
 export type RunPaneFacet = 'output' | 'tasks' | 'log' | 'models'
+
+export interface ReviewNavigationTarget {
+  findingId: string
+  quote: string
+  sourceContentHash?: string
+  quoteOccurrence?: number
+}
 
 /** 跨层导航意图。调用方只描述要去哪里，由 stageNavigate 决定落到哪些界面状态。 */
 export type NavigationIntent =
@@ -18,7 +25,7 @@ export type NavigationIntent =
   | { kind: 'run'; facet: RunPaneFacet; runId?: string }
   | { kind: 'settings'; section: SettingsSection }
   /** 带 write 时打开这一章，并由单章视图弹出写作此章的弹层。 */
-  | { kind: 'chapter'; chapterNumber: number; write?: ChapterWritePrefill }
+  | { kind: 'chapter'; chapterNumber: number; write?: ChapterWritePrefill; reviewTarget?: ReviewNavigationTarget }
 
 /** 唯一的跨层导航入口。 */
 export function navigate(intent: NavigationIntent): void {

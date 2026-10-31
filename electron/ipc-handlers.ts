@@ -6,6 +6,8 @@ import { registerConfigController } from './controllers/config-controller'
 import { registerCoverController } from './controllers/cover-controller'
 import { registerProjectController } from './controllers/project-controller'
 import { registerProjectArchiveController } from './controllers/project-archive-controller'
+import { registerPdfExportController } from './controllers/pdf-export-controller'
+import { registerTimelineController } from './controllers/timeline-controller'
 import { registerCloudBackupController } from './controllers/cloud-backup-controller'
 import { registerCmCloudController } from './controllers/cm-cloud-controller'
 import { registerFSController } from './controllers/fs-controller'
@@ -62,6 +64,8 @@ export function registerIPCHandlers() {
     onProjectSaved: input => { cmCloudBackup.onProjectSaved(input) },
   })
   registerProjectArchiveController()
+  registerPdfExportController()
+  registerTimelineController()
   registerCloudBackupController()
   registerFSController(undefined, { onProjectSaved: notifyProjectSaved })
   registerExternalFileGrantController()

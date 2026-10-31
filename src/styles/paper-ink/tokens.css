@@ -136,6 +136,31 @@
   --cover-text-on-art: #FFFFFF;
   --cover-text-shadow: 0 1px 6px rgba(10, 10, 14, .5);
 
+  /* 玻璃材质：外壳与浮层共用的一层磨砂纸。只在这里写颜色，glass.css 只引用变量。
+     透明度分四档：外壳导轨/顶栏最透，浮在正文上的卡片次之，对话框与菜单最实。
+     模糊半径与饱和度同时决定"像不像玻璃"，所以成对给出。 */
+  --glass-chrome: color-mix(in srgb, var(--frame) 46%, transparent);
+  --glass-panel: color-mix(in srgb, var(--paper) 56%, transparent);
+  --glass-raised: color-mix(in srgb, var(--paper) 72%, transparent);
+  --glass-float: color-mix(in srgb, var(--paper) 82%, transparent);
+  --glass-line: color-mix(in srgb, var(--ink) 11%, transparent);
+  --glass-line-strong: color-mix(in srgb, var(--ink) 18%, transparent);
+  --glass-sheen: linear-gradient(158deg, color-mix(in srgb, white 42%, transparent), transparent 46%);
+  --glass-sheen-soft: linear-gradient(158deg, color-mix(in srgb, white 18%, transparent), transparent 42%);
+  --glass-inner: inset 0 1px 0 color-mix(in srgb, white 52%, transparent);
+  --glass-input: color-mix(in srgb, var(--paper) 54%, transparent);
+  --glass-scrim: color-mix(in srgb, var(--scrim) 56%, transparent);
+  --glass-shadow: 0 22px 64px -30px rgba(23, 23, 26, .46), 0 2px 10px -6px rgba(23, 23, 26, .16);
+  --glass-shadow-soft: 0 10px 28px -20px rgba(23, 23, 26, .32);
+  --glass-blur: 18px;
+  --glass-blur-heavy: 30px;
+  --glass-sat: 1.4;
+  /* 玻璃后面必须有东西可以透出来，否则只是一块半透明色块：画布下多加两团环境光。 */
+  --glass-ambient:
+    radial-gradient(54% 46% at 4% -10%, color-mix(in srgb, var(--paint-azure) 90%, transparent), transparent 70%),
+    radial-gradient(50% 44% at 98% 108%, color-mix(in srgb, var(--paint-vermilion) 24%, transparent), transparent 72%),
+    radial-gradient(40% 36% at 72% 6%, color-mix(in srgb, var(--paint-ochre) 17%, transparent), transparent 72%);
+
   background: var(--frame-wash), var(--frame);
   color: var(--ink);
   font: 400 var(--fs-13)/1.55 var(--font-ui);
@@ -216,4 +241,26 @@
     radial-gradient(1100px 720px at 6% -8%, color-mix(in srgb, var(--paint-plum) 12%, transparent), transparent 62%),
     radial-gradient(920px 640px at 98% 10%, color-mix(in srgb, var(--paint-azure) 11%, transparent), transparent 58%),
     radial-gradient(1200px 760px at 46% 110%, color-mix(in srgb, var(--paint-ochre) 9%, transparent), transparent 62%);
+
+  /* 深色玻璃：纸面本身很深，透出的底色要靠冷调环境光与更亮的高光边才看得出来。 */
+  --glass-chrome: color-mix(in srgb, var(--frame) 62%, transparent);
+  --glass-panel: color-mix(in srgb, var(--paper) 58%, transparent);
+  --glass-raised: color-mix(in srgb, var(--paper) 70%, transparent);
+  --glass-float: color-mix(in srgb, var(--paper) 76%, transparent);
+  --glass-line: color-mix(in srgb, var(--ink) 14%, transparent);
+  --glass-line-strong: color-mix(in srgb, var(--ink) 22%, transparent);
+  --glass-sheen: linear-gradient(158deg, color-mix(in srgb, white 12%, transparent), transparent 44%);
+  --glass-sheen-soft: linear-gradient(158deg, color-mix(in srgb, white 7%, transparent), transparent 40%);
+  --glass-inner: inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
+  --glass-input: color-mix(in srgb, var(--paper) 46%, transparent);
+  --glass-scrim: color-mix(in srgb, var(--scrim) 68%, transparent);
+  --glass-shadow: 0 26px 70px -32px rgba(0, 0, 0, .88), 0 2px 12px -6px rgba(0, 0, 0, .6);
+  --glass-shadow-soft: 0 12px 32px -22px rgba(0, 0, 0, .72);
+  --glass-blur: 20px;
+  --glass-blur-heavy: 34px;
+  --glass-sat: 1.5;
+  --glass-ambient:
+    radial-gradient(54% 44% at 8% -8%, color-mix(in srgb, var(--paint-plum) 26%, transparent), transparent 72%),
+    radial-gradient(48% 42% at 98% 106%, color-mix(in srgb, var(--paint-azure) 24%, transparent), transparent 70%),
+    radial-gradient(36% 32% at 76% 10%, color-mix(in srgb, var(--paint-jade) 14%, transparent), transparent 72%);
 }

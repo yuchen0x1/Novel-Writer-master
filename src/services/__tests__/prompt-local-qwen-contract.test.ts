@@ -578,6 +578,17 @@ describe('built-in model-neutral prompt contract', () => {
     }
   })
 
+  it('keeps Chinese proofreading explicit and bounded in both review prompt languages', () => {
+    const zh = getBuiltinPromptTemplate('consistency_check', 'zh-CN')!
+    const en = getBuiltinPromptTemplate('consistency_check', 'en-US')!
+    expect(zh.content).toContain('中文校对')
+    expect(zh.content).toContain('错别字、漏字或重字、中文标点错误、明确的语法错误')
+    expect(zh.content).toContain('方言、文风、节奏、文学趣味和可选改写不算问题')
+    expect(en.content).toContain('Chinese proofreading')
+    expect(en.content).toContain('objective typos, duplicated or missing characters')
+    expect(en.content).toContain('Do not report style preference, dialect, rhythm, voice, or an optional rewrite')
+  })
+
   it('keeps author text written on the same line as the upcoming-blueprint heading', () => {
     const custom = '【后续章节大纲预告】：第5章 主角离城\n\n【全局写作要求】'
     expect(pruneEmptyOptionalPromptSections(custom)).toBe(custom)

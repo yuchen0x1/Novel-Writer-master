@@ -18,6 +18,8 @@ import BatchWriteDialog from './BatchWriteDialog'
 import BlueprintCard from './BlueprintCard'
 import BlueprintPlanList from './BlueprintPlanList'
 import GenerateBlueprintsDialog from './GenerateBlueprintsDialog'
+import SceneCardsPanel from './SceneCardsPanel'
+import { useSceneCards } from './use-scene-cards'
 import { pluralEn } from '../../../shared/plural-en'
 
 /** 等作者确认的一步：覆盖已有蓝图、生成前的架构警告、清空全部、删除此章、清除误导入正文。 */
@@ -37,6 +39,7 @@ export default function StageBlueprint({ projectKey, initialChapterNumber, selec
 }) {
   const text = useLocaleStore(s => s.text)
   const plan = useChapterBlueprints({ projectKey, initialChapterNumber, selectRequest })
+  const sceneCards = useSceneCards(projectKey)
   const { chapters } = useStageView()
   const rows = useMemo(() => new Map(chapters.map(row => [row.number, row])), [chapters])
   const writeRequest = useStageStore(s => s.writeRequest)
@@ -206,6 +209,7 @@ export default function StageBlueprint({ projectKey, initialChapterNumber, selec
             onSelect={plan.setSelectedIdx}
           />
           {selected && (
+            <div className="stage-bp-detail">
             <BlueprintCard
               blueprint={selected}
               row={rows.get(selected.chapterNumber)}
@@ -214,6 +218,15 @@ export default function StageBlueprint({ projectKey, initialChapterNumber, selec
               onSave={() => void plan.saveOne()}
               onDelete={() => setAsk({ kind: 'delete', chapterNumber: selected.chapterNumber })}
             />
+            <SceneCardsPanel
+              chapterNumber={selected.chapterNumber}
+              scenes={sceneCards.byChapter(selected.chapterNumber)}
+              saving={sceneCards.saving}
+              error={sceneCards.error}
+              onSave={sceneCards.saveScene}
+              onDelete={sceneCards.deleteScene}
+            />
+            </div>
           )}
         </div>
       )}

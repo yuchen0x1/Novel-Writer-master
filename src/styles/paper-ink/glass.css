@@ -1,0 +1,184 @@
+/*
+ * 玻璃材质层：外壳、内容面板与浮层的统一表面。
+ *
+ * 三条约束，改这里之前先读：
+ * 1. 颜色只来自 tokens.css 的 --glass-* 变量（scripts/check-color-literals.mjs 会扫这个文件）。
+ * 2. 大面积的 backdrop-filter 很贵：只有窄条（导轨、顶栏）与浮层（菜单、对话框、命令面板）配模糊，
+ *    正文所在的内容面板只做半透明 + 高光边，避免软件渲染下滚动/输入掉帧。
+ * 3. 透明度永远配一层 --glass-line 细边与 --glass-inner 顶部高光，否则浅色下卡片会糊在底色里。
+ *
+ * 关闭方式：根元素加 data-glass="off"，或系统开启「降低透明度」时自动回退为实色。
+ */
+
+/* 画布：两团固定环境光垫在底色晕染之下，玻璃才有可透的层次。 */
+.paper-ink {
+  background-image: var(--glass-ambient), var(--frame-wash);
+  background-attachment: fixed, scroll;
+}
+
+/* ================= 外壳：导轨与顶栏 ================= */
+.stage-rail {
+  background: var(--glass-chrome);
+  border-right: 1px solid var(--glass-line);
+  box-shadow: var(--glass-inner);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+}
+
+.stage-topbar {
+  background: var(--glass-chrome);
+  border-bottom: 1px solid var(--glass-line);
+  box-shadow: var(--glass-inner);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+}
+
+/* 标签条本身透明，只有当前页签是一块浮起来的薄玻璃。 */
+.stage-tabbar {
+  background: transparent;
+  border-bottom-color: var(--glass-line);
+}
+
+.stage-tab[data-active] {
+  background: var(--glass-raised);
+  box-shadow: var(--glass-inner), 0 -1px 0 var(--glass-line) inset;
+  -webkit-backdrop-filter: blur(12px) saturate(var(--glass-sat));
+  backdrop-filter: blur(12px) saturate(var(--glass-sat));
+}
+
+/* ================= 内容面板与侧页 ================= */
+/* 正文面板面积最大，不加模糊：半透明 + 细边 + 顶部高光已经能读出玻璃，且不拖慢输入。 */
+.stage-panel {
+  background: var(--glass-panel);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow-panel), var(--glass-inner);
+}
+
+.stage-panel .stage-sheet,
+.stage-panel .pi-sheet {
+  background: var(--glass-raised);
+}
+
+/* ================= 书架与流程卡片 ================= */
+/* 开始写作的三张入口卡在 .stage-library 作用域里定义，选择器要带上父级才压得过原样式。 */
+.stage-library .stage-start {
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--glass-inner), var(--glass-shadow-soft);
+  -webkit-backdrop-filter: blur(10px) saturate(var(--glass-sat));
+  backdrop-filter: blur(10px) saturate(var(--glass-sat));
+}
+
+.stage-library .stage-start:hover:not(:active, [aria-expanded='true'], :focus-visible) {
+  background: var(--glass-float);
+  border-color: var(--glass-line-strong);
+}
+
+.stage-library .stage-start:active,
+.stage-library .stage-start[aria-expanded='true'] {
+  background: var(--paper-press);
+}
+
+/* ================= 浮层：菜单、弹层、对话框、提示 ================= */
+.pi-sheet,
+.pi-popover,
+.pi-menu,
+.pi-dialog,
+.pi-toast,
+.stage-palette {
+  background: var(--glass-float);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--glass-shadow), var(--glass-inner);
+  -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-sat));
+}
+
+/* 遮挡层也带一点模糊：下面还看得见书页，但已经退出焦点。模糊别开太大，否则环境色会被抹平成灰。 */
+.pi-scrim,
+.stage-palette-scrim {
+  background: var(--glass-scrim);
+  -webkit-backdrop-filter: blur(6px) saturate(var(--glass-sat));
+  backdrop-filter: blur(6px) saturate(var(--glass-sat));
+}
+
+/* ================= 输入控件 ================= */
+.pi-input,
+.stage-palette-input,
+.stage-search-trigger {
+  background: var(--glass-input);
+  border-color: var(--glass-line-strong);
+  box-shadow: var(--glass-inner);
+  -webkit-backdrop-filter: blur(8px) saturate(var(--glass-sat));
+  backdrop-filter: blur(8px) saturate(var(--glass-sat));
+}
+
+.pi-input:focus-visible,
+.stage-palette-input:focus-visible,
+.stage-search-trigger:focus-visible {
+  background: var(--glass-raised);
+}
+
+/* ================= 回退：降低透明度 / 主动关闭 ================= */
+/* 回退规则必须与原玻璃规则同权重并排在其后，所以这里不用 :where() 降权。 */
+@media (prefers-reduced-transparency: reduce) {
+  .paper-ink {
+    background-image: var(--frame-wash);
+    background-attachment: scroll;
+  }
+
+  .stage-rail, .stage-topbar, .stage-tab[data-active], .stage-panel, .stage-library .stage-start,
+  .pi-sheet, .pi-popover, .pi-menu, .pi-dialog, .pi-toast, .stage-palette,
+  .pi-input, .stage-palette-input, .stage-search-trigger {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--paper);
+  }
+
+  .stage-rail,
+  .stage-topbar,
+  .stage-tabbar {
+    background: var(--frame);
+  }
+
+  .pi-scrim,
+  .stage-palette-scrim {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+.paper-ink[data-glass='off'] {
+  background-image: var(--frame-wash);
+  background-attachment: scroll;
+}
+
+.paper-ink[data-glass='off'] .stage-rail,
+.paper-ink[data-glass='off'] .stage-topbar,
+.paper-ink[data-glass='off'] .stage-tab[data-active],
+.paper-ink[data-glass='off'] .stage-panel,
+.paper-ink[data-glass='off'] .stage-library .stage-start,
+.paper-ink[data-glass='off'] .pi-sheet,
+.paper-ink[data-glass='off'] .pi-popover,
+.paper-ink[data-glass='off'] .pi-menu,
+.paper-ink[data-glass='off'] .pi-dialog,
+.paper-ink[data-glass='off'] .pi-toast,
+.paper-ink[data-glass='off'] .stage-palette,
+.paper-ink[data-glass='off'] .pi-input,
+.paper-ink[data-glass='off'] .stage-palette-input,
+.paper-ink[data-glass='off'] .stage-search-trigger {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: var(--paper);
+}
+
+.paper-ink[data-glass='off'] .stage-rail,
+.paper-ink[data-glass='off'] .stage-topbar,
+.paper-ink[data-glass='off'] .stage-tabbar {
+  background: var(--frame);
+}
+
+
+
+
+
+

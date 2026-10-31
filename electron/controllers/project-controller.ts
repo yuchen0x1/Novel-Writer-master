@@ -36,6 +36,7 @@ import { projectPeekService } from '../services/project-peek'
 import { probeProjectSqlite } from '../services/sqlite-project-migration'
 import { mainText } from '../i18n'
 import { adoptTransferredCharacterContinuityOnOpen } from '../services/transferred-character-continuity'
+import { chapterDeletionService } from '../services/chapter-deletion-service'
 
 /** 按作者保存的界面语言选文案；没保存过时按系统语言，与渲染层一致。 */
 function text(zhCNText: string, enUSText: string): string {
@@ -134,6 +135,26 @@ function sameProjectPath(left: string | null, right: string | null): boolean {
 // 用主进程 canonical root 优先，失败时退回与渲染端一致的 Windows 词法路径键。
 function sameRecentProjectPath(left: string, right: string): boolean {
   return sameProjectPath(left, right) || sameProjectPathKey(left, right)
+}
+
+/**
+ * 章节删除以 SQLite 为提交点，手稿与知识库投影在事务外执行；那一步失败会留下
+ * `chapter_deletion_operations` 里的未完成记录。此前只有一条没有任何调用方的 IPC 能续做，
+ * 于是已删章节的正文会继续被检索进生成上下文。打开项目时按记录顺序补做，失败只记日志。
+ */
+async function resumeIncompleteChapterDeletions(projectRoot: string): Promise<void> {
+  try {
+    for (const operation of chapterDeletionService.listIncomplete(projectRoot)) {
+      // 续做期间用户可能已经切走项目；换库后旧 operation 不可达，直接放弃。
+      if (!sameProjectPath(getCurrentProjectPath(), projectRoot)) return
+      const result = await chapterDeletionService.retry(projectRoot, operation.operationId)
+      if (!result.success) {
+        console.warn(`[Project] 章节删除的后续清理仍未完成: ${result.error ?? 'unknown'}`)
+      }
+    }
+  } catch (error) {
+    console.error('[Project] 续做未完成的章节删除失败:', error)
+  }
 }
 
 function creativeStrategyCoreUpdate(
@@ -704,6 +725,8 @@ export function registerProjectController(options: ProjectControllerOptions = {}
         const session = projectAccess.beginSession(trustedProject)
         projectData.sessionLease = session.leaseId
         revokeRecentPreviewCapabilities()
+        // 打开项目后补做上次中断的手稿/知识库清理：已删章节的正文不该继续被检索进上下文。
+        await resumeIncompleteChapterDeletions(resolvedProjectPath)
         return {
           success: true,
           project: projectData,
@@ -916,6 +939,7 @@ export function registerProjectController(options: ProjectControllerOptions = {}
       _legacySessionLease: string,
       context?: ProjectSessionContext,
     ) => {
+      return serializeProjectOpen(async () => {
     let resolvedPath: string
     let deletedProjectId: string
     let deletingCurrentProject = false
@@ -1015,6 +1039,7 @@ export function registerProjectController(options: ProjectControllerOptions = {}
         ].filter(Boolean).join(text('；', '; ')),
       }
     }
+      })
     },
   )
 
