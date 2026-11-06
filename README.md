@@ -19,15 +19,15 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/lenmo181/AI-Novel-Writer/releases/latest"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD-Windows%20%7C%20macOS-2b4c8c?style=for-the-badge" alt="下载 Windows 与 macOS 安装包" /></a><br />
+  <a href="https://github.com/yuchen0x1/Pagekin/releases/latest"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD-Windows%20%7C%20macOS-2b4c8c?style=for-the-badge" alt="下载 Windows 与 macOS 安装包" /></a><br />
   <a href="https://www.orz.md/ai-novel-writer/demo/">观看 32 秒中文实录：选段续写与改成对话</a><br />
   <sub>1.3.0 实录，模型等待段已剪短，AI 配音；32 秒是片长，不是生成耗时。</sub>
 </p>
 
 <p align="center">
-  <a href="https://github.com/lenmo181/AI-Novel-Writer/releases"><img src="https://badgen.net/github/tag/lenmo181/AI-Novel-Writer?label=release" alt="Release" /></a>
-  <a href="https://github.com/lenmo181/AI-Novel-Writer/blob/main/LICENSE"><img src="https://badgen.net/badge/license/GPL-3.0/blue" alt="GPL-3.0 License" /></a>
-  <a href="https://github.com/lenmo181/AI-Novel-Writer/stargazers"><img src="https://badgen.net/github/stars/lenmo181/AI-Novel-Writer" alt="GitHub stars" /></a>
+  <a href="https://github.com/yuchen0x1/Pagekin/releases"><img src="https://badgen.net/github/tag/yuchen0x1/Pagekin?label=release" alt="Release" /></a>
+  <a href="https://github.com/yuchen0x1/Pagekin/blob/main/LICENSE"><img src="https://badgen.net/badge/license/GPL-3.0/blue" alt="GPL-3.0 License" /></a>
+  <a href="https://github.com/yuchen0x1/Pagekin/stargazers"><img src="https://badgen.net/github/stars/yuchen0x1/Pagekin" alt="GitHub stars" /></a>
 </p>
 
 <p align="center">
@@ -40,16 +40,16 @@
 > - 中文作品新增客观中文校对维度；审稿中心跳转可定位到具体原文引用。
 > - 修复小说配置混合 JSON 解析、项目切换旧场景闪现和发布前检查问题。
 >
-> 完整说明见 [1.7.1 更新内容](https://github.com/lenmo181/AI-Novel-Writer/releases/tag/v1.7.1)。
+> 完整说明见 [1.7.1 更新内容](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.7.1)。
 >
 > ## 1.4.0 更新
 >
 > - 情节大纲按已设置的副篇章数自动续批生成，断点恢复与有限重试贯穿整本书。
 > - 写作 Skills 与提示词模板增加卷章规划、角色连续性、审稿自检和失败恢复指导。
 > - 写作工作台增加运行状态、进度反馈和轻量动态画面，支持减少动态效果。
-> - 应用内更新、官网入口和发布资产统一切换到 `lenmo181/AI-Novel-Writer`。
+> - 应用内更新、官网入口和发布资产统一切换到 `yuchen0x1/Pagekin`。
 >
-> 完整说明见 [1.4.0 更新内容](https://github.com/lenmo181/AI-Novel-Writer/releases/tag/v1.4.0)。
+> 完整说明见 [1.4.0 更新内容](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.4.0)。
 
 ## 它能做什么
 
@@ -162,7 +162,7 @@ API Key：  可以留空；界面要求时填任意占位值
 
 ## 下载与安装
 
-请只从 [GitHub Releases](https://github.com/lenmo181/AI-Novel-Writer/releases/latest) 下载正式安装包。
+请只从 [GitHub Releases](https://github.com/yuchen0x1/Pagekin/releases/latest) 下载正式安装包。
 
 ### Windows x64
 
@@ -243,7 +243,7 @@ Windows 安装包未签名，Mac 安装包只有 ad-hoc 签名、没有经过 Ap
 需要 Node.js 20 以上和仓库指定版本的 pnpm。
 
 ```sh
-git clone https://github.com/lenmo181/AI-Novel-Writer.git
+git clone https://github.com/yuchen0x1/Pagekin.git
 cd AI-Novel-Writer
 pnpm install --frozen-lockfile
 pnpm rebuild:electron
@@ -254,7 +254,7 @@ pnpm dev
 
 ## 参与贡献
 
-Bug 和功能建议请提交到 [GitHub Issues](https://github.com/lenmo181/AI-Novel-Writer/issues)，使用问题请发到 [Discussions](https://github.com/lenmo181/AI-Novel-Writer/discussions)。提交 Pull Request 前请先读 [CONTRIBUTING.md](CONTRIBUTING.md)。这是公开仓库，提交内容请先脱敏，不要上传 API Key、完整小说正文或本机路径。
+Bug 和功能建议请提交到 [GitHub Issues](https://github.com/yuchen0x1/Pagekin/issues)，使用问题请发到 [Discussions](https://github.com/yuchen0x1/Pagekin/discussions)。提交 Pull Request 前请先读 [CONTRIBUTING.md](CONTRIBUTING.md)。这是公开仓库，提交内容请先脱敏，不要上传 API Key、完整小说正文或本机路径。
 
 ## DeepSeek Harness 插件（冻结维护）
 

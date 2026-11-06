@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels'
+import { Columns2, AlignVerticalJustifyCenter } from 'lucide-react'
 import { countDraftUnits } from '../../../shared/draft-units'
 import { formatResourceUri } from '../../../shared/project-paths'
 import type { EditorTab } from '../../../stores/editor-store'
@@ -14,12 +16,16 @@ import { confirmationSourceReviewId, parseHumanConfirmedReviewSnapshot } from '.
 import CodeMirrorEditor from '../../editor/CodeMirrorEditor'
 import { useReviewCycle } from '../../editor/review-checklist'
 import { useDraftActions } from '../../editor/use-draft-actions'
+import { useWikilinkEntries } from '../../editor/use-wikilink-entries'
+import { useStaleStateCharacters } from '../../editor/use-stale-state-characters'
 import { sameProjectSessionContext } from '../../../shared/project-session-context'
 import { captureProjectSession, isProjectSessionCurrent, isProjectSessionPath } from '../../project-session-gate'
 import ChapterActions from './ChapterActions'
 import ChapterHead from './ChapterHead'
+import ChapterReferencePanel from './ChapterReferencePanel'
 import DeletionCleanupNotices from './DeletionCleanupNotices'
 import { useChapterBlueprint } from './use-chapter-blueprint'
+import { useSceneCards } from '../blueprint/use-scene-cards'
 import ChapterPlan from './ChapterPlan'
 import { STAGE_STEP } from './chapter-lifecycle'
 import VersionSwitcher from './VersionSwitcher'
@@ -99,6 +105,37 @@ function DraftChapter({ tab, filePath, projectKey }: { tab: EditorTab; filePath:
   // 沉浸写作底部的字数进度，目标取设定里的每章字数。
   const target = useProjectStore(s => s.currentProject?.novelConfig.wordsPerChapter) || 0
   const [sheetSlot, setSheetSlot] = useState<HTMLDivElement | null>(null)
+  // 分屏对照：左栏钉住本章蓝图与场景卡；状态跨章节记忆。
+  const [splitOpen, setSplitOpen] = useState(() => {
+    try { return window.localStorage.getItem('ai-novel-writer-split-reference') === '1' } catch { return false }
+  })
+  const toggleSplit = useCallback(() => {
+    setSplitOpen(current => {
+      const next = !current
+      try { window.localStorage.setItem('ai-novel-writer-split-reference', next ? '1' : '0') } catch { /* 忽略 */ }
+      return next
+    })
+  }, [])
+  // 打字机居中滚动：光标所在行保持在视口中部附近；同样跨章节记忆。
+  const [typewriterScroll, setTypewriterScroll] = useState(() => {
+    try { return window.localStorage.getItem('ai-novel-writer-typewriter') === '1' } catch { return false }
+  })
+  const toggleTypewriter = useCallback(() => {
+    setTypewriterScroll(current => {
+      const next = !current
+      try { window.localStorage.setItem('ai-novel-writer-typewriter', next ? '1' : '0') } catch { /* 忽略 */ }
+      return next
+    })
+  }, [])
+  const wikilinkEntries = useWikilinkEntries(projectKey)
+  // 本章蓝图出场、但动态状态停更在更早章节的角色：交给审稿侧页做「状态核对」提示。
+  const staleStateCharacters = useStaleStateCharacters(projectKey, chapterNumber, blueprint?.characters ?? [])
+  // 分屏宽度持久化：拖动后记进 localStorage，下次打开恢复。
+  const referenceLayout = useDefaultLayout({
+    id: 'ai-novel-writer-chapter-reference-split',
+    panelIds: ['chapter-reference', 'chapter-prose'],
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+  })
 
   const facts = useStageStore(s => draft.meta && s.chapterFacts && session && sameProjectSessionContext(s.chapterFacts.session, session)
     ? s.chapterFacts.byDraft[draft.meta.id]
@@ -133,60 +170,112 @@ function DraftChapter({ tab, filePath, projectKey }: { tab: EditorTab; filePath:
     finishReviewTarget(findingId)
   }, [finishReviewTarget, text])
 
+  const sceneCards = useSceneCards(projectKey)
+  const chapterScenes = chapterNumber !== undefined ? sceneCards.byChapter(chapterNumber) : []
+  const splitButton = (
+    <>
+      <button
+        type="button"
+        className="stage-ch-splitbtn"
+        aria-pressed={splitOpen}
+        title={text('分屏对照：左侧钉住本章蓝图与场景卡', 'Split view: pin this chapter blueprint and scene cards on the left')}
+        onClick={toggleSplit}
+      >
+        <Columns2 size={15} aria-hidden="true" />
+        <span>{text('对照', 'Split')}</span>
+      </button>
+      <button
+        type="button"
+        className="stage-ch-splitbtn"
+        aria-pressed={typewriterScroll}
+        title={text('打字机滚动：光标所在行保持居中', 'Typewriter scrolling: keep the caret line near the middle')}
+        onClick={toggleTypewriter}
+      >
+        <AlignVerticalJustifyCenter size={15} aria-hidden="true" />
+        <span>{text('打字机', 'Typewriter')}</span>
+      </button>
+    </>
+  )
+
+  const proseEditor = !draft.mergeData && (
+    <div className="stage-ch-prose" data-readonly={!editable || undefined}>
+      <CodeMirrorEditor
+        mode="prose"
+        fitContent
+        paragraphIndent
+        wikilinkEntries={wikilinkEntries}
+        typewriterScroll={typewriterScroll}
+        content={tab.content ?? ''}
+        filePath={filePath}
+        editable={editable}
+        hideStatusBar
+        onCharCountChange={setCharCount}
+        reviewTarget={reviewTarget ?? undefined}
+        onReviewTargetFailure={failReviewTarget}
+        onReviewTargetComplete={finishReviewTarget}
+        onChange={draft.onBodyChange}
+        onSave={body => draft.save(body)}
+      />
+    </div>
+  )
+
+  const page = (
+    <article className="stage-ch-page" aria-busy={!draft.loaded}>
+      {chapterNumber !== undefined && (
+        <ChapterHead
+          chapterNumber={chapterNumber}
+          role={blueprint?.role}
+          title={title}
+          step={stage === 'archived' || stage === null ? null : STAGE_STEP[stage]}
+          focus={focus}
+          actions={splitButton}
+          version={draft.meta
+            ? <VersionSwitcher tab={tab} current={draft.meta} label={versionLabel} title={title} onSave={() => draft.save(draft.currentBodyRef.current, true)} />
+            : <span className="stage-ch-version stage-ch-version-chip" role="status">{versionLabel}</span>}
+        />
+      )}
+      {draft.meta && stage && chapterNumber !== undefined && reviewReady && (
+        <ChapterActions
+          key={review.sessionKey}
+          sheetSlot={sheetSlot}
+          tab={tab}
+          stage={stage}
+          chapterNumber={chapterNumber}
+          title={title}
+          draft={draft}
+          facts={facts}
+          staleStateCharacters={staleStateCharacters}
+          review={latest ? { report: latest.content, reviewId: latest.id, snapshot: review.snapshot, cycle: review.cycle, reloadCycle: review.reloadCycle } : null}
+          focus={focus}
+        />
+      )}
+      {chapterNumber !== undefined && (
+        <div className="stage-ch-notices"><DeletionCleanupNotices projectKey={projectKey} chapterNumber={chapterNumber} /></div>
+      )}
+      {proseEditor}
+    </article>
+  )
+
   return (
     <div className="stage-ch" data-focus={focus || undefined}>
-      <div className="stage-ch-scroll">
-        <article className="stage-ch-page" aria-busy={!draft.loaded}>
-          {chapterNumber !== undefined && (
-            <ChapterHead
-              chapterNumber={chapterNumber}
-              role={blueprint?.role}
-              title={title}
-              step={stage === 'archived' || stage === null ? null : STAGE_STEP[stage]}
-              focus={focus}
-              version={draft.meta
-                ? <VersionSwitcher tab={tab} current={draft.meta} label={versionLabel} title={title} onSave={() => draft.save(draft.currentBodyRef.current, true)} />
-                : <span className="stage-ch-version stage-ch-version-chip" role="status">{versionLabel}</span>}
-            />
-          )}
-          {draft.meta && stage && chapterNumber !== undefined && reviewReady && (
-            <ChapterActions
-              key={review.sessionKey}
-              sheetSlot={sheetSlot}
-              tab={tab}
-              stage={stage}
-              chapterNumber={chapterNumber}
-              title={title}
-              draft={draft}
-              facts={facts}
-              review={latest ? { report: latest.content, reviewId: latest.id, snapshot: review.snapshot, cycle: review.cycle, reloadCycle: review.reloadCycle } : null}
-              focus={focus}
-            />
-          )}
-          {chapterNumber !== undefined && (
-            <div className="stage-ch-notices"><DeletionCleanupNotices projectKey={projectKey} chapterNumber={chapterNumber} /></div>
-          )}
-          {!draft.mergeData && (
-            <div className="stage-ch-prose" data-readonly={!editable || undefined}>
-              <CodeMirrorEditor
-                mode="prose"
-                fitContent
-                paragraphIndent
-                content={tab.content ?? ''}
-                filePath={filePath}
-                editable={editable}
-                hideStatusBar
-                onCharCountChange={setCharCount}
-                reviewTarget={reviewTarget ?? undefined}
-                onReviewTargetFailure={failReviewTarget}
-                onReviewTargetComplete={finishReviewTarget}
-                onChange={draft.onBodyChange}
-                onSave={body => draft.save(body)}
-              />
-            </div>
-          )}
-        </article>
-      </div>
+      {splitOpen ? (
+        <Group
+          className="stage-ch-split"
+          orientation="horizontal"
+          defaultLayout={referenceLayout.defaultLayout}
+          onLayoutChanged={referenceLayout.onLayoutChanged}
+        >
+          <Panel id="chapter-reference" defaultSize="30%" minSize="16%" maxSize="55%">
+            <ChapterReferencePanel blueprint={blueprint ?? null} scenes={chapterScenes} />
+          </Panel>
+          <Separator className="stage-ch-resizehandle" aria-label={text('拖动调整参考栏宽度', 'Drag to resize the reference panel')} />
+          <Panel id="chapter-prose" minSize="40%">
+            <div className="stage-ch-scroll">{page}</div>
+          </Panel>
+        </Group>
+      ) : (
+        <div className="stage-ch-scroll">{page}</div>
+      )}
       <div ref={setSheetSlot} className="stage-ch-sheet-slot" />
       {focus && (
         <footer className="stage-ch-focusbar" aria-label={text('写作状态', 'Writing status')}>

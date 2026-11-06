@@ -119,7 +119,7 @@ describe('GitHub Windows update release verification', () => {
     })
 
     expect(fetcher.mock.calls.map(([url]) => url)).toEqual([
-      'https://api.example.test/repos/lenmo181/AI-Novel-Writer/releases/tags/v0.2.6',
+      'https://api.example.test/repos/yuchen0x1/Pagekin/releases/tags/v0.2.6',
       'https://example.test/latest.yml',
     ])
   })

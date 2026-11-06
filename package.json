@@ -1,16 +1,16 @@
 {
   "name": "ai-novel-writer",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "description": "AI Novel Writer - a local-first production workspace for long-form fiction",
   "author": "AI Novel Writer Maintainers",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lenmo181/AI-Novel-Writer.git"
+    "url": "https://github.com/yuchen0x1/Pagekin.git"
   },
   "bugs": {
-    "url": "https://github.com/lenmo181/AI-Novel-Writer/issues"
+    "url": "https://github.com/yuchen0x1/Pagekin/issues"
   },
-  "homepage": "https://github.com/lenmo181/AI-Novel-Writer",
+  "homepage": "https://github.com/yuchen0x1/Pagekin",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.11.0",
@@ -51,6 +51,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "6.20.1",
     "@codemirror/lang-markdown": "^6.5.0",
     "@codemirror/language": "^6.12.3",
     "@codemirror/language-data": "^6.5.2",

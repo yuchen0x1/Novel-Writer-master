@@ -4,13 +4,13 @@
   "description": "A local-first novel project plugin for DeepSeek Harness",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lenmo181/AI-Novel-Writer.git",
+    "url": "git+https://github.com/yuchen0x1/Pagekin.git",
     "directory": "plugins/dsh-ai-novel-writer"
   },
   "bugs": {
-    "url": "https://github.com/lenmo181/AI-Novel-Writer/issues"
+    "url": "https://github.com/yuchen0x1/Pagekin/issues"
   },
-  "homepage": "https://github.com/lenmo181/AI-Novel-Writer/tree/master/plugins/dsh-ai-novel-writer#readme",
+  "homepage": "https://github.com/yuchen0x1/Pagekin/tree/master/plugins/dsh-ai-novel-writer#readme",
   "publishConfig": {
     "access": "public"
   },

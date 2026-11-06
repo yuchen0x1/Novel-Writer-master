@@ -56,7 +56,7 @@ type Ask = 'refine' | 'finalize' | 'delete' | 'discard' | null
  * 完成合并、定稿；直接修稿、删除这一稿、复制本章正文在「更多」里。审稿清单的状态也在这里，
  * 侧页的勾选数与主按钮的「按 N 项意见修稿」是同一份。挂载方以审稿报告的会话键作 key，报告变了清单随之重置。
  */
-export default function ChapterActions({ sheetSlot, tab, stage, chapterNumber, title, draft, facts, review, focus }: {
+export default function ChapterActions({ sheetSlot, tab, stage, chapterNumber, title, draft, facts, staleStateCharacters, review, focus }: {
   sheetSlot: HTMLDivElement | null
   tab: EditorTab
   stage: ChapterStage
@@ -65,6 +65,8 @@ export default function ChapterActions({ sheetSlot, tab, stage, chapterNumber, t
   draft: DraftActions
   /** 与流程脊同一份的审稿与修稿记录：哪几份待合并修稿还能合并。 */
   facts: ChapterFacts | undefined
+  /** 本章蓝图出场但动态状态停更在更早章节的角色（审稿侧页的状态核对提示）。 */
+  staleStateCharacters?: readonly { name: string; lastChapter: number; fields: readonly string[] }[]
   review: LatestReview | null
   focus: boolean
 }) {
@@ -387,6 +389,8 @@ export default function ChapterActions({ sheetSlot, tab, stage, chapterNumber, t
         <ReviewSheet
           checklist={checklist}
           reportText={review.report}
+          draftText={tab.content ?? ''}
+          staleStateCharacters={staleStateCharacters}
           subtitle={text(`基于草稿 v${meta.version}`, `Based on draft v${meta.version}`)}
           onClose={() => setSheet(false)}
         />,

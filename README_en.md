@@ -19,13 +19,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/lenmo181/AI-Novel-Writer/releases/latest"><img src="https://img.shields.io/badge/Download-Windows%20%7C%20macOS-2b4c8c?style=for-the-badge" alt="Download for Windows and macOS" /></a>
+  <a href="https://github.com/yuchen0x1/Pagekin/releases/latest"><img src="https://img.shields.io/badge/Download-Windows%20%7C%20macOS-2b4c8c?style=for-the-badge" alt="Download for Windows and macOS" /></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/lenmo181/AI-Novel-Writer/releases"><img src="https://badgen.net/github/tag/lenmo181/AI-Novel-Writer?label=release" alt="Release" /></a>
-  <a href="https://github.com/lenmo181/AI-Novel-Writer/blob/main/LICENSE"><img src="https://badgen.net/badge/license/GPL-3.0/blue" alt="GPL-3.0 License" /></a>
-  <a href="https://github.com/lenmo181/AI-Novel-Writer/stargazers"><img src="https://badgen.net/github/stars/lenmo181/AI-Novel-Writer" alt="GitHub stars" /></a>
+  <a href="https://github.com/yuchen0x1/Pagekin/releases"><img src="https://badgen.net/github/tag/yuchen0x1/Pagekin?label=release" alt="Release" /></a>
+  <a href="https://github.com/yuchen0x1/Pagekin/blob/main/LICENSE"><img src="https://badgen.net/badge/license/GPL-3.0/blue" alt="GPL-3.0 License" /></a>
+  <a href="https://github.com/yuchen0x1/Pagekin/stargazers"><img src="https://badgen.net/github/stars/yuchen0x1/Pagekin" alt="GitHub stars" /></a>
 </p>
 
 <p align="center">
@@ -38,16 +38,16 @@
 > - Chinese projects gain an objective Chinese proofreading dimension, and review-center navigation lands on the quoted source anchor.
 > - Fixed mixed JSON configuration parsing, stale scene data during project switches, and release preflight issues.
 >
-> See the [1.7.1 release notes](https://github.com/lenmo181/AI-Novel-Writer/releases/tag/v1.7.1) for details.
+> See the [1.7.1 release notes](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.7.1) for details.
 >
 > ## What's new in 1.4.0
 >
 > - Plot outlines continue automatically through the configured sub-chapters, with checkpoint recovery and bounded retries.
 > - Writing Skills and prompt templates now cover volume planning, character continuity, review self-checks, and failure recovery.
 > - The writing workspace adds run status, progress feedback, and restrained motion with reduced-motion support.
-> - In-app updates, the official homepage, and release assets now point to `lenmo181/AI-Novel-Writer`.
+> - In-app updates, the official homepage, and release assets now point to `yuchen0x1/Pagekin`.
 >
-> See the [1.4.0 release notes](https://github.com/lenmo181/AI-Novel-Writer/releases/tag/v1.4.0) for details.
+> See the [1.4.0 release notes](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.4.0) for details.
 
 ## What it does
 
@@ -160,7 +160,7 @@ Embedding models also use the `/v1` address. Do not use `http://127.0.0.1:11434/
 
 ## Download and install
 
-Download official installers only from [GitHub Releases](https://github.com/lenmo181/AI-Novel-Writer/releases/latest).
+Download official installers only from [GitHub Releases](https://github.com/yuchen0x1/Pagekin/releases/latest).
 
 ### Windows x64
 
@@ -241,7 +241,7 @@ The Windows installer is unsigned, and the Mac installers are only ad-hoc signed
 You need Node.js 20 or later and the pnpm version pinned in the repository.
 
 ```sh
-git clone https://github.com/lenmo181/AI-Novel-Writer.git
+git clone https://github.com/yuchen0x1/Pagekin.git
 cd AI-Novel-Writer
 pnpm install --frozen-lockfile
 pnpm rebuild:electron
@@ -252,7 +252,7 @@ Official installers are built in GitHub Actions. The Windows x64, macOS Apple Si
 
 ## Contributing
 
-Report bugs and request features in [GitHub Issues](https://github.com/lenmo181/AI-Novel-Writer/issues), and ask usage questions in [Discussions](https://github.com/lenmo181/AI-Novel-Writer/discussions). Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. This is a public repository, so remove API keys, full novel text, and local paths from anything you submit.
+Report bugs and request features in [GitHub Issues](https://github.com/yuchen0x1/Pagekin/issues), and ask usage questions in [Discussions](https://github.com/yuchen0x1/Pagekin/discussions). Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. This is a public repository, so remove API keys, full novel text, and local paths from anything you submit.
 
 ## DeepSeek Harness plugin (frozen)
 

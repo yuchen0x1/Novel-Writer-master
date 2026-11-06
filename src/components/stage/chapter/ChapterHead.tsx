@@ -5,13 +5,15 @@ import { useLocaleStore } from '../../../stores/locale-store'
 import { Lifecycle } from '../../ui/Lifecycle'
 
 /** 章节头：大号章号、「第 N 章 · 定位」、标题与右侧的版本切换器，下面是生命周期条。沉浸写作时只留标题。 */
-export default function ChapterHead({ chapterNumber, role, title, version, step, focus }: {
+export default function ChapterHead({ chapterNumber, role, title, version, step, focus, actions }: {
   chapterNumber: number
   role?: string
   title: string
   version: ReactNode
   step: number | null
   focus: boolean
+  /** 标题行右侧的小工具（分屏、打字机滚动等写作辅助开关）。 */
+  actions?: ReactNode
 }) {
   const text = useLocaleStore(s => s.text)
   const roleLabels = getChapterRoleLabels(role)
@@ -26,6 +28,7 @@ export default function ChapterHead({ chapterNumber, role, title, version, step,
       )}
       <div className="stage-ch-titlerow">
         <h1 className="stage-ch-title">{title || chapterLabel(chapterNumber, text)}</h1>
+        {actions}
         {version}
       </div>
       {!focus && step !== null && (

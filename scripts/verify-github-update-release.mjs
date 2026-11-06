@@ -14,8 +14,8 @@ import {
 const scriptPath = fileURLToPath(import.meta.url)
 const repositoryRoot = path.resolve(path.dirname(scriptPath), '..')
 const defaultRepository = Object.freeze({
-  owner: 'lenmo181',
-  repo: 'AI-Novel-Writer',
+  owner: 'yuchen0x1',
+  repo: 'Pagekin',
 })
 const defaultApiBaseUrl = 'https://api.github.com'
 

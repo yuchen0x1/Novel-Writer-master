@@ -7,6 +7,7 @@ import {
   GLOBAL_CONFIG_PATH,
   DEFAULT_GLOBAL_CONFIG,
 } from '../utils/config-utils'
+import { protectModelApiKey, unprotectModelApiKey } from '../utils/model-credential-security'
 import type { GlobalConfig, LLMFinishReason, LLMRequest, LLMResponse, ModelDiscoveryRequest, ModelProfile, TokenUsage } from '../../src/shared/ipc-channels'
 import { knownAppErrorMessage } from '../../src/i18n/app-errors'
 import { isProjectSessionContext } from '../../src/shared/project-session-context'
@@ -42,7 +43,11 @@ function connectionTestTimeoutMs(model: ModelProfile): number {
 const CLOSED_EXECUTION_LEASE_TOMBSTONE_TTL_MS = 5 * 60_000
 
 function loadModelConfigs(): ModelProfile[] {
-  return readJsonFile<ModelProfile[]>(MODELS_CONFIG_PATH, [])
+  const models = readJsonFile<ModelProfile[]>(MODELS_CONFIG_PATH, [])
+  return models.map(m => ({
+    ...m,
+    apiKey: unprotectModelApiKey(m.apiKey),
+  }))
 }
 
 function loadModelConfigsForUpdate(): ModelProfile[] {
@@ -50,7 +55,11 @@ function loadModelConfigsForUpdate(): ModelProfile[] {
   if (result.status === 'error') {
     throw new Error('LLM_MODEL_CONFIG_CORRUPT', { cause: result.error })
   }
-  return result.status === 'ok' ? result.value : []
+  const models = result.status === 'ok' ? result.value : []
+  return models.map(m => ({
+    ...m,
+    apiKey: unprotectModelApiKey(m.apiKey),
+  }))
 }
 
 function loadGlobalConfigForUpdate(): GlobalConfig {
@@ -62,7 +71,11 @@ function loadGlobalConfigForUpdate(): GlobalConfig {
 }
 
 function saveModelConfigs(models: ModelProfile[]) {
-  writeJsonFile(MODELS_CONFIG_PATH, models)
+  const protectedModels = models.map(m => ({
+    ...m,
+    apiKey: protectModelApiKey(m.apiKey),
+  }))
+  writeJsonFile(MODELS_CONFIG_PATH, protectedModels)
 }
 
 export function getModelConfig(modelId: string): ModelProfile | null {

@@ -266,7 +266,7 @@ describe('Windows cloud build workflow contract', () => {
         'init',
         '--platform', 'windows',
         '--evidence-root', evidenceRoot,
-        '--repository', 'lenmo181/AI-Novel-Writer',
+        '--repository', 'yuchen0x1/Pagekin',
         '--commit', 'a'.repeat(40),
         '--run-id', '123',
         '--run-attempt', '1',

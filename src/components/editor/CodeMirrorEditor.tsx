@@ -18,6 +18,7 @@ import { useLocaleStore } from '../../stores/locale-store'
 import { locateReviewQuote } from '../../shared/review-anchor'
 import { getActiveProjectSessionContext } from '../../shared/project-session-context'
 import { livePreview, paperHeadFacet, type PaperHead } from './live-preview'
+import { wikilinkHighlight, wikilinkCompletion, type WikilinkEntry } from './wikilink'
 
 export type CodeMirrorEditorProps = {
   content: string
@@ -36,6 +37,10 @@ export type CodeMirrorEditorProps = {
   fitContent?: boolean
   /** 段落首行缩进两字（只是显示，见 paragraph-indent）。 */
   paragraphIndent?: boolean
+  /** 打字机居中滚动：光标所在行保持在滚动视口中部附近。 */
+  typewriterScroll?: boolean
+  /** [[ ]] 双向链接的候选实体；传入后启用 [[ 联想补全与悬浮速览卡片。 */
+  wikilinkEntries?: readonly WikilinkEntry[]
   /** 从全文审稿中心传来的引文定位目标；源稿哈希不匹配时拒绝静默定位。 */
   reviewTarget?: {
     findingId: string
@@ -80,6 +85,8 @@ export default function CodeMirrorEditor({
   paperHead = null,
   fitContent = false,
   paragraphIndent: indentParagraphs = false,
+  typewriterScroll = false,
+  wikilinkEntries,
   reviewTarget,
   onReviewTargetFailure,
   onReviewTargetComplete,
@@ -265,6 +272,20 @@ export default function CodeMirrorEditor({
       onCharCountChange?.(cnt)
     }
 
+    if (typewriterScroll && (v.selectionSet || v.docChanged)) {
+      // 打字机居中滚动：等布局稳定后把光标行滚回视口中部（fitContent 时滚外层容器）。
+      requestAnimationFrame(() => {
+        const view = editorRef.current?.view
+        if (!view) return
+        const coords = view.coordsAtPos(v.state.selection.main.head)
+        if (!coords) return
+        const scroller = (fitContent ? scrollParentOf(view.dom) ?? view.scrollDOM : view.scrollDOM)
+        const rect = scroller.getBoundingClientRect()
+        const delta = coords.top + coords.bottom - (rect.top + rect.bottom)
+        if (Math.abs(delta / 2) > 6) scroller.scrollTop += delta / 2
+      })
+    }
+
     if (v.selectionSet || v.docChanged || v.geometryChanged) {
       const sel = v.state.selection.main
       if (sel.empty || sel.to - sel.from < 1) {
@@ -277,7 +298,7 @@ export default function CodeMirrorEditor({
         }
       }
     }
-  }, [onChange, onCharCountChange, aiResult])
+  }, [onChange, onCharCountChange, aiResult, fitContent, typewriterScroll])
 
   // 监听滚动与缩放，实时更新 Bubble Menu 坐标
   useEffect(() => {
@@ -447,9 +468,15 @@ export default function CodeMirrorEditor({
     }
     if (mode === 'prose') exts.push(...livePreview())
     if (indentParagraphs) exts.push(paragraphIndent)
+    // [[ ]] 双向链接：候选实体传入后启用联想补全与悬浮速览
+    const hasWikilink = (wikilinkEntries?.length ?? 0) > 0
+    if (hasWikilink) {
+      exts.push(wikilinkHighlight(wikilinkEntries!, uiLocale === 'zh-CN'))
+      exts.push(wikilinkCompletion(wikilinkEntries!))
+    }
     exts.push(paperHeadFacet.of(stablePaperHead))
     return exts
-  }, [mode, stablePaperHead, uiLocale, indentParagraphs])
+  }, [mode, stablePaperHead, uiLocale, indentParagraphs, wikilinkEntries])
 
   // AI 菜单处理（流式调用，实时显示生成内容）
   const handleAIAction = async (action: EditorAIAction) => {
@@ -559,6 +586,8 @@ export default function CodeMirrorEditor({
 
   // 固定 basicSetup 内存引用，防止 React 每次渲染生成新对象导致内部扩展被重载（搜索框消失的罪魁祸首）
   // 正文不要补全：打字后补全请求还没结束时，它的键位表会先把 Esc 吞掉，「先 Esc 再 Tab」就移不出编辑区。
+  // 传入 wikilinkEntries 时由 wikilinkCompletion 提供唯一的补全源（同样只在 [[ 后弹窗，Esc 仍按原流程走）。
+  const hasWikilink = (wikilinkEntries?.length ?? 0) > 0
   const cmBasicSetup = useMemo(() => ({
     lineNumbers: false,
     foldGutter: false,
@@ -568,9 +597,9 @@ export default function CodeMirrorEditor({
     highlightActiveLine: false,
     highlightActiveLineGutter: false,
     searchKeymap: true,
-    autocompletion: mode !== 'prose',
-    completionKeymap: mode !== 'prose',
-  }), [mode])
+    autocompletion: mode !== 'prose' && !hasWikilink,
+    completionKeymap: mode !== 'prose' && !hasWikilink,
+  }), [mode, hasWikilink])
 
   return (
     <div className={fitContent ? 'relative' : 'relative h-full flex flex-col min-h-0'}

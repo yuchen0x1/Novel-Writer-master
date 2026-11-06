@@ -835,3 +835,154 @@
   font-size: var(--fs-12);
   color: var(--ink-3);
 }
+
+/*
+ * 分屏对照（split view）：左栏钉住本章蓝图与场景卡，右栏仍是原纸面。
+ * 全部使用纸墨令牌，深浅主题自动适配；面板宽度由 react-resizable-panels 拖拽决定。
+ */
+.stage-ch-split {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.stage-ch-resizehandle {
+  flex: 0 0 6px;
+  background: transparent;
+  border-left: 1px solid var(--rule);
+  transition: background 120ms ease;
+}
+.stage-ch-resizehandle:hover,
+.stage-ch-resizehandle[data-resize-handle-active] {
+  background: var(--rule-strong);
+}
+
+.stage-ch-refpanel {
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--paper-2, var(--paper));
+}
+
+.stage-ch-refpanel-scroll {
+  height: 100%;
+  overflow: auto;
+  padding: 20px 18px 32px;
+}
+
+.stage-ch-refsection + .stage-ch-refsection {
+  margin-top: var(--s-5);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--rule);
+}
+
+.stage-ch-refheading {
+  margin: 0 0 var(--s-2);
+  font: 600 var(--fs-12) var(--font-display);
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+
+.stage-ch-refitem {
+  margin: 0 0 var(--s-2);
+  font-size: var(--fs-13, var(--fs-12));
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.stage-ch-reflabel {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1px solid var(--rule-strong);
+  font-size: var(--fs-12);
+  color: var(--ink-3);
+}
+
+.stage-ch-refscene {
+  margin: 0 0 var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+}
+
+.stage-ch-refscene-title {
+  margin: 0 0 var(--s-1);
+  font: 600 var(--fs-13, var(--fs-12)) var(--font-display);
+  color: var(--ink);
+}
+
+.stage-ch-refscene-facts {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+}
+.stage-ch-refscene-facts > div {
+  display: flex;
+  gap: 8px;
+  font-size: var(--fs-12);
+  line-height: 1.6;
+}
+.stage-ch-refscene-facts dt {
+  flex: 0 0 auto;
+  color: var(--ink-3);
+}
+.stage-ch-refscene-facts dd {
+  margin: 0;
+  color: var(--ink-2);
+}
+
+.stage-ch-refempty {
+  margin: 0;
+  font-size: var(--fs-12);
+  line-height: 1.8;
+  color: var(--ink-3);
+}
+
+/* 标题行里的写作辅助开关（对照 / 打字机） */
+.stage-ch-splitbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: var(--s-3);
+  padding: 3px 10px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  background: transparent;
+  font-size: var(--fs-12);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.stage-ch-splitbtn:hover {
+  background: var(--accent-soft);
+}
+.stage-ch-splitbtn[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* 节奏雷达（审稿侧页内的本地统计区） */
+.stage-ch-pacing {
+  margin-top: var(--s-4);
+}
+
+/* 状态核对（审稿侧页内的陈旧状态提示列表） */
+.stage-ch-stalelist {
+  margin: 0;
+}
+.stage-ch-staleitem {
+  margin: 0 0 var(--s-1);
+  font-size: var(--fs-12);
+  line-height: 1.7;
+  color: var(--ink);
+}
+.stage-ch-stalehint {
+  margin: var(--s-2) 0 0;
+  font-size: var(--fs-12);
+  line-height: 1.7;
+  color: var(--ink-3);
+}

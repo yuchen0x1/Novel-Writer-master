@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, RotateCcw } from 'lucide-react'
 import type { useReviewChecklist, EditableReviewItem } from '../../editor/review-checklist'
 import { includedCount, normalizeSeverity, severityCopy } from '../../editor/review-checklist'
+import { analyzeChapterPacing } from '../../../shared/pacing-radar'
 import { pluralEn } from '../../../shared/plural-en'
 import { useLocaleStore } from '../../../stores/locale-store'
 import { Button } from '../../ui/Button'
@@ -11,6 +12,83 @@ import { Sheet } from '../../ui/Sheet'
 import { StatGrid } from '../../ui/StatGrid'
 
 type Checklist = ReturnType<typeof useReviewChecklist>
+
+/** 状态核对：本章蓝图出场、但动态状态停更在更早章节的角色（战力/伤势/位置等按作者确认记录）。 */
+const STATE_FIELD_LABELS: Record<string, readonly [string, string]> = {
+  location: ['位置', 'Location'],
+  powerLevel: ['境界/战力', 'Power level'],
+  physicalState: ['伤势', 'Physical state'],
+  mentalState: ['心理', 'Mental state'],
+  keyItems: ['随身物品', 'Key items'],
+  recentEvents: ['近期事件', 'Recent events'],
+}
+
+function StaleStateSection({ characters }: { characters: readonly { name: string; lastChapter: number; fields: readonly string[] }[] }) {
+  const text = useLocaleStore(s => s.text)
+  if (characters.length === 0) return null
+  return (
+    <Notice tone="warn" title={text('状态核对', 'State check')}>
+      <div className="stage-ch-stalelist">
+        {characters.map(character => (
+          <p key={character.name} className="stage-ch-staleitem">
+            <strong>{character.name}</strong>
+            {' · '}
+            {text(`状态停更于第 ${character.lastChapter} 章`, `state last confirmed at chapter ${character.lastChapter}`)}
+            {': '}
+            {character.fields.map(field => text(STATE_FIELD_LABELS[field]?.[0] ?? field, STATE_FIELD_LABELS[field]?.[1] ?? field)).join(text('、', ', '))}
+          </p>
+        ))}
+        <p className="stage-ch-stalehint">{text(
+          '这些角色本章出场，但他们的动态状态停留在更早的作者确认记录；若正文与此冲突，请核对或在角色卡更新状态。',
+          'These characters appear in this chapter, but their dynamic states were last confirmed earlier. If the prose conflicts, verify or update their character cards.',
+        )}</p>
+      </div>
+    </Notice>
+  )
+}
+
+/** 网文节奏雷达：本地统计当前草稿的对话占比、段落密度与章尾钩子，无需模型调用。 */
+function PacingRadarSection({ draftText }: { draftText: string }) {
+  const text = useLocaleStore(s => s.text)
+  const locale = useLocaleStore(s => s.locale)
+  if (!draftText.trim()) return null
+  const metrics = analyzeChapterPacing(draftText)
+  if (metrics.charCount < 200) return null
+  const hookLabel = metrics.endingHook === 'strong' ? text('强钩子', 'Strong hook')
+    : metrics.endingHook === 'weak' ? text('弱钩子', 'Weak hook')
+      : text('无钩子', 'No hook')
+  const hookHint = metrics.endingHook === 'strong' ? text('章尾留有悬念', 'The ending leaves suspense')
+    : metrics.endingHook === 'weak' ? text('结尾略有转折或预告', 'The ending turns or previews slightly')
+      : text('结尾平铺直叙，考虑加一个悬念', 'Flat ending; consider adding suspense')
+  return (
+    <section className="stage-ch-pacing" aria-label={text('节奏雷达', 'Pacing radar')}>
+      <StatGrid
+        label={text('本章节奏指标', 'Chapter pacing metrics')}
+        items={[
+          { id: 'dialogue', label: text('对话占比', 'Dialogue share'), value: `${Math.round(metrics.dialogueCharRatio * 100)}%` },
+          { id: 'turns', label: text('对话轮数', 'Dialogue turns'), value: metrics.dialogueTurns.toLocaleString(locale) },
+          { id: 'avgPara', label: text('平均段落字数', 'Avg. paragraph'), value: metrics.avgParagraphChars.toLocaleString(locale) },
+          { id: 'longPara', label: text('长段占比', 'Long paragraphs'), value: `${Math.round(metrics.longParagraphRatio * 100)}%` },
+          { id: 'hook', label: text('章尾钩子', 'Ending hook'), value: hookLabel, hint: hookHint },
+        ]}
+      />
+      {(metrics.longParagraphRatio > 0.3 || metrics.endingHook === 'none') && (
+        <Notice tone="warn" title={text('节奏提示', 'Pacing note')}>
+          {[
+            metrics.longParagraphRatio > 0.3 && text(
+              `超过三成的段落长于 220 字，连载阅读容易疲劳；考虑在动作节点切段。`,
+              `Over 30% of paragraphs exceed 220 characters — consider splitting at action beats for serialized reading.`,
+            ),
+            metrics.endingHook === 'none' && text(
+              '章尾没有明显悬念钩子；网文连载通常期待一个让读者想点开下一章的收尾。',
+              'The ending has no clear hook; serialized chapters usually close with a reason to open the next one.',
+            ),
+          ].filter(Boolean).join(text('；', '; '))}
+        </Notice>
+      )}
+    </section>
+  )
+}
 
 function FindingStatus({ item, checklist }: { item: EditableReviewItem; checklist: Checklist }) {
   const text = useLocaleStore(s => s.text)
@@ -116,10 +194,14 @@ function IssueCard({ item, checklist, onEdit }: {
  * 单章视图的审稿侧页（ReviewReport 的数据逻辑）：严重、建议、待核实三格统计，逐条勾选纳入修稿，
  * 添加作者意见与总体修稿指导，合并后复验未完成时可重试。勾选数与章节动作条上的「按 N 项意见修稿」同步。
  */
-export default function ReviewSheet({ checklist, subtitle, reportText, onClose }: {
+export default function ReviewSheet({ checklist, subtitle, reportText, draftText, staleStateCharacters, onClose }: {
   checklist: Checklist
   subtitle: string
   reportText: string
+  /** 当前草稿正文；传入后显示本地节奏雷达（无需模型）。 */
+  draftText?: string
+  /** 本章蓝图出场但动态状态停更在更早章节的角色。 */
+  staleStateCharacters?: readonly { name: string; lastChapter: number; fields: readonly string[] }[]
   onClose: () => void
 }) {
   const text = useLocaleStore(s => s.text)
@@ -155,6 +237,8 @@ export default function ReviewSheet({ checklist, subtitle, reportText, onClose }
           { id: 'unknown', label: text('待核实', 'To verify'), value: count('unknown') },
         ]}
       />
+      {draftText !== undefined && <PacingRadarSection draftText={draftText} />}
+      {staleStateCharacters && <StaleStateSection characters={staleStateCharacters} />}
       {checklist.summary && <p className="stage-ch-sheet-summary">{checklist.summary}</p>}
       {checklist.goalReview && (
         <p className="stage-ch-sheet-note">

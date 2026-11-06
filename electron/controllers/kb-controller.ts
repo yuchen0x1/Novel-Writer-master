@@ -2,6 +2,7 @@ import { app, ipcMain, dialog } from 'electron'
 import type { IpcMainInvokeEvent } from 'electron'
 import path from 'node:path'
 import { readJsonFile, GLOBAL_CONFIG_PATH, DEFAULT_GLOBAL_CONFIG, MODELS_CONFIG_PATH } from '../utils/config-utils'
+import { unprotectModelApiKey } from '../utils/model-credential-security'
 import { GlobalConfig, ModelProfile } from '../../src/shared/ipc-channels'
 import { isProjectSessionContext } from '../../src/shared/project-session-context'
 import { hasRequiredApiKey } from '../../src/shared/provider-presets'
@@ -178,10 +179,11 @@ export function getEmbeddingConfig(): { protocol: 'openai' | 'gemini'; model: Em
   const models = readJsonFile<ModelProfile[]>(MODELS_CONFIG_PATH, [])
   const model = models.find((m) => m.id === targetModelId)
   if (!model) return null
+  const plainApiKey = unprotectModelApiKey(model.apiKey ?? '')
   return {
     protocol: model.protocol as 'openai' | 'gemini',
     // models.json 只经过宽松的迁移校验，旧档案可能缺这几个字段。
-    model: { provider: model.provider ?? '', baseUrl: model.baseUrl ?? '', apiKey: model.apiKey ?? '', modelName: model.modelName, embeddingOptions: model.embeddingOptions },
+    model: { provider: model.provider ?? '', baseUrl: model.baseUrl ?? '', apiKey: plainApiKey, modelName: model.modelName, embeddingOptions: model.embeddingOptions },
   }
 }
 

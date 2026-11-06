@@ -3,6 +3,7 @@ import { appErrorMessage, displayedErrorMessage, englishWithReason } from '../..
 import { sanitizeDraftText, composeDraftVisibleContinuation, DRAFT_CONDENSE_PURPOSE, DRAFT_VISIBLE_TEXT_VERSION, isDraftVisibleTextVersion, type DraftVisibleTextVersion } from '../../../shared/draft-visible-text'
 import { DRAFT_RECONCILE_PURPOSE, draftReconciliationBlock } from '../../../shared/draft-reconciliation'
 import { DRAFT_SHORT_OUTLINE_PURPOSE, draftShortOutlinePrompt, draftShortOutlineBlock } from '../../../shared/draft-short-outline'
+import { buildLorebookRules, scanActivatedLorebookEntries, renderActivatedLorebookPrompt } from '../lorebook-triggers'
 export { sanitizeDraftText } from '../../../shared/draft-visible-text'
 import { createWorkflowMainGenerationRuntime, type WorkflowMainGenerationRequest } from '../workflow-main-generation'
 import type { MainGenerationRunHandle } from '../../generation/generation-runtime'
@@ -832,10 +833,35 @@ export class GenerateDraftCommand extends BaseWorkflowCommand {
         `  Optional material coverage gaps: ${chapterMaterials.omissions.length}`,
       ))
     }
+
+    // 扫描硬规则触发器（Lorebook Triggers），将命中的实体规则优先注入
+    let lorebookPromptBlock = ''
+    try {
+      const rosterSnapshot = await ipc.invokeWithProjectSession(projectSession, 'db:character-roster-read', expectedProjectPath)
+      const lorebookRules = buildLorebookRules(
+        rosterSnapshot?.status === 'ready' ? rosterSnapshot : null,
+        novelConfig.worldSetting,
+      )
+      const contextToScan = [
+        this.chapterInfo.title,
+        this.chapterInfo.keyEvents,
+        this.chapterInfo.userGuidance,
+        chapterMaterials.previousEnding,
+      ].filter(Boolean).join('\n')
+      const activatedLorebook = scanActivatedLorebookEntries(contextToScan, lorebookRules)
+      if (activatedLorebook.length > 0) {
+        lorebookPromptBlock = renderActivatedLorebookPrompt(activatedLorebook, writingLanguage === 'en-US' ? 'en-US' : 'zh-CN')
+        callbacks.log(uiText(
+          `  已激活上下文硬规则（${activatedLorebook.length} 条）：${activatedLorebook.map(r => r.name).join('、')}`,
+          `  Activated context lorebook triggers (${activatedLorebook.length}): ${activatedLorebook.map(r => r.name).join(', ')}`,
+        ))
+      }
+    } catch { /* 容错：触发器异常不中断主写稿链路 */ }
+
     // 仅历史恢复沿用已记录的对账块；新 run 直接使用作者材料与定稿事实。
     const chapterExecutionContract = chapterExecutionContractText(writingLanguage, writerChapterInfo)
     const systemRole = `${promptBuilder.getSystemRole()}\n\n${chapterExecutionContract.rules}`
-    const composeInitialPrompt = (reconciliationBlock: string) => [chapterMaterials.text, promptBuilder.build(),
+    const composeInitialPrompt = (reconciliationBlock: string) => [chapterMaterials.text, lorebookPromptBlock, promptBuilder.build(),
       reconciliationBlock, chapterExecutionContract.authorItems, chapterLengthContract]
       .filter(Boolean)
       .join('\n\n')

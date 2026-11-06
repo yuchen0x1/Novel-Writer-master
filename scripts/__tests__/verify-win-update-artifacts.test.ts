@@ -54,8 +54,8 @@ function createFormalWindowsRelease(root: string, options: { sha512?: string; re
     'win-unpacked/resources/app-update.yml',
     [
       'provider: github',
-      'owner: lenmo181',
-      'repo: AI-Novel-Writer',
+      'owner: yuchen0x1',
+      'repo: Pagekin',
       `releaseType: ${options.releaseType ?? 'release'}`,
       'channel: latest',
       'tagNamePrefix: v',
@@ -106,8 +106,8 @@ describe('Windows update release artifact verification', () => {
       embeddedUpdateConfig: path.join(root, 'win-unpacked/resources/app-update.yml'),
       version: '0.2.6',
       provider: 'github',
-      owner: 'lenmo181',
-      repo: 'AI-Novel-Writer',
+      owner: 'yuchen0x1',
+      repo: 'Pagekin',
       releaseType: 'release',
     })
   })
@@ -150,8 +150,8 @@ describe('Windows update release artifact verification', () => {
     expect(config.nsis?.artifactName).toBe('ai-novel-writer-setup-${version}.${ext}')
     expect(windowsPublish).toMatchObject({
       provider: 'github',
-      owner: 'lenmo181',
-      repo: 'AI-Novel-Writer',
+      owner: 'yuchen0x1',
+      repo: 'Pagekin',
       releaseType: 'release',
       publishAutoUpdate: true,
       tagNamePrefix: 'v',

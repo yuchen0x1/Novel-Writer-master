@@ -50,8 +50,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "lenmo181",
-        "repo": "AI-Novel-Writer",
+        "owner": "yuchen0x1",
+        "repo": "Pagekin",
         "channel": "latest",
         "releaseType": "release",
         "publishAutoUpdate": true,
