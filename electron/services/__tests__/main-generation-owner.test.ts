@@ -772,7 +772,8 @@ describe('frozen planning roots', () => {
   it('freezes the complete architecture on premise, shares liability with synopsis, and restores its exact chapter policy', async () => {
     const fetch = syntheticStream(), f = planningFixture()
     const root = f.owner.begin(architectureSelection(f, fullIntent))
-    expect(root.ledger!.policy).toEqual({ maxPhysicalRequests: 40, maxTokenLiability: 10485760, maxOutputPerRequest: 65536, maxActiveElapsedMs: 4500000 })
+    // 预算按「首次请求 + 全部有界重试」预留：3 步架构 8/8/22 次，加 10 章细纲 80 次，共 118 次。
+    expect(root.ledger!.policy).toEqual({ maxPhysicalRequests: 118, maxTokenLiability: 30932992, maxOutputPerRequest: 65536, maxActiveElapsedMs: 13275000 })
     const repository = new GenerationRunRepository(() => f.db)
     const policy = repository.get(root.handle.runId).binding.sourceManifest.policy
     expect(policy).toMatchObject({ version: 's07-capacity-v2', planning: { kind: 'architecture', intent: fullIntent, outlineProtocol: PLOT_OUTLINE_PROTOCOL }, budget: root.ledger!.policy })
@@ -797,7 +798,8 @@ describe('frozen planning roots', () => {
     const f = planningFixture()
     const intent: ArchitecturePlanningIntent = { version: 'architecture-action-v1', priorSteps: ['worldbuilding'], synopsisRange: { from: 151, to: 160 } }
     const root = f.owner.begin(architectureSelection(f, intent, 'generate-world-building'))
-    expect(root.ledger!.policy.maxPhysicalRequests).toBe(32)
+    // 仅世界构建 8 次，加 10 章细纲 80 次（每章 2 次内容尝试 × 4 次物理尝试）。
+    expect(root.ledger!.policy.maxPhysicalRequests).toBe(88)
     expect(() => f.owner.begin({ ...architectureSelection(f, intent), parentRootActionId: root.handle.rootActionId })).toThrow('GENERATION_PLANNING_OPERATION_NOT_SELECTED')
     for (const invalid of [
       { ...fullIntent, priorSteps: ['characters', 'characters'] },

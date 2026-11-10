@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { formatResourceUri, parseResourceUri, resourceWriteAllowed } from '../../shared/project-paths'
 import { useProjectStore } from '../../stores/project-store'
 import { registerEditorExitSaveHandler, useEditorStore } from '../../stores/editor-store'
+import { reportSaveFailure, registerSaveRetry, unregisterSaveRetry, useSaveStatusStore } from '../../stores/save-status-store'
 import { useWorkflowStore, workflowResourceKey } from '../../stores/workflow-store'
 import { useLocaleStore } from '../../stores/locale-store'
 import { toast } from '../ui/Toast'
@@ -155,6 +156,7 @@ export function useDraftActions({ tabId, filePath, content, projectKey }: DraftT
   const onBodyChange = (body: string) => {
     currentBodyRef.current = body
     setSaveOutcome('idle')
+    useSaveStatusStore.getState().clearFailure()
     useEditorStore.getState().updateTabContent(tabId, body)
   }
 
@@ -178,6 +180,8 @@ export function useDraftActions({ tabId, filePath, content, projectKey }: DraftT
     }
     setSaving(true)
     setSaveOutcome('idle')
+    useSaveStatusStore.getState().begin(projectSession.projectPath)
+    let failureMessage: string | null = null
     try {
       const resource = parseResourceUri(filePath)
       if (!resourceWriteAllowed(filePath) || resource?.kind !== 'draft') throw new Error(text('资源只读或无效', 'This resource is read-only or invalid.'))
@@ -202,12 +206,17 @@ export function useDraftActions({ tabId, filePath, content, projectKey }: DraftT
       // 待合并的修稿按保存的正文判断能否合并，正文变了就要重读。
       if (pendingRevisions.length > 0) reload()
     } catch (error) {
+      failureMessage = displayedErrorMessage(useLocaleStore.getState().locale, error, text('草稿保存失败', 'Could not save the draft'))
       if (isProjectSessionCurrent(projectSession)) {
         setSaveOutcome('failed')
-        toast.error(displayedErrorMessage(useLocaleStore.getState().locale, error, text('草稿保存失败', 'Could not save the draft')))
+        toast.error(failureMessage)
       }
       if (propagateFailure) throw error
     } finally {
+      // 会话已切换时只把计数收掉：失败属于上一个项目，不该画在新作品的顶栏上。
+      if (failureMessage !== null && isProjectSessionCurrent(projectSession)) reportSaveFailure(projectSession.projectPath, `draft:${tabId}`, failureMessage)
+      else if (isProjectSessionCurrent(projectSession)) useSaveStatusStore.getState().succeed(projectSession.projectPath)
+      else useSaveStatusStore.getState().release()
       if (isProjectSessionCurrent(projectSession)) setSaving(false)
     }
   }
@@ -223,6 +232,13 @@ export function useDraftActions({ tabId, filePath, content, projectKey }: DraftT
       projectKey,
       save: () => exitSaveRef.current(currentBodyRef.current, true),
     })
+  }, [projectKey, tabId])
+
+  // 顶栏「保存失败 · 重试」重跑这一稿最近一次失败的保存。
+  useEffect(() => {
+    const key = `draft:${tabId}`
+    registerSaveRetry(projectKey, key, () => { void exitSaveRef.current(currentBodyRef.current) })
+    return () => unregisterSaveRetry(projectKey, key)
   }, [projectKey, tabId])
 
   const freezeDraftSourceForAI = async (projectSession: NonNullable<ReturnType<typeof captureProjectSession>>) => {

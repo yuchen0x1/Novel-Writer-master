@@ -20,6 +20,7 @@ export const enUS = {
   'error.projectOpenGrantRequired': 'Access to this project folder has expired. Choose the project folder again.',
   'error.projectRecentIdentityChanged': 'The location saved in recent projects now holds a different project. Choose the project folder again.',
   'error.projectMigrationNotQualified': 'This project cannot be converted safely yet. The original was kept and nothing was written. Use Import legacy project to create a complete copy.',
+  'error.draftSnapshotMigrationTransactionRequired': 'The draft snapshot database migration was not running inside a safe transaction, so it was stopped. Try again; if it keeps happening, report the app version and when it occurred.',
   'error.projectSchemaUnrecognized': 'The project format is not recognized, so it was not opened. Check which app and version created it.',
   'error.projectSchemaCorrupt': 'The project data structure is damaged, so it was not opened. Keep the original and restore from a backup.',
   'error.projectSchemaNewer': 'This project was created by a newer version, so it was not opened. Update the app, then open it again.',

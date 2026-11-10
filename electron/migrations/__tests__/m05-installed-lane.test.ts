@@ -34,7 +34,8 @@ describe('installed M05 lane', () => {
       const before = db.prepare('SELECT body FROM contents').pluck().get()
       const result = migrateSchema(new SqliteSchemaAdapter(db), getDesktopMigrationRegistry(), 6)
 
-      expect(CURRENT_DESKTOP_SCHEMA_VERSION).toBe(8)
+      // M05 是历史步骤，只要求车道继续向后延伸，不锁死当前最新版本。
+      expect(CURRENT_DESKTOP_SCHEMA_VERSION).toBeGreaterThanOrEqual(6)
       expect(result.completedSteps).toEqual(['M05'])
       expect(db.prepare('SELECT body FROM contents').pluck().get()).toBe(before)
       expect(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'character_avatar_%' ORDER BY name").pluck().all())

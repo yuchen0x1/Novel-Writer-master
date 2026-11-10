@@ -288,8 +288,8 @@ describe('蓝图阶段', () => {
   it('出场人物可以逐个添加与移除', async () => {
     await renderPage()
     await act(async () => page.getByRole('button', { name: '移除 守塔人' }).click())
-    await act(async () => page.getByLabelText('出场人物').fill('沈砺'))
-    await act(async () => page.getByLabelText('出场人物').element().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
+    await act(async () => page.getByPlaceholder('添加人物，回车确认').fill('沈砺'))
+    await act(async () => page.getByPlaceholder('添加人物，回车确认').element().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
     const save = editorSaveHandler({ id: 'chapter-card-editor', type: 'chapter-card', projectKey: PROJECT_PATH })
     await act(async () => { await save!() })
     const [[, saved]] = calls('db:blueprint-upsert-many')
@@ -300,8 +300,8 @@ describe('蓝图阶段', () => {
     stored = [{ ...blueprint(1, '旧港'), characters: ['林岚', '守塔人', '守塔人'] }, blueprint(2, '北堤')]
     await renderPage()
     await act(async () => page.getByRole('button', { name: '移除 守塔人' }).first().click())
-    await act(async () => page.getByLabelText('出场人物').fill('沈砺、沈砺'))
-    await act(async () => page.getByLabelText('出场人物').element().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
+    await act(async () => page.getByPlaceholder('添加人物，回车确认').fill('沈砺、沈砺'))
+    await act(async () => page.getByPlaceholder('添加人物，回车确认').element().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
     const save = editorSaveHandler({ id: 'chapter-card-editor', type: 'chapter-card', projectKey: PROJECT_PATH })
     await act(async () => { await save!() })
     const [[, saved]] = calls('db:blueprint-upsert-many')
@@ -310,7 +310,7 @@ describe('蓝图阶段', () => {
 
   it('输入法组字时按回车是选词，不把拼音当人物加进来', async () => {
     await renderPage()
-    const input = page.getByLabelText('出场人物')
+    const input = page.getByPlaceholder('添加人物，回车确认')
     await act(async () => input.fill('shen'))
     await act(async () => input.element().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true })))
     expect((input.element() as HTMLInputElement).value).toBe('shen')

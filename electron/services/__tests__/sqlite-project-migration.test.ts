@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type BetterSqlite3 from 'better-sqlite3'
 import { initializeLegacyBaselineSchema } from '../../migrations/baseline-schema'
 import { ensureBaselineBlueprintTables } from '../../migrations/baseline-blueprint-schema'
+import { CURRENT_DESKTOP_SCHEMA_VERSION } from '../../migrations/desktop-registry'
 import { sqliteSchemaFingerprint } from '../../migrations/sqlite-schema-adapter'
 import { backupProjectSqlite, probeProjectSqlite, verifyProjectSqlite, upgradeProjectSqlite } from '../sqlite-project-migration'
 import { CharacterRosterRepository } from '../../repositories/character-roster-repository'
@@ -173,13 +174,13 @@ describe('real SQLite schema probe and WAL staging backup', () => {
     expect(target.prepare('SELECT COUNT(*) FROM character_roster_meta').pluck().get()).toBe(0)
   })
 
-  it('imports the exact early v1.1.0 schema0 rows through schema7 without touching the source', async () => {
+  it('imports the exact early v1.1.0 schema0 rows through the current schema without touching the source', async () => {
     const f = earlyV110Fixture(), before = bytes(f.root)
     expect(probeProjectSqlite({ databasePath: f.source })).toMatchObject({
       schemaVersion: 0, fingerprint: '2504dde08865f758f654d38ae3d972420c28fa60d1f747e92898390455272de6',
     })
     const result = await backupProjectSqlite({ sourceDatabasePath: f.source, targetDatabasePath: f.target })
-    expect(result.schemaVersion).toBe(7)
+    expect(result.schemaVersion).toBe(CURRENT_DESKTOP_SCHEMA_VERSION)
     expect(verifyProjectSqlite({ databasePath: f.target })).toEqual(result)
     const target = new Database(f.target, { readonly: true, fileMustExist: true }); handles.push(target)
     expect(target.prepare('SELECT rowid,project_name,genre,global_guidance,characters_arch FROM project_core').get())
@@ -214,10 +215,10 @@ describe('real SQLite schema probe and WAL staging backup', () => {
     })
     expect(bytes(f.root)).toEqual(before)
   })
-  it('copies qualified v1.0.0 old columns, rowids, and sequence into schema7 staging', async () => {
+  it('copies qualified v1.0.0 old columns, rowids, and sequence into current-schema staging', async () => {
     const f = legacyV100Fixture(), before = bytes(f.root)
     const result = await backupProjectSqlite({ sourceDatabasePath: f.source, targetDatabasePath: f.target })
-    expect(result.schemaVersion).toBe(7)
+    expect(result.schemaVersion).toBe(CURRENT_DESKTOP_SCHEMA_VERSION)
     expect(verifyProjectSqlite({ databasePath: f.target })).toEqual(result)
     const target = new Database(f.target, { readonly: true, fileMustExist: true }); handles.push(target)
     expect(target.prepare('SELECT rowid FROM project_core WHERE id=?').pluck().get('main')).toBe(7)
@@ -254,7 +255,7 @@ describe('real SQLite schema probe and WAL staging backup', () => {
       schemaVersion: 0, fingerprint: 'c536a35e30f51f681843a2a07a48592cc80e9840abeb7898fcd463297128ccf8',
     })
     const result = await backupProjectSqlite({ sourceDatabasePath: f.source, targetDatabasePath: f.target })
-    expect(result.schemaVersion).toBe(7)
+    expect(result.schemaVersion).toBe(CURRENT_DESKTOP_SCHEMA_VERSION)
     expect(verifyProjectSqlite({ databasePath: f.target })).toEqual(result)
     const target = new Database(f.target, { fileMustExist: true }); handles.push(target)
     expect(target.prepare('SELECT rowid,core_outline,world_setting,protagonist_profile FROM project_core').get())
@@ -300,7 +301,7 @@ describe('real SQLite schema probe and WAL staging backup', () => {
     const before = bytes(f.root)
     expect(probeProjectSqlite({ databasePath: f.source })).toMatchObject({ schemaVersion: 0, fingerprint })
     const result = await backupProjectSqlite({ sourceDatabasePath: f.source, targetDatabasePath: f.target })
-    expect(result.schemaVersion).toBe(7)
+    expect(result.schemaVersion).toBe(CURRENT_DESKTOP_SCHEMA_VERSION)
     expect(verifyProjectSqlite({ databasePath: f.target })).toEqual(result)
     const target = new Database(f.target, { readonly: true, fileMustExist: true }); handles.push(target)
     for (const [index, table] of preservedTables.entries()) {
@@ -340,10 +341,10 @@ describe('real SQLite schema probe and WAL staging backup', () => {
     })
     expect(bytes(f.root)).toEqual(before)
   })
-  it('copies qualified v1.1.0 rows and sequence through canonical staging to schema7 without writing the source', async () => {
+  it('copies qualified v1.1.0 rows and sequence through canonical staging to current schema without writing the source', async () => {
     const f = legacyV110Fixture(), before = bytes(f.root)
     const result = await backupProjectSqlite({ sourceDatabasePath: f.source, targetDatabasePath: f.target })
-    expect(result.schemaVersion).toBe(7)
+    expect(result.schemaVersion).toBe(CURRENT_DESKTOP_SCHEMA_VERSION)
     expect(verifyProjectSqlite({ databasePath: f.target })).toEqual(result)
     const target = new Database(f.target, { readonly: true, fileMustExist: true }); handles.push(target)
     expect(target.prepare('SELECT rowid FROM project_core WHERE id=?').pluck().get('main')).toBe(7)
@@ -410,13 +411,25 @@ describe('real SQLite schema probe and WAL staging backup', () => {
   })
 })
 
-it('upgrades a qualified schema 6 file to schema 7 without changing author content', async () => {
+it('upgrades a qualified schema 6 file to the current schema without changing author content', async () => {
  const f=fixture()
  const before=await backupProjectSqlite({sourceDatabasePath:f.source,targetDatabasePath:f.target,targetVersion:6})
  expect(before.schemaVersion).toBe(6)
  const upgraded=upgradeProjectSqlite({databasePath:f.target})
- expect(upgraded.schemaVersion).toBe(7)
+ expect(upgraded.schemaVersion).toBe(CURRENT_DESKTOP_SCHEMA_VERSION)
  expect(upgraded.domain).toEqual(before.domain)
+ expect(verifyProjectSqlite({databasePath:f.target})).toEqual(upgraded)
+})
+it('upgrades a qualified schema 8 project through M08 without changing author content', async () => {
+ const f=fixture()
+ const before=await backupProjectSqlite({sourceDatabasePath:f.source,targetDatabasePath:f.target,targetVersion:8})
+ expect(before.schemaVersion).toBe(8)
+ const upgraded=upgradeProjectSqlite({databasePath:f.target})
+ expect(upgraded.schemaVersion).toBe(CURRENT_DESKTOP_SCHEMA_VERSION)
+ expect(upgraded.domain).toEqual(before.domain)
+ const target=new Database(f.target,{fileMustExist:true});handles.push(target)
+ expect(target.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='draft_snapshots'").get()).toEqual({name:'draft_snapshots'})
+ expect(target.prepare('SELECT COUNT(*) FROM draft_snapshots').pluck().get()).toBe(0)
  expect(verifyProjectSqlite({databasePath:f.target})).toEqual(upgraded)
 })
 it('resolves a trusted system scratch junction before validating its private snapshot', () => {

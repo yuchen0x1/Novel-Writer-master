@@ -5,6 +5,7 @@ import { Save, RefreshCw, Sparkles, Loader2, AlertTriangle, FileText } from 'luc
 import { renderIcon } from '../panels/sidebar/sidebar-icons'
 
 import { registerEditorExitSaveHandler, useEditorStore, type PlanningRecoverySaveSnapshot } from '../../stores/editor-store'
+import { reportSaveFailure, registerSaveRetry, unregisterSaveRetry, useSaveStatusStore } from '../../stores/save-status-store'
 import ArchitectureConfirmDialog from '../dialogs/ArchitectureConfirmDialog'
 import { ARCH_STEP_NAMES, archSectionHasContent, judgeArchCore, type ArchStepKey } from '../../services/architecture-step-selection'
 import { Button } from '../ui/Button'
@@ -214,6 +215,7 @@ function ArchFileViewerSession({
     reloadGateRef.current.recordContentChange()
     setLoading(false)
     setSaveOutcome('idle')
+    useSaveStatusStore.getState().clearFailure()
     currentContentRef.current = md
     const storeAction = archEditStoreAction({
       savedContent: savedContentRef.current,
@@ -236,6 +238,8 @@ function ArchFileViewerSession({
     setLoading(false)
     setSaving(true)
     setSaveOutcome('idle')
+    useSaveStatusStore.getState().begin(projectSession.projectPath)
+    let failureMessage: string | null = null
     const savedSnapshot = useEditorStore.getState().tabs.find(tab => tab.id === tabId)
     let submittedSnapshot = { content: md, contentRevision: savedSnapshot?.contentRevision ?? 0 }
     try {
@@ -336,14 +340,18 @@ function ArchFileViewerSession({
         if (recoveryRef.current) await refreshRecovery()
       }
     } catch (error) {
+      failureMessage = appErrorMessage(useLocaleStore.getState().locale, error)
       if (isProjectSessionCurrent(projectSession)) {
-        if (recoveryRef.current) setRecoveryError(appErrorMessage(useLocaleStore.getState().locale, error))
+        if (recoveryRef.current) setRecoveryError(failureMessage)
         setSaveOutcome('failed')
-        toast.error(appErrorMessage(useLocaleStore.getState().locale, error))
+        toast.error(failureMessage)
       }
       // Exit-save must reject so the caller cannot close an unsaved document.
       if (propagateFailure) throw error
     } finally {
+      if (failureMessage !== null && isProjectSessionCurrent(projectSession)) reportSaveFailure(projectSession.projectPath, `arch:${tabId}`, failureMessage)
+      else if (isProjectSessionCurrent(projectSession)) useSaveStatusStore.getState().succeed(projectSession.projectPath)
+      else useSaveStatusStore.getState().release()
       if (isProjectSessionCurrent(projectSession)) setSaving(false)
     }
   }, [filePath, isCharacterProjection, projectKey, tabId, refreshRecovery, text])
@@ -359,6 +367,14 @@ function ArchFileViewerSession({
       projectKey,
       save: () => handleSave(currentContentRef.current, true),
     })
+  }, [handleSave, isCharacterProjection, projectKey, tabId])
+
+  // 顶栏「保存失败 · 重试」重跑这一份架构文档最近一次失败的保存。
+  useEffect(() => {
+    if (isCharacterProjection) return
+    const key = `arch:${tabId}`
+    registerSaveRetry(projectKey, key, () => { void handleSave(currentContentRef.current) })
+    return () => unregisterSaveRetry(projectKey, key)
   }, [handleSave, isCharacterProjection, projectKey, tabId])
 
   /** 从 DB 重新加载（AI 生成后刷新用） */

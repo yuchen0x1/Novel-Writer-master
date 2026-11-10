@@ -249,6 +249,7 @@
 .pi-menu-item:disabled, .pi-menu-item[data-tone="danger"]:disabled { color: var(--ink-3); cursor: not-allowed; background: none; }
 .pi-menu-sep { height: 1px; margin: 6px 4px; background: var(--rule); }
 .pi-menu-label { padding: 6px 10px 4px; font-size: var(--fs-11); letter-spacing: .14em; color: var(--ink-3); }
+.pi-menu-note { padding: 4px 10px 8px; max-width: 26em; font-size: var(--fs-12); line-height: 1.45; color: var(--ink-3); }
 
 /* ================= 分段控件与勾选 ================= */
 .pi-seg { display: inline-flex; padding: 2px; border-radius: var(--radius); background: var(--sunken); }

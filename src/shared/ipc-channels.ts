@@ -16,6 +16,7 @@ import type { BookSearchResult } from './book-search'
 import type { WritingStatsOverview } from './writing-stats'
 import type { TimelineDocument } from './timeline'
 import type { SceneCard } from './scene-cards'
+import type { DraftSnapshotMeta } from './draft-snapshot'
 /**
  * IPC 频道定义 — 渲染进程与主进程的类型安全通信契约
  * 所有 IPC 调用都通过此文件定义频道名和参数/返回值类型
@@ -1064,7 +1065,8 @@ export interface DatabaseChannels {
     args: [request: FinalizedDraftImportRequest, expectedProjectPath: string]
     return: { success: boolean; receipt?: FinalizedDraftImportReceipt; error?: string }
   }
-  'db:draft-create': { args: [params: { chapterNumber: number; version: number; source: 'write' | 'rewrite'; content: string; wordCount: number; sourceDependencies?: DraftSourceDependency[] }, expectedProjectPath: string]; return: { success: boolean; id?: number; error?: string } }
+  // 版本号由仓储在事务内原子分配；version 仅为旧调用方兼容，不会再被采用。
+  'db:draft-create': { args: [params: { chapterNumber: number; version?: number; source: 'write' | 'rewrite'; content: string; wordCount: number; sourceDependencies?: DraftSourceDependency[] }, expectedProjectPath: string]; return: { success: boolean; id?: number; error?: string } }
   'db:draft-list': { args: [chapterNumber: number, expectedProjectPath: string]; return: DraftMeta[] }
   'db:draft-list-all': { args: [expectedProjectPath: string]; return: DraftMeta[] }
   'db:draft-get-meta': { args: [id: number, expectedProjectPath: string]; return: DraftMeta | null }
@@ -1140,6 +1142,11 @@ export interface DatabaseChannels {
     return: { success: boolean; error?: string }
   }
   'db:draft-next-version': { args: [chapterNumber: number, expectedProjectPath: string]; return: number }
+  'db:draft-snapshot-list': { args: [draftId: number, expectedProjectPath: string]; return: DraftSnapshotMeta[] }
+  'db:draft-snapshot-get': {
+    args: [snapshotId: number, expectedProjectPath: string]
+    return: (DraftSnapshotMeta & { content: string }) | null
+  }
   'db:draft-update-status': { args: [id: number, status: string, wordCount: number | undefined, expectedProjectPath: string]; return: { success: boolean; error?: string } }
   'db:draft-update-content': { args: [id: number, content: string, wordCount: number, expectedProjectPath: string]; return: { success: boolean; error?: string } }
   'db:draft-delete': {

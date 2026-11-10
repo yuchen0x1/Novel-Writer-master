@@ -97,8 +97,9 @@ describe('project clear repositories', () => {
 
     expect(db.prepare).toHaveBeenCalledWith('DELETE FROM blueprint_character_sync_operations')
     expect(db.prepare).toHaveBeenCalledWith('DELETE FROM blueprint_commit_operations')
+    expect(db.prepare).toHaveBeenCalledWith('DELETE FROM scene_cards')
     expect(db.prepare).toHaveBeenCalledWith('DELETE FROM blueprints')
-    expect(db.run).toHaveBeenCalledTimes(3)
+    expect(db.run).toHaveBeenCalledTimes(4)
   })
 
   it('clears generated drafts, review artifacts, summaries, and content in dependency order', () => {

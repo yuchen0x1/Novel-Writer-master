@@ -14,7 +14,8 @@
     "character_identity_origins", "character_aliases", "character_identity_proposals",
     "character_identity_approvals", "character_relationships", "character_identity_meta",
     "review_cycles", "review_findings", "import_effect_ledger",
-    "character_avatar_assets", "character_avatar_unresolved"
+    "character_avatar_assets", "character_avatar_unresolved",
+    "scene_cards", "draft_snapshots"
   ],
   "m06Tables": ["review_cycle_merges"],
   "optionalFields": ["characters.avatar"],
@@ -90,6 +91,7 @@
     "consistency_exemptions": {"stable_fact_key":"D","reason":"D","revoked":"D"},
     "contents": {"id":"D","body":"D","created_at":"D"},
     "continuity_projection_meta": {"id":"D","generation":"D","stale_from_chapter":"D"},
+    "draft_snapshots": {"snapshot_id":"D","draft_id":"D","chapter_number":"D","source":"D","word_count":"D","content_hash":"D","content":"D","created_at":"D"},
     "drafts": {"id":"D","chapter_number":"D","version":"D","status":"D","source":"D","content_id":"D","word_count":"D","source_dependencies":"R","created_at":"D","updated_at":"D"},
     "finalization_outbox": {"finalization_id":"D","draft_id":"D","chapter_number":"D","chapter_title":"D","content_hash":"D","content_revision":"D","content_snapshot":"D","target_file_name":"P","knowledge_document_id":"D","publication_status":"H","last_error":"R","published_at":"D","created_at":"D","updated_at":"D"},
     "finalized_draft_import_operations": {"operation_id":"D","payload_hash":"R","receipt_json":"R","created_at":"H"},
@@ -121,6 +123,7 @@
     "review_findings": {"cycle_id":"H","finding_id":"H","source_project_id":"H","source_epoch":"H","source_id":"H","source_revision":"H","source_content_hash":"H","span_start":"H","span_end":"H","span_unit":"H","excerpt_hash":"H","occurrence":"H","category":"H","target_id":"H","kind":"H","problem_text":"H","expected_text":"H","status":"H","evidence_hash":"H","confirmation_item_index":"H"},
     "reviews": {"id":"D","base_draft_id":"D","review_index":"D","source_draft_chapter_number":"D","source_draft_version":"D","source_draft_status":"D","source_content":"D","content_id":"D","created_at":"D"},
     "revisions": {"id":"D","base_draft_id":"D","revision_index":"D","revision_type":"D","status":"D","merged_to_draft_id":"D","user_prompt":"D","review_source_id":"D","source_draft_chapter_number":"D","source_draft_version":"D","source_draft_status":"D","source_content":"D","content_id":"D","word_count":"D","created_at":"D","updated_at":"D"},
+    "scene_cards": {"scene_id":"D","chapter_number":"D","scene_order":"D","title":"D","location":"D","story_time":"D","participants":"D","goal":"D","conflict":"D","transition":"D","notes":"D","created_at":"D","updated_at":"D"},
     "summary_snapshots": {"id":"D","draft_id":"D","chapter_number":"D","character_states":"D","chapter_notes":"D","continuity_facts":"D","character_state_candidates":"D","source_finalization_id":"D","source_content_hash":"D","projection_generation":"D","created_at":"D"},
     "text_metric_versions": {"metric":"B","version":"B","updated_at":"B"}
   }

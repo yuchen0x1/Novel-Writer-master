@@ -1,4 +1,4 @@
-import { Check, ChevronDown, CircleDashed, Maximize2, Minimize2, Minus, PanelRightClose, PanelRightOpen, Search, Settings, Square, X } from 'lucide-react'
+import { AlertTriangle, Check, ChevronDown, CircleDashed, LoaderCircle, Maximize2, Minimize2, Minus, PanelRightClose, PanelRightOpen, RotateCcw, Search, Settings, Square, X } from 'lucide-react'
 import { ipc } from '../../services/ipc-client'
 import { APP_BRAND } from '../../shared/brand'
 import { useEditorStore } from '../../stores/editor-store'
@@ -7,6 +7,7 @@ import { useLocaleStore } from '../../stores/locale-store'
 import { navigate } from '../../stores/navigation/navigation-intents'
 import { useStageStore } from '../../stores/navigation/stage-store'
 import { useProjectStore } from '../../stores/project-store'
+import { runSaveRetry, useSaveStatusStore } from '../../stores/save-status-store'
 import { Button } from '../ui/Button'
 import { Menu, type MenuGroupSpec } from '../ui/Menu'
 import RunCapsule from './RunCapsule'
@@ -45,9 +46,16 @@ function WindowControls() {
 
 export default function StageTopBar({ crumbs, library, focus, focusTitle, workMenu, onToggleFocus, assistantOpen = false, onToggleAssistant }: StageTopBarProps) {
   const text = useLocaleStore(s => s.text)
+  const locale = useLocaleStore(s => s.locale)
   const projectName = useProjectStore(s => s.currentProject?.name)
   const projectPath = useProjectStore(s => s.currentProject?.path)
   const dirty = useEditorStore(s => Boolean(projectPath) && countUnsavedEditorItemsForProject(s.tabs, s.draftLedgers, projectPath!) > 0)
+  const savingCount = useSaveStatusStore(s => s.savingCount)
+  const failure = useSaveStatusStore(s => s.failure)
+  const lastSavedAt = useSaveStatusStore(s => s.lastSavedAt)
+  const saveStatusProject = useSaveStatusStore(s => s.projectPath)
+  // 保存状态自带作品归属；只显示当前作品的，避免切书后显示上一部的失败或上次保存时间。
+  const saveStatusCurrent = saveStatusProject === null || saveStatusProject === projectPath
 
   if (focus) {
     return (
@@ -111,12 +119,46 @@ export default function StageTopBar({ crumbs, library, focus, focusTitle, workMe
           <Settings size={16} aria-hidden="true" />
         </Button>
       )}
-      {!library && (
-        <span className="stage-saved" data-dirty={dirty || undefined} role="status">
-          {dirty ? <CircleDashed size={13} aria-hidden="true" /> : <Check size={13} aria-hidden="true" />}
-          {dirty ? text('未保存', 'Unsaved') : text('已保存', 'Saved')}
-        </span>
-      )}
+      {!library && (() => {
+        // 保存中优先；失败与未保存同屏（失败时内容确实未保存，顶栏文字保持「未保存」），警示图标与重试按钮表达失败；
+        // 只有失败却没有未保存内容时才整段写「保存失败」。
+        const statusSavingCount = saveStatusCurrent ? savingCount : 0
+        const statusFailure = saveStatusCurrent ? failure : null
+        const statusLastSavedAt = saveStatusCurrent ? lastSavedAt : null
+        const phase = statusSavingCount > 0 ? 'saving' : statusFailure ? 'failed' : dirty ? 'dirty' : 'saved'
+        const savedTime = statusLastSavedAt !== null && phase === 'saved'
+          ? new Date(statusLastSavedAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+          : null
+        return (
+          <span
+            className="stage-saved"
+            data-phase={phase}
+            data-dirty={phase === 'dirty' || phase === 'failed' || undefined}
+            role={phase === 'failed' ? 'alert' : 'status'}
+            title={statusFailure ?? (savedTime ? text(`上次保存 ${savedTime}`, `Last saved ${savedTime}`) : undefined)}
+          >
+            {phase === 'saving' && <><LoaderCircle size={13} className="stage-update-spin" aria-hidden="true" />{text('保存中…', 'Saving…')}</>}
+            {phase === 'failed'
+              ? <AlertTriangle size={13} aria-hidden="true" />
+              : phase === 'dirty' && <CircleDashed size={13} aria-hidden="true" />}
+            {(phase === 'dirty' || phase === 'failed') && (statusFailure && !dirty
+              ? text('保存失败', 'Save failed')
+              : text('未保存', 'Unsaved'))}
+            {phase === 'failed' && (
+              <button
+                type="button"
+                className="stage-saved-retry"
+                aria-label={text('重试保存', 'Retry save')}
+                title={text('重试上一次失败的保存', 'Retry the last failed save')}
+                onClick={() => runSaveRetry()}
+              >
+                <RotateCcw size={12} aria-hidden="true" />
+              </button>
+            )}
+            {phase === 'saved' && <><Check size={13} aria-hidden="true" />{text('已保存', 'Saved')}</>}
+          </span>
+        )
+      })()}
       {!library && (
         <Button variant="icon" size="sm" aria-label={text('进入沉浸写作', 'Enter focus mode')} onClick={onToggleFocus}>
           <Maximize2 size={15} aria-hidden="true" />

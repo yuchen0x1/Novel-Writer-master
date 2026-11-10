@@ -201,6 +201,34 @@
   color: var(--warn);
 }
 
+.stage-saved[data-phase='saving'] {
+  color: var(--ink-2);
+}
+
+.stage-saved[data-phase='failed'] {
+  color: var(--danger);
+}
+
+.stage-saved-retry {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.stage-saved-retry:hover {
+  color: var(--ink);
+}
+
+.stage-saved-retry:focus-visible {
+  box-shadow: var(--focus-ring);
+  border-radius: 4px;
+}
+
 .stage-window-controls {
   flex: none;
   display: flex;

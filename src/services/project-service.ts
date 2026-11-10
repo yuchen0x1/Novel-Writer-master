@@ -275,6 +275,7 @@ export async function onProjectOpened(
  */
 export async function onProjectClosed(projectPath: string | null): Promise<void> {
   const { useEditorStore } = await import('../stores/editor-store')
+  const { resetSaveStatus } = await import('../stores/save-status-store')
   if (projectPath) {
     // 正常关闭只清理对应项目，保留其他项目的未保存草稿。
     useEditorStore.getState().clearProjectTabs(projectPath)
@@ -282,6 +283,9 @@ export async function onProjectClosed(projectPath: string | null): Promise<void>
     // 数据库状态未知且 renderer 已无项目身份时，不能保留任何可编辑 Tab。
     useEditorStore.getState().clearTabs()
   }
+
+  // 顶栏保存状态与重试入口属于已关闭的作品，不能带到下一本。
+  resetSaveStatus()
 
   disableProjectBindingsPreservingDrafts(projectPath)
 

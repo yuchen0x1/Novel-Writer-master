@@ -26,6 +26,7 @@ import { globalEventBus, type EventPayloadMap } from '../../shared/event-bus'
 import { shouldRefreshBlueprints } from './blueprint-refresh'
 import { useLocaleStore } from '../../stores/locale-store'
 import { registerEditorExitSaveHandler, useEditorStore } from '../../stores/editor-store'
+import { reportSaveFailure, registerSaveRetry, unregisterSaveRetry, useSaveStatusStore } from '../../stores/save-status-store'
 import type { GenerationRecoveryContext } from '../../shared/generation-owner-contract'
 import {
   CHAPTER_CARD_TAB_ID,
@@ -376,6 +377,7 @@ export function useChapterBlueprints({
     markChapterDirty(blueprintsRef.current.map((b, i) => (
       i === selectedIdx ? updateEditableChapterBlueprintField(b, key, value) : b
     )), selected.chapterNumber)
+    useSaveStatusStore.getState().clearFailure()
   }
 
   /**
@@ -400,6 +402,8 @@ export function useChapterBlueprints({
     const savedSnapshots = captureBlueprintSnapshots([selected])
     setSaving(true)
     setSaveOutcome('idle')
+    useSaveStatusStore.getState().begin(projectSession.projectPath)
+    let failureMessage: string | null = null
     try {
       await saveChapterBlueprint(selected, projectKey, projectSession, locale)
       if (!isCurrentProjectSession(projectSession)) return
@@ -414,13 +418,16 @@ export function useChapterBlueprints({
       announceSaved(projectSession)
       addLog('info', text(`第 ${selected.chapterNumber} 章蓝图已保存`, `Saved blueprint for Chapter ${selected.chapterNumber}`))
     } catch (err) {
+      failureMessage = displayedErrorMessage(useLocaleStore.getState().locale, err)
       if (!isCurrentProjectSession(projectSession)) return
-      const message = displayedErrorMessage(useLocaleStore.getState().locale, err)
-      addLog('error', text(`保存第 ${selected.chapterNumber} 章蓝图失败：${message}`, englishWithReason(`Could not save the blueprint for Chapter ${selected.chapterNumber}.`, message)))
-      toast.error(text(`保存失败\n\n${message}`, englishWithReason('Could not save the blueprint.', message, '\n\n')))
+      addLog('error', text(`保存第 ${selected.chapterNumber} 章蓝图失败：${failureMessage}`, englishWithReason(`Could not save the blueprint for Chapter ${selected.chapterNumber}.`, failureMessage)))
+      toast.error(text(`保存失败\n\n${failureMessage}`, englishWithReason('Could not save the blueprint.', failureMessage, '\n\n')))
       setSaveOutcome('failed')
       if (propagateFailure) throw err
     } finally {
+      if (failureMessage !== null && isCurrentProjectSession(projectSession)) reportSaveFailure(projectSession.projectPath, `blueprint:${projectKey}`, failureMessage)
+      else if (isCurrentProjectSession(projectSession)) useSaveStatusStore.getState().succeed(projectSession.projectPath)
+      else useSaveStatusStore.getState().release()
       if (isCurrentProjectSession(projectSession)) setSaving(false)
     }
   }
@@ -437,6 +444,8 @@ export function useChapterBlueprints({
     const savedSnapshots = captureBlueprintSnapshots(saveInput)
     setSaving(true)
     setSaveOutcome('idle')
+    useSaveStatusStore.getState().begin(projectSession.projectPath)
+    let failureMessage: string | null = null
     try {
       await saveAllBlueprints(saveInput, projectKey, projectSession, locale)
       if (!isCurrentProjectSession(projectSession)) return
@@ -451,13 +460,16 @@ export function useChapterBlueprints({
       announceSaved(projectSession)
       addLog('info', text(`已保存全部 ${saveInput.length} 章蓝图`, `Saved ${saveInput.length} chapter ${pluralEn(saveInput.length, 'blueprint')}`))
     } catch (err) {
+      failureMessage = displayedErrorMessage(useLocaleStore.getState().locale, err)
       if (!isCurrentProjectSession(projectSession)) return
-      const message = displayedErrorMessage(useLocaleStore.getState().locale, err)
-      addLog('error', text(`保存全部蓝图失败：${message}`, englishWithReason('Could not save all chapter blueprints.', message)))
-      toast.error(text(`保存失败\n\n${message}`, englishWithReason('Could not save the blueprints.', message, '\n\n')))
+      addLog('error', text(`保存全部蓝图失败：${failureMessage}`, englishWithReason(`Could not save all chapter blueprints.`, failureMessage)))
+      toast.error(text(`保存失败\n\n${failureMessage}`, englishWithReason('Could not save the blueprints.', failureMessage, '\n\n')))
       setSaveOutcome('failed')
       if (propagateFailure) throw err
     } finally {
+      if (failureMessage !== null && isCurrentProjectSession(projectSession)) reportSaveFailure(projectSession.projectPath, `blueprint:${projectKey}`, failureMessage)
+      else if (isCurrentProjectSession(projectSession)) useSaveStatusStore.getState().succeed(projectSession.projectPath)
+      else useSaveStatusStore.getState().release()
       if (isCurrentProjectSession(projectSession)) setSaving(false)
     }
   }
@@ -472,6 +484,11 @@ export function useChapterBlueprints({
       projectKey,
       save: () => exitSaveRef.current(true),
     })
+  }, [projectKey])
+  useEffect(() => {
+    const key = `blueprint:${projectKey}`
+    registerSaveRetry(projectKey, key, () => { void exitSaveRef.current(false) })
+    return () => unregisterSaveRetry(projectKey, key)
   }, [projectKey])
 
   /** 新建空章节 */

@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { BlueprintRepository } from '../../repositories/blueprint-repository'
 import { closeProjectDatabase, createProjectDatabase, getProjectDb, initProjectDatabase } from '../../database'
+import { CURRENT_DESKTOP_SCHEMA_VERSION } from '../../migrations/desktop-registry'
 import { createCanonicalProjectManifest } from '../../../src/shared/project-format'
 import {
   DEFAULT_PORTABLE_ARCHIVE_LIMITS,
@@ -67,22 +68,22 @@ afterEach(() => {
 })
 
 describe('portable v7 field policy', () => {
-  it('与实际当前registry双向精确匹配51表481字段，并包含两个lazy表', () => {
+  it('与实际当前registry双向精确匹配53表502字段，并包含两个lazy表', () => {
     const { database } = openCurrent()
-    expect(database.pragma('user_version', { simple: true })).toBe(7)
+    expect(database.pragma('user_version', { simple: true })).toBe(CURRENT_DESKTOP_SCHEMA_VERSION)
     const tables = database.prepare("SELECT name FROM pragma_table_list WHERE schema='main' AND type='table' AND name NOT LIKE 'sqlite_%'")
       .all() as Array<{ name: string }>
     const fieldCount = tables.reduce((count, table) => count
       + (database.prepare(`PRAGMA table_info("${table.name}")`).all() as unknown[]).length, 0)
-    expect({ tables: tables.length, fields: fieldCount }).toEqual({ tables: 51, fields: 481 })
-    expect(assertPortableSourceSchema(database)).toEqual({ tables: 51, fields: 481 })
+    expect({ tables: tables.length, fields: fieldCount }).toEqual({ tables: 53, fields: 502 })
+    expect(assertPortableSourceSchema(database)).toEqual({ tables: 53, fields: 502 })
     expect(getPortableFieldPolicy('review_cycle_merges', 'cycle_id').disposition).toBe('historical-nonreplayable')
     expect(getPortableFieldPolicy('review_cycle_merges', 'body').disposition).toBe('historical-nonreplayable')
     expect(listPortableFieldPolicyKeys()).toContain('blueprint_commit_operations.operation_id')
     expect(listPortableFieldPolicyKeys()).toContain('blueprint_character_sync_operations.operation_id')
   })
 
-  it('把签署S01基线35表356字段逐项投影，并精确增加M01-M05的15表/123字段及M06的1表/2字段', () => {
+  it('把签署S01基线35表356字段逐项投影，并精确增加M01-M05的15表/123字段、M06的1表/2字段及场景卡与快照的2表/21字段', () => {
     const signed = JSON.parse(fs.readFileSync(path.resolve(
       'docs/research/novel-quality-modernization/s01-storage-contract.json'), 'utf8')) as {
       fieldDispositions: Array<{ table: string; field: string; portableDisposition: string }>
@@ -104,13 +105,13 @@ describe('portable v7 field policy', () => {
     const baseline = new Set(signed.fieldDispositions.map(field => `${field.table}.${field.field}`))
     const baselineTables = new Set(signed.fieldDispositions.map(field => field.table))
     const added = listPortableFieldPolicyKeys().filter(key => !baseline.has(key))
-    expect(added).toHaveLength(126)
+    expect(added).toHaveLength(147)
     expect(getPortableFieldPolicy('characters', 'avatar')).toMatchObject({
       origin: 'registered-donor', disposition: 'exclude-machine-authority', signedDisposition: null,
     })
     const delta = added.filter(key => getPortableFieldPolicy(...key.split('.') as [string, string]).origin === 'm01-m05-delta')
-    expect(delta).toHaveLength(123)
-    expect(new Set(delta.map(key => key.split('.')[0]).filter(table => !baselineTables.has(table!))).size).toBe(15)
+    expect(delta).toHaveLength(144)
+    expect(new Set(delta.map(key => key.split('.')[0]).filter(table => !baselineTables.has(table!))).size).toBe(17)
     expect(delta.filter(key => key.startsWith('characters.')).sort()).toEqual([
       'characters.character_id', 'characters.identity_revision', 'characters.legacy_key',
       'characters.retired', 'characters.static_provenance',
@@ -144,7 +145,7 @@ describe('portable v7 field policy', () => {
         if (mode === 'extra-table') mutate.exec('CREATE TABLE future_portable_data(id TEXT)')
         if (mode === 'extra-field') mutate.exec('ALTER TABLE contents ADD COLUMN future_payload TEXT')
         if (mode === 'unregistered-avatar') mutate.exec('ALTER TABLE characters ADD COLUMN avatar TEXT')
-        if (mode === 'higher-version') mutate.pragma('user_version = 8')
+        if (mode === 'higher-version') mutate.pragma(`user_version = ${CURRENT_DESKTOP_SCHEMA_VERSION + 1}`)
         if (mode === 'lower-version') mutate.pragma('user_version = 5')
         if (mode === 'legacy-v6') {
           mutate.exec('DROP TABLE review_cycle_merges')
@@ -171,7 +172,7 @@ describe('portable v7 field policy', () => {
         .all() as Array<{ name: string }>
       const fields = tables.reduce((count, table) => count
         + (database.prepare(`PRAGMA table_info("${table.name}")`).all() as unknown[]).length, 0)
-      expect({ tables: tables.length, fields }).toEqual({ tables: 51, fields: 481 })
+      expect({ tables: tables.length, fields }).toEqual({ tables: 53, fields: 502 })
       expect(() => assertPortableSourceSchema(database)).toThrow('PORTABLE_SCHEMA_UNSUPPORTED')
     } finally { database.close() }
     expect(fs.readFileSync(project.databasePath)).toEqual(before)

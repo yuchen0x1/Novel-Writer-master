@@ -22,6 +22,7 @@ export const zhCN = {
   'error.projectOpenGrantRequired': '这个项目文件夹的访问授权已失效，请重新选择项目目录。',
   'error.projectRecentIdentityChanged': '最近项目里记录的位置现在是另一个项目，请重新选择项目目录。',
   'error.projectMigrationNotQualified': '项目格式转换尚未具备安全迁移条件，已保留原项目且未写入。请通过“导入旧项目”创建完整副本。',
+  'error.draftSnapshotMigrationTransactionRequired': '草稿快照数据库迁移未在安全事务中执行，已拒绝继续。请重试；如果反复出现，请反馈项目版本和错误时间。',
   'error.projectSchemaUnrecognized': '无法识别项目格式，已拒绝打开。请核查创建该项目的软件和版本。',
   'error.projectSchemaCorrupt': '项目数据结构已损坏，已拒绝打开。请保留原件并从备份恢复。',
   'error.projectSchemaNewer': '该项目由更新版本创建，已拒绝打开。请升级软件后再打开。',

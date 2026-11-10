@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => ({
 vi.mock('electron', () => ({
   app: { getLocale: () => 'zh-CN' },
   nativeImage: { createFromBuffer: vi.fn() },
+  // registerIPCHandlers 会注册全部控制器，需要完整的 ipcMain 表面。
+  ipcMain: { handle: vi.fn(), on: vi.fn(), removeHandler: vi.fn() },
 }))
 vi.mock('../services/app-data-locator', () => ({
   assertGlobalDataReady: vi.fn(),

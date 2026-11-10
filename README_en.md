@@ -32,6 +32,14 @@
   <img src="docs/assets/readme/v130-hero-en.webp" alt="Pagekin 1.3.0: product summary on the left and real screenshots of the library, chapter view, blueprint, run sheet, architecture, and cast on the right" width="100%" />
 </p>
 
+> ## What's new in 1.9.0
+>
+> - Draft auto snapshots: every save and generation records a snapshot (up to 30 per draft). The version menu lists them by time, word count, and source, and any snapshot can be restored as a new draft without touching existing versions.
+> - Top bar save status: saving, saved (with time), unsaved, and save failed are clearly distinguished, with one-click retry for a failed save. Status is owned by the book, so switching books never shows stale state.
+> - Fixed schema-8 projects being unable to upgrade in place to schema 9; merging a review revision into a draft now records a snapshot too.
+>
+> See the [1.9.0 release notes](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.9.0) for details.
+>
 > ## What's new in 1.7.1
 >
 > - Scene cards are now available in each chapter blueprint with persisted location, time, participants, goals, conflicts, and transitions.

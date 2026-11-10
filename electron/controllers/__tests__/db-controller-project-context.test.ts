@@ -20,6 +20,8 @@ const mocks = vi.hoisted(() => ({
   blueprintCompleteCharacterSync: vi.fn(),
   blueprintDelete: vi.fn(),
   blueprintClearAll: vi.fn(),
+  sceneCardDeleteByChapter: vi.fn(),
+  sceneCardClearAll: vi.fn(),
   characterGetAll: vi.fn(() => []),
   characterSaveAll: vi.fn(),
   characterDelete: vi.fn(),
@@ -61,6 +63,8 @@ const mocks = vi.hoisted(() => ({
   })),
   draftGetMeta: vi.fn(),
   draftListAll: vi.fn((): Array<Record<string, unknown>> => []),
+  draftSnapshotList: vi.fn((): Array<Record<string, unknown>> => []),
+  draftSnapshotGet: vi.fn((): (Record<string, unknown> & { content: string }) | null => null),
   draftUpdateContent: vi.fn(),
   draftDelete: vi.fn(),
   postProcessCreateRun: vi.fn(() => 'run-1'),
@@ -147,6 +151,13 @@ vi.mock('../../repositories/blueprint-repository', () => ({
   },
 }))
 
+vi.mock('../../repositories/scene-card-repository', () => ({
+  SceneCardRepository: {
+    deleteByChapter: mocks.sceneCardDeleteByChapter,
+    clearAll: mocks.sceneCardClearAll,
+  },
+}))
+
 vi.mock('../../repositories/post-process-repository', () => ({
   PostProcessRepository: {
     createRun: mocks.postProcessCreateRun,
@@ -181,6 +192,14 @@ vi.mock('../../repositories/draft-repository', () => ({
     updateStatus: vi.fn(),
     updateContent: mocks.draftUpdateContent,
     delete: mocks.draftDelete,
+  },
+}))
+
+vi.mock('../../repositories/draft-snapshot-repository', () => ({
+  DraftSnapshotRepository: {
+    listByDraft: mocks.draftSnapshotList,
+    get: mocks.draftSnapshotGet,
+    record: vi.fn(),
   },
 }))
 
@@ -401,6 +420,21 @@ describe('database controller project context guard', () => {
       'C:/projects/A',
     )).resolves.toMatchObject({ success: false })
     expect(mocks.projectCoreCommitSynopsis).not.toHaveBeenCalled()
+  })
+
+  it('lists and reads draft snapshots only while their owning project session is active', async () => {
+    const snapshot = { snapshotId: 8, draftId: 4, chapterNumber: 1, source: 'save', wordCount: 12, contentHash: 'a'.repeat(64), createdAt: '2026-11-09 10:00:00' }
+    mocks.draftSnapshotList.mockReturnValueOnce([snapshot])
+    mocks.draftSnapshotGet.mockReturnValueOnce({ ...snapshot, content: 'snapshot body' })
+
+    await expect(handler('db:draft-snapshot-list')({}, 4, 'C:/projects/A')).resolves.toEqual([snapshot])
+    await expect(handler('db:draft-snapshot-get')({}, 8, 'C:/projects/A')).resolves.toMatchObject({ content: 'snapshot body' })
+
+    mocks.currentProjectPath = 'C:/projects/B'
+    await expect(handler('db:draft-snapshot-list')({}, 4, 'C:/projects/A')).rejects.toThrow()
+    await expect(handler('db:draft-snapshot-get')({}, 8, 'C:/projects/A')).rejects.toThrow()
+    expect(mocks.draftSnapshotList).toHaveBeenCalledTimes(1)
+    expect(mocks.draftSnapshotGet).toHaveBeenCalledTimes(1)
   })
 
   it.each(['zh-CN', 'en-US'] as const)(

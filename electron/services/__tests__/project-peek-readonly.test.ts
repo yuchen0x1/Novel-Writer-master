@@ -5,7 +5,7 @@ import path from 'node:path'
 import { createRequire } from 'node:module'
 import { afterEach, describe, expect, it } from 'vitest'
 import { initializeLegacyBaselineSchema } from '../../migrations/baseline-schema'
-import { getDesktopMigrationRegistry } from '../../migrations/desktop-registry'
+import { CURRENT_DESKTOP_SCHEMA_VERSION, getDesktopMigrationRegistry } from '../../migrations/desktop-registry'
 import { migrateSchema } from '../../migrations/runner'
 import { SqliteSchemaAdapter } from '../../migrations/sqlite-schema-adapter'
 import { ProjectPeekService } from '../project-peek'
@@ -45,8 +45,8 @@ function fixture(options: { schemaVersion?: number; journalMode?: 'delete' | 'wa
   handles.push(database)
   database.pragma('foreign_keys = ON')
   initializeLegacyBaselineSchema(database)
-  migrateSchema(new SqliteSchemaAdapter(database), getDesktopMigrationRegistry(), options.schemaVersion ?? 7)
-  if ((options.schemaVersion ?? 7) === 7) seedCore(database)
+  migrateSchema(new SqliteSchemaAdapter(database), getDesktopMigrationRegistry(), options.schemaVersion ?? CURRENT_DESKTOP_SCHEMA_VERSION)
+  if ((options.schemaVersion ?? CURRENT_DESKTOP_SCHEMA_VERSION) === CURRENT_DESKTOP_SCHEMA_VERSION) seedCore(database)
   if (options.journalMode === 'wal') database.pragma('journal_mode = WAL')
   return { root, storage, scratch, projectId, databasePath, database }
 }

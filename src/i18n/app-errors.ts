@@ -37,6 +37,7 @@ const ERROR_KEYS = {
   PROJECT_MIGRATION_NOT_QUALIFIED: 'error.projectMigrationNotQualified',
   PROJECT_MIGRATION_DUAL_ROOT: 'error.projectMigrationNotQualified',
   PROJECT_MIGRATION_RECOVERY_REQUIRED: 'error.projectMigrationNotQualified',
+  DRAFT_SNAPSHOT_MIGRATION_TRANSACTION_REQUIRED: 'error.draftSnapshotMigrationTransactionRequired',
   UNRECOGNIZED_SCHEMA: 'error.projectSchemaUnrecognized',
   CORRUPT_SCHEMA: 'error.projectSchemaCorrupt',
   NEWER_SCHEMA_READ_ONLY: 'error.projectSchemaNewer',

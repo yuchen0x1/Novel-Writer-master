@@ -1,14 +1,19 @@
 import { useEffect, useState, type KeyboardEvent } from 'react'
 import { ChevronDown } from 'lucide-react'
 import type { DraftMeta } from '../../../services/draft-index'
+import { displayedErrorMessage } from '../../../i18n/app-errors'
 import { sameProjectSessionContext } from '../../../shared/project-session-context'
+import { countDraftUnits } from '../../../shared/draft-units'
+import type { DraftSnapshotMeta } from '../../../shared/draft-snapshot'
 import { sqliteTime } from '../../../shared/sqlite-time'
 import { useDraftStore } from '../../../stores/draft-store'
 import { useEditorStore, type EditorTab } from '../../../stores/editor-store'
 import { useLocaleStore } from '../../../stores/locale-store'
 import { useProjectStore } from '../../../stores/project-store'
-import { captureProjectSession } from '../../project-session-gate'
+import { captureProjectSession, isProjectSessionCurrent, isProjectSessionPath } from '../../project-session-gate'
+import { ipc } from '../../../services/ipc-client'
 import { Button } from '../../ui/Button'
+import { toast } from '../../ui/Toast'
 import { useAnchoredLayer } from '../../ui/use-anchored-layer'
 import { InkDialog } from '../InkDialog'
 import { openDraftInChapterView, swapChapterTab } from './chapter-tab-routing'
@@ -43,6 +48,9 @@ export default function VersionSwitcher({ tab, current, label, title, onSave }: 
   const { open, layerId, anchorRef, triggerRef, layerRef, renderLayer, toggle, close } = useAnchoredLayer('end')
   const [showArchived, setShowArchived] = useState(current.status === 'archived')
   const [pending, setPending] = useState<DraftMeta | null>(null)
+  const [snapshots, setSnapshots] = useState<DraftSnapshotMeta[] | null>(null)
+  const [snapshotsFailed, setSnapshotsFailed] = useState(false)
+  const [restoring, setRestoring] = useState<DraftSnapshotMeta | null>(null)
   const [busy, setBusy] = useState(false)
 
   const session = captureProjectSession(project)
@@ -52,6 +60,33 @@ export default function VersionSwitcher({ tab, current, label, title, onSave }: 
   const archived = sorted.filter(draft => draft.status === 'archived')
   const shown = showArchived ? [...active, ...archived] : active
 
+  // 菜单打开时读这一稿的自动快照；换稿或重开菜单都按当前稿重读。
+  // 读取失败单独标记：快照是附加信息，失败不该表现为「这一稿没有快照」。
+  useEffect(() => {
+    if (!open) return
+    let alive = true
+    const projectSession = captureProjectSession(useProjectStore.getState().currentProject)
+    if (!projectSession || !isProjectSessionPath(projectSession, tab.projectKey)) {
+      queueMicrotask(() => {
+        if (!alive) return
+        setSnapshots([])
+        setSnapshotsFailed(false)
+      })
+      return () => { alive = false }
+    }
+    void ipc.invokeWithProjectSession(projectSession, 'db:draft-snapshot-list', current.id, projectSession.projectPath)
+      .then(list => {
+        if (!alive || !isProjectSessionCurrent(projectSession)) return
+        setSnapshots(list)
+        setSnapshotsFailed(false)
+      })
+      .catch(() => {
+        if (!alive) return
+        setSnapshots([])
+        setSnapshotsFailed(true)
+      })
+    return () => { alive = false }
+  }, [open, current.id, tab.projectKey])
   useEffect(() => {
     if (open) layerRef.current?.querySelector<HTMLButtonElement>('[aria-checked="true"]')?.focus()
   }, [open, layerRef])
@@ -106,6 +141,49 @@ export default function VersionSwitcher({ tab, current, label, title, onSave }: 
     }
   }
 
+  /** 用快照内容新建一稿再切过去；有未保存修改时先保存，恢复不覆盖任何已有稿。 */
+  const restoreSnapshot = async () => {
+    const snapshot = restoring
+    if (!snapshot) return
+    const projectSession = captureProjectSession(useProjectStore.getState().currentProject)
+    if (!projectSession || !isProjectSessionPath(projectSession, tab.projectKey)) return
+    setBusy(true)
+    try {
+      if (useEditorStore.getState().tabs.find(candidate => candidate.id === tab.id)?.dirty) {
+        try { await onSave() } catch { return }
+        if (useEditorStore.getState().tabs.find(candidate => candidate.id === tab.id)?.dirty) return
+      }
+      const full = await ipc.invokeWithProjectSession(projectSession, 'db:draft-snapshot-get', snapshot.snapshotId, projectSession.projectPath)
+      if (!isProjectSessionCurrent(projectSession)) return
+      if (!full) throw new Error(text('这份快照已不存在', 'This snapshot no longer exists'))
+      // 版本号由 db:draft-create 在事务内分配，这里不再预读，避免版本被并发占走后提示错版本。
+      const created = await ipc.invokeWithProjectSession(projectSession, 'db:draft-create', {
+        chapterNumber: current.chapterNumber,
+        source: 'rewrite',
+        content: full.content,
+        wordCount: countDraftUnits(full.content),
+      }, projectSession.projectPath)
+      if (!isProjectSessionCurrent(projectSession)) return
+      if (!created.success) throw new Error(created.error || text('没有新建快照草稿', 'The snapshot draft was not created'))
+      await useDraftStore.getState().loadAllDrafts(projectSession.projectPath, projectSession)
+      if (!isProjectSessionCurrent(projectSession)) return
+      const fresh = useDraftStore.getState().draftsByChapter[current.chapterNumber]?.find(draft => draft.id === created.id)
+      setRestoring(null)
+      if (fresh) await swapTo(fresh)
+      toast.success(fresh
+        ? text(`已从快照新建草稿 v${fresh.version}，原有各稿都保留`, `Snapshot restored as draft v${fresh.version}. Every earlier version is kept.`)
+        : text('已从快照新建草稿，原有各稿都保留', 'Snapshot restored as a new draft. Every earlier version is kept.'))
+    } catch (error) {
+      const reason = displayedErrorMessage(locale, error)
+      toast.error(text(`恢复快照失败：${reason}`, `Could not restore the snapshot: ${reason}`))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const snapshotTime = (snapshot: DraftSnapshotMeta) =>
+    sqliteTime(snapshot.createdAt).toLocaleString(locale, { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+
   const row = (draft: DraftMeta) => (
     <button
       key={draft.id}
@@ -158,6 +236,41 @@ export default function VersionSwitcher({ tab, current, label, title, onSave }: 
               </button>
             </>
           )}
+          {snapshots !== null && snapshots.length > 0 && (
+            <>
+              <div role="separator" className="pi-menu-sep" />
+              <div className="pi-menu-label">{text('本稿自动快照', 'Auto snapshots of this draft')}</div>
+              {snapshots.map(snapshot => (
+                <button
+                  key={snapshot.snapshotId}
+                  type="button"
+                  role="menuitem"
+                  className="pi-menu-item stage-ch-snapshot-item"
+                  tabIndex={-1}
+                  onClick={() => { close(true); setRestoring(snapshot) }}
+                >
+                  <span>{snapshotTime(snapshot)}</span>
+                  <small>
+                    {text(
+                      `${snapshot.wordCount.toLocaleString(locale)} 字`,
+                      `${snapshot.wordCount.toLocaleString(locale)} ${pluralEn(snapshot.wordCount, 'word')}`,
+                    )} · {snapshot.source === 'create' ? text('生成时', 'On generation') : text('保存时', 'On save')}
+                  </small>
+                </button>
+              ))}
+            </>
+          )}
+          {open && snapshots !== null && snapshots.length === 0 && (
+            <>
+              <div role="separator" className="pi-menu-sep" />
+              <div className="pi-menu-label">{text('本稿自动快照', 'Auto snapshots of this draft')}</div>
+              <div className="pi-menu-note">
+                {snapshotsFailed
+                  ? text('快照读取失败，这次不做快照恢复。', 'Snapshots could not be read, so they are not offered this time.')
+                  : text('这一稿还没有快照；保存或生成后会出现。', 'No snapshots for this draft yet. They appear after a save or a generation.')}
+              </div>
+            </>
+          )}
         </div>,
       )}
       <InkDialog
@@ -173,6 +286,23 @@ export default function VersionSwitcher({ tab, current, label, title, onSave }: 
             <Button variant="secondary" disabled={busy} onClick={() => setPending(null)}>{text('继续编辑', 'Keep editing')}</Button>
             <Button variant="danger" disabled={busy} onClick={() => void settle(false)}>{text('放弃修改并切换', 'Discard and switch')}</Button>
             <Button variant="primary" disabled={busy} onClick={() => void settle(true)}>{text('保存并切换', 'Save and switch')}</Button>
+          </>
+        )}
+      />
+      <InkDialog
+        open={restoring !== null}
+        onOpenChange={next => { if (!next && !busy) setRestoring(null) }}
+        title={text('从快照恢复为新草稿？', 'Restore snapshot as a new draft?')}
+        description={restoring
+          ? text(
+            `用 ${snapshotTime(restoring)} 的快照内容新建一稿；当前各稿都保留，不会被覆盖。`,
+            `Create a new draft from the snapshot taken at ${snapshotTime(restoring)}. Every existing version is kept and nothing is overwritten.`,
+          )
+          : ''}
+        footer={(
+          <>
+            <Button variant="secondary" disabled={busy} onClick={() => setRestoring(null)}>{text('取消', 'Cancel')}</Button>
+            <Button variant="primary" disabled={busy} onClick={() => void restoreSnapshot()}>{text('恢复为新草稿', 'Restore as new draft')}</Button>
           </>
         )}
       />

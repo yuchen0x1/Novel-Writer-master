@@ -30,6 +30,8 @@ import { commitAuthorCharacterRoster } from '../services/character-roster-author
 import { CharacterRosterRepository } from '../repositories/character-roster-repository'
 import type { CharacterRosterCommitRequest } from '../../src/shared/character-roster'
 import { DraftRepository } from '../repositories/draft-repository'
+import { DraftSnapshotRepository } from '../repositories/draft-snapshot-repository'
+import { DRAFT_SNAPSHOT_SHOWN } from '../../src/shared/draft-snapshot'
 import { SceneCardRepository } from '../repositories/scene-card-repository'
 import type { DraftSourceDependency } from '../../src/shared/draft-source-dependency'
 import { FinalizedDraftImportRepository } from '../repositories/finalized-draft-import-repository'
@@ -151,6 +153,15 @@ function importChannelLocale(args: unknown[]): Locale {
     return importRunLocale(request.runId, request.locale)
   }
   return importRunLocale(first)
+}
+
+/** 快照是保存链路的尽力而为步骤：正文已落盘，快照失败只告警，不把成功的保存翻成失败。 */
+function recordDraftSnapshotBestEffort(params: { draftId: number; chapterNumber: number; source: 'create' | 'save'; content: string; wordCount: number }): void {
+  try {
+    DraftSnapshotRepository.record(params)
+  } catch (error) {
+    console.warn('[db] 草稿快照记录失败（正文已保存）:', error instanceof Error ? error.name : 'unknown')
+  }
 }
 
 function registerProjectDatabaseHandler(channel: string, handler: ProjectDatabaseHandler, onProjectSaved?: ProjectSavedCallback): void {
@@ -798,6 +809,10 @@ export function registerDatabaseController(options: DatabaseControllerOptions = 
     try {
       assertRequiredExpectedProjectPath(getCurrentProjectPath(), expectedProjectPath)
       const id = DraftRepository.create(params)
+      recordDraftSnapshotBestEffort({
+        draftId: id, chapterNumber: params.chapterNumber, source: 'create',
+        content: params.content, wordCount: params.wordCount,
+      })
       return { success: true, id }
     } catch (err) {
       return { success: false, error: String(err) }
@@ -827,6 +842,16 @@ export function registerDatabaseController(options: DatabaseControllerOptions = 
   ipcMain.handle('db:draft-get-latest', async (_event, chapterNumber: number, expectedProjectPath: string) => {
     assertRequiredExpectedProjectPath(getCurrentProjectPath(), expectedProjectPath)
     return DraftRepository.getLatestByChapter(chapterNumber)
+  })
+
+  ipcMain.handle('db:draft-snapshot-list', async (_event, draftId: number, expectedProjectPath: string) => {
+    assertRequiredExpectedProjectPath(getCurrentProjectPath(), expectedProjectPath)
+    return DraftSnapshotRepository.listByDraft(draftId, DRAFT_SNAPSHOT_SHOWN)
+  })
+
+  ipcMain.handle('db:draft-snapshot-get', async (_event, snapshotId: number, expectedProjectPath: string) => {
+    assertRequiredExpectedProjectPath(getCurrentProjectPath(), expectedProjectPath)
+    return DraftSnapshotRepository.get(snapshotId)
   })
 
   ipcMain.handle('db:draft-get-finalized', async (_event, chapterNumber: number, expectedProjectPath: string) => {
@@ -987,6 +1012,9 @@ export function registerDatabaseController(options: DatabaseControllerOptions = 
         throw new Error('DRAFT_FINALIZED_READ_ONLY')
       }
       DraftRepository.updateContent(id, content, wordCount)
+      recordDraftSnapshotBestEffort({
+        draftId: id, chapterNumber: draft.chapterNumber, source: 'save', content, wordCount,
+      })
       return { success: true }
     } catch (err) {
       return { success: false, error: String(err) }
@@ -1149,7 +1177,15 @@ export function registerDatabaseController(options: DatabaseControllerOptions = 
   ipcMain.handle('db:revision-merge', async (_event, request: Parameters<typeof RevisionRepository.mergeIntoDraft>[0], expectedProjectPath: string) => {
     try {
       assertRequiredExpectedProjectPath(getCurrentProjectPath(), expectedProjectPath)
-      return { success: true, receipt: RevisionRepository.mergeIntoDraft(request) }
+      const receipt = RevisionRepository.mergeIntoDraft(request)
+      // 合并会直接改写正文，是正文的实质变更点，和保存一样留快照（幂等重复合并不重复记）。
+      if (!receipt.idempotent) {
+        recordDraftSnapshotBestEffort({
+          draftId: request.targetDraftId, chapterNumber: receipt.chapterNumber, source: 'save',
+          content: request.mergedContent, wordCount: request.wordCount,
+        })
+      }
+      return { success: true, receipt }
     } catch (err) {
       return { success: false, error: String(err) }
     }

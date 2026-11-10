@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { create } from 'zustand'
 import { useProjectStore } from '../../stores/project-store'
 import { registerEditorExitSaveHandler, useEditorStore } from '../../stores/editor-store'
+import { reportSaveFailure, registerSaveRetry, unregisterSaveRetry, useSaveStatusStore } from '../../stores/save-status-store'
 import { useLLMStore } from '../../stores/llm-store'
 import { useWorkflowStore } from '../../stores/workflow-store'
 import { useLocaleStore } from '../../stores/locale-store'
@@ -70,6 +71,7 @@ export function useNovelConfigForm(projectKey: string) {
     if (!projectSession || !isProjectSessionPath(projectSession, projectKey)) return
     updateNovelConfig({ [key]: value }, projectSession)
     setSaveOutcome('idle')
+    useSaveStatusStore.getState().clearFailure()
     setGenerateError(error => (error?.field === key ? null : error))
   }
 
@@ -79,6 +81,8 @@ export function useNovelConfigForm(projectKey: string) {
     if (!config || useSavesInFlight.getState()[sessionKey] || !projectSession || !isProjectSessionPath(projectSession, projectKey)) return false
     useSavesInFlight.setState({ [sessionKey]: true })
     setSaveOutcome('idle')
+    useSaveStatusStore.getState().begin(projectSession.projectPath)
+    let failureMessage: string | null = null
     try {
       const saved = await saveProject(projectSession)
       if (!isProjectSessionCurrent(projectSession)) return false
@@ -90,21 +94,30 @@ export function useNovelConfigForm(projectKey: string) {
       setSaveOutcome(stillDirty ? 'idle' : 'saved')
       return true
     } catch (error) {
+      const reason = displayedErrorMessage(useLocaleStore.getState().locale, error)
+      failureMessage = reason
       if (isProjectSessionCurrent(projectSession)) {
         setSaveOutcome('failed')
         console.error('[NovelConfigEditor] 保存失败:', error)
-        const reason = displayedErrorMessage(useLocaleStore.getState().locale, error)
         addLog('error', text(`保存失败：${reason}`, `Save failed: ${reason}`))
       }
       if (propagateFailure) throw error
       return false
     } finally {
+      if (failureMessage !== null && isProjectSessionCurrent(projectSession)) reportSaveFailure(projectSession.projectPath, `config:${projectKey}`, failureMessage)
+      else if (isProjectSessionCurrent(projectSession)) useSaveStatusStore.getState().succeed(projectSession.projectPath)
+      else useSaveStatusStore.getState().release()
       useSavesInFlight.setState({ [sessionKey]: false })
     }
   }
   useEffect(() => {
     exitSaveRef.current = save
   })
+  useEffect(() => {
+    const key = `config:${projectKey}`
+    registerSaveRetry(projectKey, key, () => { void exitSaveRef.current(false) })
+    return () => unregisterSaveRetry(projectKey, key)
+  }, [projectKey])
 
   const openGenerateDialog = () => {
     const projectSession = captureProjectSession(currentProject)
