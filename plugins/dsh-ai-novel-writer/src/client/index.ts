@@ -70,6 +70,28 @@ export { observeNovelContextSources } from './context-observer.ts'
 export type { NovelContextSelectionSources } from './context-observer.ts'
 export { observeNovelV2Workspace } from './workbench-v2-observer.ts'
 export type { NovelV2WorkspaceSelectionSources } from './workbench-v2-observer.ts'
+
+interface ConnectionPresenceSource {
+  getSnapshot(): unknown
+  subscribe(listener: () => void): () => void
+}
+
+/**
+ * Read the active Host presence source across the Connection API transition.
+ *
+ * DSH 0.1.2 exposes `generation`; older Harness fixtures exposed
+ * `hostDescription`. Keeping the fallback here lets embedded consumers migrate
+ * independently while production uses the current API.
+ */
+function connectionPresence(connection: ConnectionHandle): ConnectionPresenceSource {
+  const candidate = connection as unknown as {
+    generation?: ConnectionPresenceSource
+    hostDescription?: ConnectionPresenceSource
+  }
+  const source = candidate.generation ?? candidate.hostDescription
+  if (source === undefined) throw new Error('AI novel context requires the Connection presence source')
+  return source
+}
 export {
   PresetSetupController,
   PresetSetupDisconnectedError,
@@ -683,6 +705,7 @@ export function createNovelV2WorkbenchPort(
  */
 export function apply(ctx: ClientContext): void {
   const connection = ctx.get('connection') as unknown as ConnectionHandle
+  const presence = connectionPresence(connection)
   const controller = new PresetSetupController(
     createPresetSetupPort(connection.rpc),
     error => { ctx.logger.warn(error) },
@@ -726,15 +749,15 @@ export function apply(ctx: ClientContext): void {
       refreshScheduled = true
       queueMicrotask(() => {
         refreshScheduled = false
-        if (stopped || connection.hostDescription.getSnapshot() === undefined) return
+        if (stopped || presence.getSnapshot() === undefined) return
         if (controller.getSnapshot().status !== 'idle') void controller.load()
         if (workbenchController.getSnapshot().open) void workbenchController.refresh()
         else void workbenchController.inspect()
         if (v2WorkbenchController.getSnapshot().open) void v2WorkbenchController.refresh()
       })
     }
-    const stopDescription = connection.hostDescription.subscribe(() => {
-      if (connection.hostDescription.getSnapshot() === undefined) {
+    const stopDescription = presence.subscribe(() => {
+      if (presence.getSnapshot() === undefined) {
         controller.disconnected()
         workbenchController.disconnected()
         v2WorkbenchController.disconnected()

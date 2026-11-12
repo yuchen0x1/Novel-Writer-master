@@ -34,13 +34,12 @@ describe('preset setup Host RPC', () => {
     expect(settled).toBe(true)
   })
 
-  it('registers one loopback channel, dispatches status and install, and disposes it', async () => {
+  it('registers one authenticated channel, dispatches status and install, and disposes it', async () => {
     const presetRoot = await makeTestWorkspace('preset-host-')
     let handler: ConnectionRpcHandler | undefined
     const dispose = vi.fn(async () => {})
-    const handle = vi.fn((channel: string, candidate: ConnectionRpcHandler, options: { authority: string }) => {
+    const handle = vi.fn((channel: string, candidate: ConnectionRpcHandler) => {
       expect(channel).toBe('/ai-novel')
-      expect(options).toEqual({ authority: 'loopback' })
       handler = candidate
       return dispose
     })

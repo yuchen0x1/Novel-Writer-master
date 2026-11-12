@@ -53,8 +53,8 @@ host.baseUrl = pathToFileURL(root).href + '/'
 let setupRegistered = false
 host.provide('connection', {
   rpc: {
-    handle(channel, _handler, options) {
-      if (channel !== '/ai-novel' || options.authority !== 'loopback') {
+    handle(channel, handler) {
+      if (channel !== '/ai-novel' || typeof handler !== 'function') {
         throw new Error('The emitted Host entry registered an unexpected setup channel')
       }
       setupRegistered = true

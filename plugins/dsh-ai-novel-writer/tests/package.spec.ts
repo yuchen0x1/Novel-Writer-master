@@ -72,7 +72,7 @@ describe('installable AI novel bundle', () => {
       const entry = [...ctx.loader.entries()].find(candidate => candidate.options.id === 'ai-novel-writer')
       expect(entry?.options.name).toBe('@ethanyoq/dsh-ai-novel-writer')
       expect(entry?.fiber).toBeDefined()
-      expect(handle).toHaveBeenCalledWith('/ai-novel', expect.any(Function), { authority: 'loopback' })
+      expect(handle).toHaveBeenCalledWith('/ai-novel', expect.any(Function))
     } finally {
       await ctx.fiber.dispose()
     }

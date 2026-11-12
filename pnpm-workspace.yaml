@@ -5,6 +5,14 @@ allowBuilds:
   esbuild: true
   '@lancedb/lancedb-win32-x64-msvc': true
 
+minimumReleaseAgeExclude:
+  - fast-uri@3.1.8 || 3.1.9
+  - electron@42.11.1 || 42.11.3 || 42.11.6 || 42.11.9 || 42.11.16
+  - zod@4.6.6
+  - undici@6.29.1 || 7.30.1
+  - glob@14.0.2
+  - minimatch@11.0.1
+
 overrides:
   '@babel/core@7.29.0': 7.29.7
   '@xmldom/xmldom@0.8.12': 0.8.15
@@ -15,6 +23,12 @@ overrides:
   'browserslist@4.28.2': 4.28.7
   'electron-updater@6.8.9>js-yaml': 4.3.2
   'js-yaml@4.1.1': 4.3.2
+  'undici@6.28.1': 6.29.1
+  'undici@7.29.1': 7.30.1
+  'fast-uri@3.1.7': 3.1.9
+  'zod@4.3.6': 4.6.7
+  'glob@13.0.6': 14.0.2
+  'minimatch@>=7': 11.0.1
   'source-map-js@1.2.1': 1.2.2
   'tar@7.5.13': 7.5.21
   'ws@8.20.0': 8.21.3
