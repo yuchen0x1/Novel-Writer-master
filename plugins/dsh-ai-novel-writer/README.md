@@ -98,7 +98,7 @@ If V1 native approval is disabled, the agent cannot save the change. Accepting a
 
 For V2, inspect the Proposal inbox and its item status. A model response alone does not prove that an application succeeded. Read back the project state after application.
 
-Use [Issues](https://github.com/yuchen0x1/Pagekin/issues) for reproducible errors and [Discussions](https://github.com/yuchen0x1/Pagekin/discussions) for usage questions. Include the plugin version and selected Preset. Remove credentials and private prose before posting.
+Use [Issues](https://github.com/yuchen0x1/Novel-Writer-master/issues) for reproducible errors and [Discussions](https://github.com/yuchen0x1/Novel-Writer-master/discussions) for usage questions. Include the plugin version and selected Preset. Remove credentials and private prose before posting.
 
 ## Configure the bundle
 

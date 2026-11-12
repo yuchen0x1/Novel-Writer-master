@@ -4,13 +4,13 @@
   "description": "A local-first novel project plugin for DeepSeek Harness",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yuchen0x1/Pagekin.git",
+    "url": "git+https://github.com/yuchen0x1/Novel-Writer-master.git",
     "directory": "plugins/dsh-ai-novel-writer"
   },
   "bugs": {
-    "url": "https://github.com/yuchen0x1/Pagekin/issues"
+    "url": "https://github.com/yuchen0x1/Novel-Writer-master/issues"
   },
-  "homepage": "https://github.com/yuchen0x1/Pagekin/tree/master/plugins/dsh-ai-novel-writer#readme",
+  "homepage": "https://github.com/yuchen0x1/Novel-Writer-master/tree/main/plugins/dsh-ai-novel-writer#readme",
   "publishConfig": {
     "access": "public"
   },

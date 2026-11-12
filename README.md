@@ -19,15 +19,15 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/yuchen0x1/Pagekin/releases/latest"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD-Windows%20%7C%20macOS-2b4c8c?style=for-the-badge" alt="下载 Windows 与 macOS 安装包" /></a><br />
+  <a href="https://github.com/yuchen0x1/Novel-Writer-master/releases/latest"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD-Windows%20%7C%20macOS-2b4c8c?style=for-the-badge" alt="下载 Windows 与 macOS 安装包" /></a><br />
   <a href="https://www.orz.md/ai-novel-writer/demo/">观看 32 秒中文实录：选段续写与改成对话</a><br />
   <sub>1.3.0 实录，模型等待段已剪短，AI 配音；32 秒是片长，不是生成耗时。</sub>
 </p>
 
 <p align="center">
-  <a href="https://github.com/yuchen0x1/Pagekin/releases"><img src="https://badgen.net/github/tag/yuchen0x1/Pagekin?label=release" alt="Release" /></a>
-  <a href="https://github.com/yuchen0x1/Pagekin/blob/main/LICENSE"><img src="https://badgen.net/badge/license/GPL-3.0/blue" alt="GPL-3.0 License" /></a>
-  <a href="https://github.com/yuchen0x1/Pagekin/stargazers"><img src="https://badgen.net/github/stars/yuchen0x1/Pagekin" alt="GitHub stars" /></a>
+  <a href="https://github.com/yuchen0x1/Novel-Writer-master/releases"><img src="https://badgen.net/github/tag/yuchen0x1/Novel-Writer-master?label=release" alt="Release" /></a>
+  <a href="https://github.com/yuchen0x1/Novel-Writer-master/blob/main/LICENSE"><img src="https://badgen.net/badge/license/GPL-3.0/blue" alt="GPL-3.0 License" /></a>
+  <a href="https://github.com/yuchen0x1/Novel-Writer-master/stargazers"><img src="https://badgen.net/github/stars/yuchen0x1/Novel-Writer-master" alt="GitHub stars" /></a>
 </p>
 
 <p align="center">
@@ -38,7 +38,7 @@
 
 - **Novel Writer master 1.10.0**：统一更新应用名称与 Windows/macOS 图标，保留旧安装的数据目录；模型 API Key 使用系统安全密钥库加密保存；保存状态与重试按当前作品会话隔离。
 - 新系统密钥库不可用时会明确提示，新的 API Key 不会以明文保存。
-- 查看 [1.10.0 更新说明](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.10.0) 或[完整发布历史](https://github.com/yuchen0x1/Pagekin/releases)。
+- 查看 [1.10.0 更新说明](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v1.10.0) 或[完整发布历史](https://github.com/yuchen0x1/Novel-Writer-master/releases)。
 
 ## 它能做什么
 
@@ -151,7 +151,7 @@ API Key：  可以留空；界面要求时填任意占位值
 
 ## 下载与安装
 
-请只从 [GitHub Releases](https://github.com/yuchen0x1/Pagekin/releases/latest) 下载正式安装包。
+请只从 [GitHub Releases](https://github.com/yuchen0x1/Novel-Writer-master/releases/latest) 下载正式安装包。
 
 ### Windows x64
 
@@ -234,7 +234,7 @@ Windows 安装包未签名，Mac 安装包只有 ad-hoc 签名、没有经过 Ap
 需要 Node.js 20 以上和仓库指定版本的 pnpm。
 
 ```sh
-git clone https://github.com/yuchen0x1/Pagekin.git Novel-Writer-master
+git clone https://github.com/yuchen0x1/Novel-Writer-master.git Novel-Writer-master
 cd Novel-Writer-master
 pnpm install --frozen-lockfile
 pnpm rebuild:electron
@@ -245,7 +245,7 @@ pnpm dev
 
 ## 参与贡献
 
-Bug 和功能建议请提交到 [GitHub Issues](https://github.com/yuchen0x1/Pagekin/issues)，使用问题请发到 [Discussions](https://github.com/yuchen0x1/Pagekin/discussions)。提交 Pull Request 前请先读 [CONTRIBUTING.md](CONTRIBUTING.md)。这是公开仓库，提交内容请先脱敏，不要上传 API Key、完整小说正文或本机路径。
+Bug 和功能建议请提交到 [GitHub Issues](https://github.com/yuchen0x1/Novel-Writer-master/issues)，使用问题请发到 [Discussions](https://github.com/yuchen0x1/Novel-Writer-master/discussions)。提交 Pull Request 前请先读 [CONTRIBUTING.md](CONTRIBUTING.md)。这是公开仓库，提交内容请先脱敏，不要上传 API Key、完整小说正文或本机路径。
 
 ## DeepSeek Harness 插件（冻结维护）
 

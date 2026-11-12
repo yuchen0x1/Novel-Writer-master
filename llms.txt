@@ -18,19 +18,19 @@ Key facts:
 
 ## Docs
 
-- [README (Chinese)](https://github.com/yuchen0x1/Pagekin/blob/main/README.md): product overview, supported models, installation, data and privacy, FAQ
-- [README (English)](https://github.com/yuchen0x1/Pagekin/blob/main/README_en.md): the same content in English
-- [Contributing guide](https://github.com/yuchen0x1/Pagekin/blob/main/CONTRIBUTING.md): how to file issues and submit pull requests
-- [Developer documentation index](https://github.com/yuchen0x1/Pagekin/blob/main/docs/README.md): documentation authority, ADRs, and development rules
+- [README (Chinese)](https://github.com/yuchen0x1/Novel-Writer-master/blob/main/README.md): product overview, supported models, installation, data and privacy, FAQ
+- [README (English)](https://github.com/yuchen0x1/Novel-Writer-master/blob/main/README_en.md): the same content in English
+- [Contributing guide](https://github.com/yuchen0x1/Novel-Writer-master/blob/main/CONTRIBUTING.md): how to file issues and submit pull requests
+- [Developer documentation index](https://github.com/yuchen0x1/Novel-Writer-master/blob/main/docs/README.md): documentation authority, ADRs, and development rules
 
 ## Downloads
 
-- [Latest release](https://github.com/yuchen0x1/Pagekin/releases/latest): Windows and macOS installers
-- [1.4.0 release notes](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.4.0): automatic outline continuation, writing Skills, prompt templates, motion, and the repository update
-- [1.3.0 release notes](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.3.0): changes in the Paper and Ink interface release
-- [All releases](https://github.com/yuchen0x1/Pagekin/releases): release history
+- [Latest release](https://github.com/yuchen0x1/Novel-Writer-master/releases/latest): Windows and macOS installers
+- [1.4.0 release notes](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v1.4.0): automatic outline continuation, writing Skills, prompt templates, motion, and the repository update
+- [1.3.0 release notes](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v1.3.0): changes in the Paper and Ink interface release
+- [All releases](https://github.com/yuchen0x1/Novel-Writer-master/releases): release history
 
 ## Optional
 
-- [DeepSeek Harness plugin](https://github.com/yuchen0x1/Pagekin/blob/main/plugins/dsh-ai-novel-writer/README.md): a frozen 0.1.0 Web plugin preview (MIT), far smaller than the desktop app
-- [License](https://github.com/yuchen0x1/Pagekin/blob/main/LICENSE): GPL-3.0
+- [DeepSeek Harness plugin](https://github.com/yuchen0x1/Novel-Writer-master/blob/main/plugins/dsh-ai-novel-writer/README.md): a frozen 0.1.0 Web plugin preview (MIT), far smaller than the desktop app
+- [License](https://github.com/yuchen0x1/Novel-Writer-master/blob/main/LICENSE): GPL-3.0

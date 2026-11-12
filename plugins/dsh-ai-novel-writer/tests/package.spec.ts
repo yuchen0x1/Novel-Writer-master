@@ -25,11 +25,11 @@ describe('installable AI novel bundle', () => {
     expect(manifest.publishConfig).toEqual({ access: 'public' })
     expect(manifest.repository).toEqual({
       type: 'git',
-      url: 'git+https://github.com/yuchen0x1/Pagekin.git',
+      url: 'git+https://github.com/yuchen0x1/Novel-Writer-master.git',
       directory: 'plugins/dsh-ai-novel-writer',
     })
-    expect(manifest.bugs).toEqual({ url: 'https://github.com/yuchen0x1/Pagekin/issues' })
-    expect(manifest.homepage).toBe('https://github.com/yuchen0x1/Pagekin/tree/master/plugins/dsh-ai-novel-writer#readme')
+    expect(manifest.bugs).toEqual({ url: 'https://github.com/yuchen0x1/Novel-Writer-master/issues' })
+    expect(manifest.homepage).toBe('https://github.com/yuchen0x1/Novel-Writer-master/tree/main/plugins/dsh-ai-novel-writer#readme')
     for (const packagedFile of ['LICENSE', 'THIRD_PARTY_NOTICES.md']) {
       await expect(readFile(join(root, packagedFile), 'utf8')).resolves.toContain('MIT')
     }

@@ -2,7 +2,7 @@
 
 本文档描述 Novel Writer master 当前已经接入的桌面应用更新系统。更新源是本项目的官方 GitHub Releases：
 
-<https://github.com/yuchen0x1/Pagekin/releases>
+<https://github.com/yuchen0x1/Novel-Writer-master/releases>
 
 ## 已支持的平台和动作
 
@@ -25,7 +25,7 @@ Windows 自动更新只在已安装的正式应用中启用。开发服务器、
 5. 下载进度来自 `download-progress` 事件，不能用假进度填充界面。
 6. `electron-updater` 在下载前读取 `latest.yml`，并校验安装包的 SHA-512 与文件大小；NSIS 更新同时使用 blockmap 做差分下载。下载失败时保持当前版本可用，并显示可重试的安全错误分类。
 7. 下载完成后，只有用户点击「立即重启更新」才会调用 `quitAndInstall(true, true)`。有运行中的创作任务或未保存修改时，安装动作会被拦截。
-8. macOS 只从固定的 `https://github.com/yuchen0x1/Pagekin/releases/latest` 地址打开下载页，渲染进程不能把这个地址替换成任意外部地址。
+8. macOS 只从固定的 `https://github.com/yuchen0x1/Novel-Writer-master/releases/latest` 地址打开下载页，渲染进程不能把这个地址替换成任意外部地址。
 
 更新偏好（上次检查时间、已发现版本和稍后提醒时间）写入应用全局配置。偏好读取或写入失败时，自动检查会停止联网，手动检查仍可用；错误原文不会发送到渲染进程，避免日志、路径或 Token 泄露。
 

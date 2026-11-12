@@ -1,4 +1,4 @@
-﻿param(
+param(
   [string]$InstallerPath,
   [string]$PreviousInstallerPath,
   [string]$PreviousPortableZipPath,
@@ -743,7 +743,7 @@ function Invoke-AiNovelPackagedOfficialHomepageSmoke {
       $null -ne $result.trustedIntent -and
       $result.trustedIntent.channel -eq 'official-homepage:open' -and
       $result.trustedIntent.requestArgumentCount -eq 0 -and
-      $result.trustedIntent.url -eq 'https://github.com/yuchen0x1/Pagekin' -and
+      $result.trustedIntent.url -eq 'https://github.com/yuchen0x1/Novel-Writer-master' -and
       $result.trustedIntent.success -eq $true -and
       $result.trustedIntent.shellOpenExternalCalls -eq 1 -and
       $null -ne $result.failedOpenExternal -and

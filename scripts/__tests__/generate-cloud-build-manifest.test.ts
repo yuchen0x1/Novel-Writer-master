@@ -93,7 +93,7 @@ describe('cloud Windows build manifest', () => {
       'init',
       '--platform', 'windows',
       '--evidence-root', evidenceRoot,
-      '--repository', 'yuchen0x1/Pagekin',
+      '--repository', 'yuchen0x1/Novel-Writer-master',
       '--commit', commit,
       '--run-id', '101',
       '--run-attempt', '1',

@@ -66,7 +66,7 @@ describe('release metadata', () => {
     expect(chineseReadme).toContain('> ## 1.4.0 更新')
     expect(englishReadme).toContain("> ## What's new in 1.4.0")
     for (const readme of [chineseReadme, englishReadme]) {
-      expect(readme).toContain('https://github.com/yuchen0x1/Pagekin/releases/tag/v1.4.0)')
+      expect(readme).toContain('https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v1.4.0)')
     }
 
     const zhRetained = previousNotes
@@ -93,7 +93,7 @@ describe('release metadata', () => {
         'Apple Silicon',
         'Intel',
         '1.3.0',
-        'https://github.com/yuchen0x1/Pagekin/releases/latest)',
+        'https://github.com/yuchen0x1/Novel-Writer-master/releases/latest)',
       ]) expect(readme).toContain(expected)
 
       for (const installer of [

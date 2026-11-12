@@ -20,7 +20,7 @@ vi.mock('electron', () => ({
 
 import { registerOfficialHomepageController } from '../official-homepage-controller'
 
-const OFFICIAL_HOMEPAGE_URL = 'https://github.com/yuchen0x1/Pagekin'
+const OFFICIAL_HOMEPAGE_URL = 'https://github.com/yuchen0x1/Novel-Writer-master'
 
 function handler(channel: string): IpcHandler {
   const registered = mocks.handlers.get(channel)
@@ -40,7 +40,7 @@ describe('official homepage controller', () => {
 
     await expect(handler('official-homepage:open')(
       {},
-      'https://github.com/yuchen0x1/Pagekin/issues/25',
+      'https://github.com/yuchen0x1/Novel-Writer-master/issues/25',
     )).resolves.toEqual({ success: true })
 
     expect(mocks.openExternal).toHaveBeenCalledTimes(1)

@@ -2,7 +2,7 @@ import { localize } from '../i18n/core'
 import type { Locale } from '../i18n/types'
 
 /** The only renderer-approved external destination. It is never renderer supplied. */
-export const OFFICIAL_HOMEPAGE_URL = 'https://github.com/yuchen0x1/Pagekin'
+export const OFFICIAL_HOMEPAGE_URL = 'https://github.com/yuchen0x1/Novel-Writer-master'
 
 /**
  * Renderer-facing copy for a failed fixed homepage intent. Keeping this shared

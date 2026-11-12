@@ -5,12 +5,12 @@
   "author": "Novel Writer master Maintainers",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yuchen0x1/Pagekin.git"
+    "url": "https://github.com/yuchen0x1/Novel-Writer-master.git"
   },
   "bugs": {
-    "url": "https://github.com/yuchen0x1/Pagekin/issues"
+    "url": "https://github.com/yuchen0x1/Novel-Writer-master/issues"
   },
-  "homepage": "https://github.com/yuchen0x1/Pagekin",
+  "homepage": "https://github.com/yuchen0x1/Novel-Writer-master",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.11.0",

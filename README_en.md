@@ -19,13 +19,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/yuchen0x1/Pagekin/releases/latest"><img src="https://img.shields.io/badge/Download-Windows%20%7C%20macOS-2b4c8c?style=for-the-badge" alt="Download for Windows and macOS" /></a>
+  <a href="https://github.com/yuchen0x1/Novel-Writer-master/releases/latest"><img src="https://img.shields.io/badge/Download-Windows%20%7C%20macOS-2b4c8c?style=for-the-badge" alt="Download for Windows and macOS" /></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/yuchen0x1/Pagekin/releases"><img src="https://badgen.net/github/tag/yuchen0x1/Pagekin?label=release" alt="Release" /></a>
-  <a href="https://github.com/yuchen0x1/Pagekin/blob/main/LICENSE"><img src="https://badgen.net/badge/license/GPL-3.0/blue" alt="GPL-3.0 License" /></a>
-  <a href="https://github.com/yuchen0x1/Pagekin/stargazers"><img src="https://badgen.net/github/stars/yuchen0x1/Pagekin" alt="GitHub stars" /></a>
+  <a href="https://github.com/yuchen0x1/Novel-Writer-master/releases"><img src="https://badgen.net/github/tag/yuchen0x1/Novel-Writer-master?label=release" alt="Release" /></a>
+  <a href="https://github.com/yuchen0x1/Novel-Writer-master/blob/main/LICENSE"><img src="https://badgen.net/badge/license/GPL-3.0/blue" alt="GPL-3.0 License" /></a>
+  <a href="https://github.com/yuchen0x1/Novel-Writer-master/stargazers"><img src="https://badgen.net/github/stars/yuchen0x1/Novel-Writer-master" alt="GitHub stars" /></a>
 </p>
 
 <p align="center">
@@ -36,7 +36,7 @@
 
 - **Novel Writer master 1.10.0**: updated the app name and Windows/macOS icons while preserving the existing app-data directory; API keys are encrypted with the OS key store; save status and retries are isolated to the active project session.
 - If no secure system key store is available, the app explains that new API keys were not saved instead of writing them in plaintext.
-- See the [1.10.0 release notes](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.10.0) or the [full release history](https://github.com/yuchen0x1/Pagekin/releases).
+- See the [1.10.0 release notes](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v1.10.0) or the [full release history](https://github.com/yuchen0x1/Novel-Writer-master/releases).
 
 ## What it does
 
@@ -149,7 +149,7 @@ Embedding models also use the `/v1` address. Do not use `http://127.0.0.1:11434/
 
 ## Download and install
 
-Download official installers only from [GitHub Releases](https://github.com/yuchen0x1/Pagekin/releases/latest).
+Download official installers only from [GitHub Releases](https://github.com/yuchen0x1/Novel-Writer-master/releases/latest).
 
 ### Windows x64
 
@@ -232,7 +232,7 @@ The Windows installer is unsigned, and the Mac installers are only ad-hoc signed
 You need Node.js 20 or later and the pnpm version pinned in the repository.
 
 ```sh
-git clone https://github.com/yuchen0x1/Pagekin.git Novel-Writer-master
+git clone https://github.com/yuchen0x1/Novel-Writer-master.git Novel-Writer-master
 cd Novel-Writer-master
 pnpm install --frozen-lockfile
 pnpm rebuild:electron
@@ -243,7 +243,7 @@ Official installers are built in GitHub Actions. The Windows x64, macOS Apple Si
 
 ## Contributing
 
-Report bugs and request features in [GitHub Issues](https://github.com/yuchen0x1/Pagekin/issues), and ask usage questions in [Discussions](https://github.com/yuchen0x1/Pagekin/discussions). Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. This is a public repository, so remove API keys, full novel text, and local paths from anything you submit.
+Report bugs and request features in [GitHub Issues](https://github.com/yuchen0x1/Novel-Writer-master/issues), and ask usage questions in [Discussions](https://github.com/yuchen0x1/Novel-Writer-master/discussions). Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. This is a public repository, so remove API keys, full novel text, and local paths from anything you submit.
 
 ## DeepSeek Harness plugin (frozen)
 
