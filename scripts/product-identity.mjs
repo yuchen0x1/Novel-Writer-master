@@ -3,12 +3,11 @@ import path from 'node:path'
 
 /**
  * 安装包产品名（electron-builder productName），决定 exe、.app 与卸载程序的文件名。
- * 1.3.0 及以前叫 AI小说作家；升级测试会启动旧版本，所以凡是可能碰到旧版本的地方要两个都认（ADR-0022）。
+ * 升级测试会启动旧版本，所以凡是可能碰到旧版本的地方要同时认当前与历史名称（ADR-0022）。
  * PowerShell 脚本里有同样的名单，改这里时一并改。
  */
-export const PRODUCT_NAME = '书童'
-const LEGACY_PRODUCT_NAME = 'AI小说作家'
-export const PRODUCT_NAMES = [PRODUCT_NAME, LEGACY_PRODUCT_NAME]
+export const PRODUCT_NAME = 'Novel Writer master'
+export const PRODUCT_NAMES = [PRODUCT_NAME, '书童', 'AI小说作家']
 
 export const WINDOWS_EXECUTABLE_NAME = `${PRODUCT_NAME}.exe`
 const WINDOWS_EXECUTABLE_NAMES = PRODUCT_NAMES.map(name => `${name}.exe`)

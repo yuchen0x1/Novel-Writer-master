@@ -27,11 +27,10 @@
 }
 
 .stage-rail-mark span {
-  width: 18px;
-  height: 19px;
+  width: 24px;
+  height: 24px;
   display: block;
-  background: currentColor;
-  mask: url("../../../assets/brand/pagekin-mark.svg") center / contain no-repeat;
+  background: url("../../../assets/brand/novel-writer-master-icon.png") center / contain no-repeat;
 }
 
 .stage-rail-mark:hover {

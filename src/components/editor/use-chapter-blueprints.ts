@@ -26,7 +26,7 @@ import { globalEventBus, type EventPayloadMap } from '../../shared/event-bus'
 import { shouldRefreshBlueprints } from './blueprint-refresh'
 import { useLocaleStore } from '../../stores/locale-store'
 import { registerEditorExitSaveHandler, useEditorStore } from '../../stores/editor-store'
-import { reportSaveFailure, registerSaveRetry, unregisterSaveRetry, useSaveStatusStore } from '../../stores/save-status-store'
+import { beginSaveOperation, finishSaveOperation, registerSaveRetry, unregisterSaveRetry, useSaveStatusStore } from '../../stores/save-status-store'
 import type { GenerationRecoveryContext } from '../../shared/generation-owner-contract'
 import {
   CHAPTER_CARD_TAB_ID,
@@ -402,7 +402,7 @@ export function useChapterBlueprints({
     const savedSnapshots = captureBlueprintSnapshots([selected])
     setSaving(true)
     setSaveOutcome('idle')
-    useSaveStatusStore.getState().begin(projectSession.projectPath)
+    const saveOperationId = beginSaveOperation(projectSession)
     let failureMessage: string | null = null
     try {
       await saveChapterBlueprint(selected, projectKey, projectSession, locale)
@@ -425,9 +425,9 @@ export function useChapterBlueprints({
       setSaveOutcome('failed')
       if (propagateFailure) throw err
     } finally {
-      if (failureMessage !== null && isCurrentProjectSession(projectSession)) reportSaveFailure(projectSession.projectPath, `blueprint:${projectKey}`, failureMessage)
-      else if (isCurrentProjectSession(projectSession)) useSaveStatusStore.getState().succeed(projectSession.projectPath)
-      else useSaveStatusStore.getState().release()
+      finishSaveOperation(projectSession.projectPath, saveOperationId,
+        failureMessage !== null ? 'failed' : isCurrentProjectSession(projectSession) ? 'saved' : 'released',
+        failureMessage !== null ? `blueprint:${projectKey}` : undefined, failureMessage ?? undefined)
       if (isCurrentProjectSession(projectSession)) setSaving(false)
     }
   }
@@ -444,7 +444,7 @@ export function useChapterBlueprints({
     const savedSnapshots = captureBlueprintSnapshots(saveInput)
     setSaving(true)
     setSaveOutcome('idle')
-    useSaveStatusStore.getState().begin(projectSession.projectPath)
+    const saveOperationId = beginSaveOperation(projectSession)
     let failureMessage: string | null = null
     try {
       await saveAllBlueprints(saveInput, projectKey, projectSession, locale)
@@ -467,9 +467,9 @@ export function useChapterBlueprints({
       setSaveOutcome('failed')
       if (propagateFailure) throw err
     } finally {
-      if (failureMessage !== null && isCurrentProjectSession(projectSession)) reportSaveFailure(projectSession.projectPath, `blueprint:${projectKey}`, failureMessage)
-      else if (isCurrentProjectSession(projectSession)) useSaveStatusStore.getState().succeed(projectSession.projectPath)
-      else useSaveStatusStore.getState().release()
+      finishSaveOperation(projectSession.projectPath, saveOperationId,
+        failureMessage !== null ? 'failed' : isCurrentProjectSession(projectSession) ? 'saved' : 'released',
+        failureMessage !== null ? `blueprint:${projectKey}` : undefined, failureMessage ?? undefined)
       if (isCurrentProjectSession(projectSession)) setSaving(false)
     }
   }
@@ -486,10 +486,10 @@ export function useChapterBlueprints({
     })
   }, [projectKey])
   useEffect(() => {
-    const key = `blueprint:${projectKey}`
-    registerSaveRetry(projectKey, key, () => { void exitSaveRef.current(false) })
-    return () => unregisterSaveRetry(projectKey, key)
-  }, [projectKey])
+    if (!currentProjectSession || !sameProjectSessionContext(currentProjectSession, projectSessionContextFromProject(useProjectStore.getState().currentProject))) return
+    registerSaveRetry(projectKey, `blueprint:${projectKey}`, () => { void exitSaveRef.current(false) }, `chapter-card:${projectKey}`)
+    return () => unregisterSaveRetry(projectKey, `blueprint:${projectKey}`, `chapter-card:${projectKey}`)
+  }, [currentProjectSession, projectKey])
 
   /** 新建空章节 */
   const handleAddChapter = () => {

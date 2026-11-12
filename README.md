@@ -5,12 +5,12 @@
 </div>
 
 <p align="center">
-  <img src="docs/assets/brand/pagekin-icon-256.png" width="112" height="112" alt="书童 Pagekin Logo：一张卷起页角的纸，两只圆眼睛" />
+  <img src="public/novel-writer-master-icon.png" width="112" height="112" alt="Novel Writer master 应用图标：羽毛笔与打开的书" />
 </p>
 
-<h1 align="center">书童 Pagekin</h1>
+<h1 align="center">Novel Writer master</h1>
 
-<p align="center"><sub>原名「AI 小说作家 / AI Novel Writer」</sub></p>
+<p align="center"><sub>原名「书童 Pagekin」</sub></p>
 
 <p align="center">
   <strong>开源免费的 AI 小说写作桌面软件，为长篇小说和网文连载设计。</strong><br />
@@ -34,34 +34,15 @@
   <img src="docs/assets/readme/v130-hero-zh.webp" alt="书童 Pagekin 1.3.0：左侧是产品介绍，右侧是书房、正文、蓝图、运行侧页、架构和角色名单的真实界面截图" width="100%" />
 </p>
 
-> ## 1.9.0 更新
->
-> - 草稿自动快照：保存与生成落稿自动记录快照（每稿保留最近 30 份），版本菜单可按时间、字数与来源查看，并可一键恢复为新草稿，不覆盖任何已有稿。
-> - 顶栏保存状态升级：保存中/已保存（含时间）/未保存/保存失败一目了然，失败可一键重试；状态按作品归属，切换作品不串显示。
-> - 修复 schema 8 作品无法原地升级到 schema 9 的问题，审稿修稿合并进正文的时点也会留下快照。
->
-> 完整说明见 [1.9.0 更新内容](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.9.0)。
->
-> ## 1.7.1 更新
->
-> - 新增场景卡：在每章蓝图下记录地点、时间、人物、目标、冲突和转场，并持久化保存。
-> - 中文作品新增客观中文校对维度；审稿中心跳转可定位到具体原文引用。
-> - 修复小说配置混合 JSON 解析、项目切换旧场景闪现和发布前检查问题。
->
-> 完整说明见 [1.7.1 更新内容](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.7.1)。
->
-> ## 1.4.0 更新
->
-> - 情节大纲按已设置的副篇章数自动续批生成，断点恢复与有限重试贯穿整本书。
-> - 写作 Skills 与提示词模板增加卷章规划、角色连续性、审稿自检和失败恢复指导。
-> - 写作工作台增加运行状态、进度反馈和轻量动态画面，支持减少动态效果。
-> - 应用内更新、官网入口和发布资产统一切换到 `yuchen0x1/Pagekin`。
->
-> 完整说明见 [1.4.0 更新内容](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.4.0)。
+## 最新更新
+
+- **Novel Writer master 1.10.0**：统一更新应用名称与 Windows/macOS 图标，保留旧安装的数据目录；模型 API Key 使用系统安全密钥库加密保存；保存状态与重试按当前作品会话隔离。
+- 新系统密钥库不可用时会明确提示，新的 API Key 不会以明文保存。
+- 查看 [1.10.0 更新说明](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.10.0) 或[完整发布历史](https://github.com/yuchen0x1/Pagekin/releases)。
 
 ## 它能做什么
 
-书童按写一本小说的顺序工作：你是作者，它是书童。每一步的结果都存进作品，下一步接着用。AI 负责起草，每一步由你确认。
+Novel Writer master 按写一本小说的顺序工作：从设定、架构、蓝图到正文，每一步的结果都存进作品并由你确认，AI 协助起草。
 
 ### 书房：管理你的全部作品
 
@@ -133,7 +114,7 @@
 
 ## 支持的模型与服务
 
-书童不提供模型，也不代管额度。你在设置里填上自己的服务地址、模型名和 API Key。软件支持两种调用协议：
+Novel Writer master 不提供模型，也不代管额度。你在设置里填上自己的服务地址、模型名和 API Key。软件支持两种调用协议：
 
 - **OpenAI 兼容协议**：Chat Completions 接口兼容的服务都可以用。
 - **Gemini 原生协议**：Google Gemini。
@@ -184,6 +165,8 @@ ai-novel-writer-setup-<版本号>.exe
 
 当前安装程序未进行代码签名。Windows 可能提示未知发布者。请确认下载页面是本项目的官方 GitHub Release 后再继续。
 
+自动更新的运行时架构、正式发布步骤、CI 门禁、校验方式和当前签名限制见 [自动更新与正式发布](docs/AUTO_UPDATE.md)。
+
 ### macOS（Apple Silicon 与 Intel）
 
 ```text
@@ -204,7 +187,7 @@ ai-novel-writer-mac-x64-<版本号>-installer.dmg
 | 导入的参考资料 | 留在本地作品里，除非你把它发给云端模型。 |
 | 本地模型请求 | 发给你配置的本机或局域网推理服务。 |
 | 云端模型请求 | 提示词和上下文发给你选择的服务商。 |
-| 模型配置与 API Key | 保存在本机应用数据目录的 `ai-novel-writer` 文件夹里（Windows 为 `%APPDATA%\ai-novel-writer`，macOS 为 `~/Library/Application Support/ai-novel-writer`）。请保护好系统账户，不要分享这个文件夹。 |
+| 模型配置与 API Key | 配置保存在本机 `ai-novel-writer` 应用数据目录；API Key 使用系统安全密钥库加密。Linux 需 GNOME Keyring 或 KWallet；系统密钥库不可用时，新 API Key 不会保存。请保护好系统账户，不要分享配置文件夹。 |
 | 应用偏好 | 与模型配置在同一个文件夹里。 |
 
 早期版本把配置存在 `~/.vela`。新版本启动时会把它复制到上面的文件夹，原目录不改动。
@@ -213,7 +196,7 @@ ai-novel-writer-mac-x64-<版本号>-installer.dmg
 
 ## 常见问题
 
-**书童免费吗？**
+**Novel Writer master 免费吗？**
 免费。软件以 GPL-3.0 协议开源。调用云端模型产生的费用由你和模型服务商结算，与本软件无关。用 Ollama 跑本地模型则不需要付费给任何服务商。
 
 **需要什么模型？**
@@ -251,8 +234,8 @@ Windows 安装包未签名，Mac 安装包只有 ad-hoc 签名、没有经过 Ap
 需要 Node.js 20 以上和仓库指定版本的 pnpm。
 
 ```sh
-git clone https://github.com/yuchen0x1/Pagekin.git
-cd AI-Novel-Writer
+git clone https://github.com/yuchen0x1/Pagekin.git Novel-Writer-master
+cd Novel-Writer-master
 pnpm install --frozen-lockfile
 pnpm rebuild:electron
 pnpm dev

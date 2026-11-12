@@ -109,7 +109,7 @@ function realProfileDirectories() {
   return [path.join(os.homedir(), '.vela'), path.join(appData, 'ai-novel-writer'), path.join(appData, 'AI小说作家')]
 }
 
-/** 本机开着的书童约每 5 分钟刷新一次这几个 Chromium 缓存里文件的修改时间，所以它们的变化不能说明隔离失效，只列进 externalWritesIgnored。 */
+/** 本机运行的应用约每 5 分钟刷新一次这几个 Chromium 缓存里文件的修改时间，所以它们的变化不能说明隔离失效，只列进 externalWritesIgnored。 */
 const RUNNING_INSTANCE_CACHES = new Set(['GPUCache', 'DawnWebGPUCache', 'DawnGraphiteCache'])
 
 /** 路径到「大小:修改时间」，目录只记存在，不存在的路径不记。超过 limit 个条目时报错：截断的快照会漏掉写入。 */
@@ -123,7 +123,7 @@ function profileEntries(target, entries, limit) {
   if (!stat.isDirectory()) return entries.set(target, `${stat.size}:${stat.mtimeMs}`)
   let names
   try { names = fs.readdirSync(target) } catch (error) {
-    // 运行中的书童可能在 lstat 与 readdir 之间删掉缓存目录
+    // 运行中的应用可能在 lstat 与 readdir 之间删掉缓存目录
     if (error.code === 'ENOENT' || error.code === 'ENOTDIR') return entries
     throw error
   }

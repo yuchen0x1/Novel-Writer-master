@@ -76,6 +76,7 @@ describe('UpdateNotifier 更新弹窗', () => {
     await act(async () => buttonIn(dialog, '稍后更新').click())
     await vi.waitFor(() => expect(document.querySelector('.pi-dialog')).toBeNull())
     await act(async () => root.unmount())
+    root = createRoot(container)
     const { UpdateNotifier } = await import('../UpdateNotifier')
     await act(async () => root.render(<div className="paper-ink"><UpdateNotifier /></div>))
     await act(async () => { await Promise.resolve() })
@@ -83,6 +84,9 @@ describe('UpdateNotifier 更新弹窗', () => {
   })
 
   it('立即更新请求下载并收起弹窗', async () => {
+    vi.mocked(window.aiNovelAPI!.invoke).mockImplementation(async (channel: string) => channel === 'update:get-state'
+      ? availableState('9.8.8')
+      : null)
     const dialog = await renderNotifier()
     await act(async () => buttonIn(dialog, '立即更新').click())
     await vi.waitFor(() => {

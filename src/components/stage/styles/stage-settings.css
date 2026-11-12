@@ -476,18 +476,7 @@
   width: 52px;
   height: 52px;
   flex: none;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-panel);
-  background: var(--ink);
-}
-
-.stage-set-about-mark::before {
-  content: "";
-  width: 34px;
-  height: 38px;
-  background: var(--frame);
-  mask: url("../../../assets/brand/pagekin-mark.svg") center / contain no-repeat;
+  background: url("../../../assets/brand/novel-writer-master-icon.png") center / contain no-repeat;
 }
 
 .stage-set-about-name {

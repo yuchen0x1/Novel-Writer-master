@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import appIcon from '../../assets/brand/novel-writer-master-icon.png'
 import { useProjectStore } from '../../stores/project-store'
 import { useLayoutStore } from '../../stores/layout-store'
 import { useLocaleStore } from '../../stores/locale-store'
@@ -219,8 +220,8 @@ export default function StageShell({ theme }: { theme: Theme }) {
         <div className="app-intro" aria-hidden="true">
           <span className="app-intro-wash app-intro-wash--a" />
           <span className="app-intro-wash app-intro-wash--b" />
-          <span className="app-intro-seal" aria-hidden="true">{APP_BRAND.zhName.slice(0, 1)}</span>
-          <p className="app-intro-name">{APP_BRAND.zhName} <i>{APP_BRAND.enName}</i></p>
+          <img className="app-intro-seal" src={appIcon} alt="" />
+          <p className="app-intro-name">{APP_BRAND.zhName}</p>
         </div>
       )}
       <StagePalette mode={palette} items={paletteItems} container={root} onClose={() => useStageStore.setState({ palette: null })} />

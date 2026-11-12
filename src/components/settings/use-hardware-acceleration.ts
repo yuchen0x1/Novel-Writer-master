@@ -12,6 +12,7 @@ import { useLocaleStore } from '../../stores/locale-store'
 export function useHardwareAcceleration() {
   const text = useLocaleStore(s => s.text)
   const [enabled, setEnabled] = useState(true)
+  const [startupEnabled, setStartupEnabled] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pendingRestart, setPendingRestart] = useState(false)
@@ -19,7 +20,11 @@ export function useHardwareAcceleration() {
   useEffect(() => {
     let active = true
     void ipc.invoke('config:get').then(config => {
-      if (active) setEnabled(config.hardwareAcceleration !== false)
+      if (active) {
+        const configured = config.hardwareAcceleration !== false
+        setEnabled(configured)
+        setStartupEnabled(configured)
+      }
     }).catch(() => { /* 读不到按默认开启 */ })
     return () => { active = false }
   }, [])
@@ -32,10 +37,11 @@ export function useHardwareAcceleration() {
     try {
       const result = await ipc.invoke('config:set', { hardwareAcceleration: checked })
       if (!result.success) throw new Error(result.error || text('未知错误', 'Unknown error'))
-      setPendingRestart(true)
+      setPendingRestart(checked !== startupEnabled)
     } catch (cause) {
       setEnabled(previous)
-      setError(displayedErrorMessage(useLocaleStore.getState().locale, cause))
+      const reason = displayedErrorMessage(useLocaleStore.getState().locale, cause)
+      setError(text(`硬件加速设置保存失败：${reason}`, `Could not save the hardware acceleration setting: ${reason}`))
     } finally {
       setSaving(false)
     }

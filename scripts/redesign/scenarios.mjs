@@ -842,13 +842,13 @@ export const STAGE_SCENARIOS = {
   'stage-settings-about': { model: false, shell: 'stage', setup: seedStageSample, run: async ({ page }) => {
     await stage.openSettings(page)
     await stage.showSettingsPage(page, '关于与更新')
-    await stage.root(page).getByText('书童 Pagekin', { exact: true }).waitFor({ state: 'visible' })
-    await stage.root(page).getByText('原名「AI小说作家」', { exact: true }).waitFor({ state: 'visible' })
+    await stage.root(page).getByText('Novel Writer master', { exact: true }).waitFor({ state: 'visible' })
+    await stage.root(page).getByText('原名「书童 Pagekin」', { exact: true }).waitFor({ state: 'visible' })
     const marks = await page.evaluate(() => ['.stage-brand', '.stage-set-about-mark'].map(selector => {
       const mark = document.querySelector(selector)
-      return mark ? getComputedStyle(mark, '::before').maskImage : 'missing'
+      return mark ? getComputedStyle(mark).backgroundImage : 'missing'
     }))
-    assert.ok(marks.every(image => image.includes('pagekin-mark')), `顶栏与关于页都用书页精灵标识：${marks.join(' | ')}`)
+    assert.ok(marks.every(image => image.includes('novel-writer-master-icon')), `顶栏与关于页都使用新应用图标：${marks.join(' | ')}`)
     assert.deepEqual(await chromeContrastFailures(page), [], '关于页文字对比度不足')
   } },
   'stage-settings-dark': { model: false, shell: 'stage', setup: seedStageSample, run: async context => {

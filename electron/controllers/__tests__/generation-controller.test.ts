@@ -10,6 +10,7 @@ import { createHumanConfirmedReviewSnapshot, renderHumanConfirmedReviewBrief, se
 import { ipc } from '../../../src/services/ipc-client'
 import { ReviewRepository } from '../../repositories/review-repository'
 import { FinalizationRepository } from '../../repositories/finalization-repository'
+import { DraftSnapshotRepository } from '../../repositories/draft-snapshot-repository'
 import { SummaryRepository } from '../../repositories/summary-repository'
 import type { ModelProfile, ProjectSessionContext, NovelConfig } from '../../../src/shared/ipc-channels'
 type Handler = (event: unknown, ...args: unknown[]) => Promise<unknown>
@@ -25,6 +26,7 @@ import { ModelExecutionLeaseRegistry } from '../../services/model-execution-leas
 import { projectAccess } from '../../services/project-access'
 import { createProjectDatabase, initProjectDatabase, closeProjectDatabase, getProjectDb } from '../../database'
 import { textHash } from '../../repositories/generation-run-repository'
+import { countDraftUnits } from '../../../src/shared/draft-units'
 import { KnowledgeBaseUnavailableError, knowledgeBaseLoader } from '../../services/knowledge-base-loader'
 import { LegacyVectorMigrationBlockedError } from '../../services/knowledge-base-migration-error'
 import { GeneratePlotArchitectureCommand } from '../../../src/services/workflows/commands/architecture.command'
@@ -429,6 +431,10 @@ describe('generation public IPC with actual project authority and SQLite', () =>
     await invoke('generation:compose-visible', run.handle, [result.run.artifacts[0].artifactId], textHash(result.outcome.content), 'draft-visible-v1')
     const commit = { handle: run.handle, expectedCompositionHash: textHash(result.outcome.content), chapterNumber: 1, source: 'write' as const }
     const saved = await invoke('generation:commit-draft', commit)
+    const snapshots = DraftSnapshotRepository.listByDraft(saved.id, 10)
+    expect(snapshots).toHaveLength(1)
+    expect(snapshots[0]).toMatchObject({ source: 'create', wordCount: countDraftUnits(saved.content) })
+    expect(DraftSnapshotRepository.get(snapshots[0]!.snapshotId)?.content).toBe(saved.content)
     expect((await invoke('generation:read-context', { handle: run.handle })).knowledgeSnapshot?.items).toHaveLength(1)
     const projectPath = session.projectPath
     closeProjectDatabase(); projectAccess.invalidateCurrentSession()

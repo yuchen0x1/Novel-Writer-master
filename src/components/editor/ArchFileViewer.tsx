@@ -5,7 +5,7 @@ import { Save, RefreshCw, Sparkles, Loader2, AlertTriangle, FileText } from 'luc
 import { renderIcon } from '../panels/sidebar/sidebar-icons'
 
 import { registerEditorExitSaveHandler, useEditorStore, type PlanningRecoverySaveSnapshot } from '../../stores/editor-store'
-import { reportSaveFailure, registerSaveRetry, unregisterSaveRetry, useSaveStatusStore } from '../../stores/save-status-store'
+import { beginSaveOperation, finishSaveOperation, registerSaveRetry, useSaveStatusStore } from '../../stores/save-status-store'
 import ArchitectureConfirmDialog from '../dialogs/ArchitectureConfirmDialog'
 import { ARCH_STEP_NAMES, archSectionHasContent, judgeArchCore, type ArchStepKey } from '../../services/architecture-step-selection'
 import { Button } from '../ui/Button'
@@ -238,7 +238,7 @@ function ArchFileViewerSession({
     setLoading(false)
     setSaving(true)
     setSaveOutcome('idle')
-    useSaveStatusStore.getState().begin(projectSession.projectPath)
+    const saveOperationId = beginSaveOperation(projectSession)
     let failureMessage: string | null = null
     const savedSnapshot = useEditorStore.getState().tabs.find(tab => tab.id === tabId)
     let submittedSnapshot = { content: md, contentRevision: savedSnapshot?.contentRevision ?? 0 }
@@ -349,9 +349,9 @@ function ArchFileViewerSession({
       // Exit-save must reject so the caller cannot close an unsaved document.
       if (propagateFailure) throw error
     } finally {
-      if (failureMessage !== null && isProjectSessionCurrent(projectSession)) reportSaveFailure(projectSession.projectPath, `arch:${tabId}`, failureMessage)
-      else if (isProjectSessionCurrent(projectSession)) useSaveStatusStore.getState().succeed(projectSession.projectPath)
-      else useSaveStatusStore.getState().release()
+      finishSaveOperation(projectSession.projectPath, saveOperationId,
+        failureMessage !== null ? 'failed' : isProjectSessionCurrent(projectSession) ? 'saved' : 'released',
+        failureMessage !== null ? `arch:${tabId}` : undefined, failureMessage ?? undefined)
       if (isProjectSessionCurrent(projectSession)) setSaving(false)
     }
   }, [filePath, isCharacterProjection, projectKey, tabId, refreshRecovery, text])
@@ -372,9 +372,9 @@ function ArchFileViewerSession({
   // 顶栏「保存失败 · 重试」重跑这一份架构文档最近一次失败的保存。
   useEffect(() => {
     if (isCharacterProjection) return
-    const key = `arch:${tabId}`
-    registerSaveRetry(projectKey, key, () => { void handleSave(currentContentRef.current) })
-    return () => unregisterSaveRetry(projectKey, key)
+    const session = captureProjectSession(useProjectStore.getState().currentProject)
+    if (!session || !isProjectSessionPath(session, projectKey)) return
+    registerSaveRetry(projectKey, `arch:${tabId}`, () => { void handleSave(currentContentRef.current) }, tabId)
   }, [handleSave, isCharacterProjection, projectKey, tabId])
 
   /** 从 DB 重新加载（AI 生成后刷新用） */

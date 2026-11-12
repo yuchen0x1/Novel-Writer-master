@@ -252,6 +252,50 @@ describe('设置页', () => {
     expect([...host!.querySelectorAll('.pi-btn--primary')].map(button => button.textContent)).toEqual(['添加模型'])
   })
 
+  it('hardware acceleration shows restart notice only after a successful setting change', async () => {
+    useLayoutStore.setState({ settingsSection: 'appearance' })
+    let resolveSave: ((value: { success: boolean }) => void) | undefined
+    const setConfig = vi.fn((config: unknown) => {
+      void config
+      return new Promise<{ success: boolean }>(resolve => { resolveSave = resolve })
+    })
+    win.aiNovelAPI!.invoke = async (channel, ...args) => {
+      if (channel === 'config:get') return { hardwareAcceleration: false }
+      if (channel === 'config:set') return setConfig(args[0])
+      return channel === 'update:get-state' ? { status: 'disabled', currentVersion: '1.2.2', isReminderDeferred: false } : undefined
+    }
+    await mount()
+    const switchControl = () => host!.querySelectorAll<HTMLInputElement>('[role="switch"]')[1]!
+    expect(switchControl().checked).toBe(false)
+    expect(host!.textContent).not.toContain('更改将在重启应用后生效。')
+
+    await act(async () => switchControl().click())
+    expect(switchControl().checked).toBe(true)
+    expect(switchControl().disabled).toBe(true)
+    expect(host!.textContent).not.toContain('更改将在重启应用后生效。')
+    expect(setConfig).toHaveBeenCalledWith({ hardwareAcceleration: true })
+    await act(async () => resolveSave?.({ success: true }))
+    expect(host!.textContent).toContain('更改将在重启应用后生效。')
+
+    await act(async () => switchControl().click())
+    expect(switchControl().disabled).toBe(true)
+    await act(async () => resolveSave?.({ success: true }))
+    expect(host!.textContent).not.toContain('更改将在重启应用后生效。')
+  })
+
+  it('hardware acceleration save failure rolls the switch back and shows the error', async () => {
+    useLayoutStore.setState({ settingsSection: 'appearance' })
+    win.aiNovelAPI!.invoke = async channel => channel === 'config:get' ? { hardwareAcceleration: true }
+      : channel === 'config:set' ? { success: false, error: 'CONFIG_WRITE_FAILED' }
+        : channel === 'update:get-state' ? { status: 'disabled', currentVersion: '1.2.2', isReminderDeferred: false } : undefined
+    await mount()
+    const switchControl = host!.querySelectorAll<HTMLInputElement>('[role="switch"]')[1]!
+    await act(async () => switchControl.click())
+    expect(switchControl.checked).toBe(true)
+    expect(host!.textContent).not.toContain('更改将在重启应用后生效。')
+    expect(host!.querySelector('[role="alert"]')?.textContent).toContain('硬件加速设置保存失败')
+  })
+
   it('缩放在外观里：放大、缩小、还原', async () => {
     const zoomIn = vi.fn()
     const zoomOut = vi.fn()

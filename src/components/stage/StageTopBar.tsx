@@ -6,6 +6,7 @@ import { countUnsavedEditorItemsForProject } from '../../stores/editor-unsaved'
 import { useLocaleStore } from '../../stores/locale-store'
 import { navigate } from '../../stores/navigation/navigation-intents'
 import { useStageStore } from '../../stores/navigation/stage-store'
+import { sameProjectPathKey } from '../../shared/project-session-context'
 import { useProjectStore } from '../../stores/project-store'
 import { runSaveRetry, useSaveStatusStore } from '../../stores/save-status-store'
 import { Button } from '../ui/Button'
@@ -54,8 +55,15 @@ export default function StageTopBar({ crumbs, library, focus, focusTitle, workMe
   const failure = useSaveStatusStore(s => s.failure)
   const lastSavedAt = useSaveStatusStore(s => s.lastSavedAt)
   const saveStatusProject = useSaveStatusStore(s => s.projectPath)
-  // 保存状态自带作品归属；只显示当前作品的，避免切书后显示上一部的失败或上次保存时间。
-  const saveStatusCurrent = saveStatusProject === null || saveStatusProject === projectPath
+  const saveStatusSessionId = useSaveStatusStore(s => s.projectSessionId)
+  const currentProjectId = useProjectStore(s => s.currentProject?.id ?? null)
+  const currentProjectLeaseId = useProjectStore(s => s.currentProject?.sessionLease ?? null)
+  const currentSessionId = currentProjectId !== null && currentProjectLeaseId !== null
+    ? `${currentProjectId}\u0000${currentProjectLeaseId}`
+    : null
+  // 保存状态必须属于当前 lease；同一路径关闭重开不能显示旧会话状态。
+  const saveStatusCurrent = saveStatusProject === null || (sameProjectPathKey(saveStatusProject, projectPath)
+    && saveStatusSessionId === currentSessionId)
 
   if (focus) {
     return (

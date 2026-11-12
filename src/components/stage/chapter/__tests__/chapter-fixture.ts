@@ -101,6 +101,33 @@ export function createChapterBackend() {
         state.drafts = state.drafts.filter(draft => draft.id !== Number(args[0]))
         return { success: true }
       }
+      case 'db:chapter-facts-overview': {
+        const draftIds = Array.isArray(args[0]) ? args[0] as number[] : []
+        return draftIds.flatMap(draftId => {
+          const draft = byId(draftId)
+          if (!draft) return []
+          const revisions = state.revisions.filter(revision => revision.baseDraftId === draftId)
+          const pending = revisions.filter(revision => revision.status === 'pending')
+          const mergeable = pending.filter(revision => revision.source !== null
+            && revision.source.id === draft.id
+            && revision.source.chapterNumber === draft.chapterNumber
+            && revision.source.version === draft.version
+            && revision.source.status === draft.status
+            && revision.source.content === draft.content)
+          const latestReview = state.reviews.filter(review => review.baseDraftId === draftId).at(-1)
+          const mergedDates = revisions.filter(revision => revision.status === 'merged').map(revision => revision.updatedAt).sort()
+          return [{ draftId, facts: {
+            mergeable: mergeable.map(revision => revision.id),
+            stale: pending.flatMap(revision => mergeable.includes(revision)
+              ? []
+              : [{ id: revision.id, reason: revision.source ? 'edited' as const : 'unsourced' as const }]),
+            latestReview: latestReview
+              ? { createdAt: latestReview.createdAt, cycleStatus: state.cycles.get(latestReview.id)?.revisionStatus ?? null }
+              : null,
+            lastMergedAt: mergedDates.at(-1) ?? null,
+          } }]
+        })
+      }
       case 'db:review-list': return state.reviews.filter(review => review.baseDraftId === Number(args[0])).map(review => ({ id: review.id, baseDraftId: review.baseDraftId, reviewIndex: review.reviewIndex, contentId: review.id, createdAt: review.createdAt }))
       case 'db:review-get-latest':
       case 'db:review-get-full': {

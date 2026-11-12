@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { create } from 'zustand'
 import { useProjectStore } from '../../stores/project-store'
 import { registerEditorExitSaveHandler, useEditorStore } from '../../stores/editor-store'
-import { reportSaveFailure, registerSaveRetry, unregisterSaveRetry, useSaveStatusStore } from '../../stores/save-status-store'
+import { beginSaveOperation, finishSaveOperation, registerSaveRetry, unregisterSaveRetry, useSaveStatusStore } from '../../stores/save-status-store'
 import { useLLMStore } from '../../stores/llm-store'
 import { useWorkflowStore } from '../../stores/workflow-store'
 import { useLocaleStore } from '../../stores/locale-store'
@@ -81,7 +81,7 @@ export function useNovelConfigForm(projectKey: string) {
     if (!config || useSavesInFlight.getState()[sessionKey] || !projectSession || !isProjectSessionPath(projectSession, projectKey)) return false
     useSavesInFlight.setState({ [sessionKey]: true })
     setSaveOutcome('idle')
-    useSaveStatusStore.getState().begin(projectSession.projectPath)
+    const saveOperationId = beginSaveOperation(projectSession)
     let failureMessage: string | null = null
     try {
       const saved = await saveProject(projectSession)
@@ -104,9 +104,9 @@ export function useNovelConfigForm(projectKey: string) {
       if (propagateFailure) throw error
       return false
     } finally {
-      if (failureMessage !== null && isProjectSessionCurrent(projectSession)) reportSaveFailure(projectSession.projectPath, `config:${projectKey}`, failureMessage)
-      else if (isProjectSessionCurrent(projectSession)) useSaveStatusStore.getState().succeed(projectSession.projectPath)
-      else useSaveStatusStore.getState().release()
+      finishSaveOperation(projectSession.projectPath, saveOperationId,
+        failureMessage !== null ? 'failed' : isProjectSessionCurrent(projectSession) ? 'saved' : 'released',
+        failureMessage !== null ? `config:${projectKey}` : undefined, failureMessage ?? undefined)
       useSavesInFlight.setState({ [sessionKey]: false })
     }
   }
@@ -114,10 +114,11 @@ export function useNovelConfigForm(projectKey: string) {
     exitSaveRef.current = save
   })
   useEffect(() => {
-    const key = `config:${projectKey}`
-    registerSaveRetry(projectKey, key, () => { void exitSaveRef.current(false) })
-    return () => unregisterSaveRetry(projectKey, key)
-  }, [projectKey])
+    const session = captureProjectSession(useProjectStore.getState().currentProject)
+    if (!session || !isProjectSessionPath(session, projectKey)) return
+    registerSaveRetry(projectKey, `config:${projectKey}`, () => { void exitSaveRef.current(false) }, `config:${projectKey}`)
+    return () => unregisterSaveRetry(projectKey, `config:${projectKey}`, `config:${projectKey}`)
+  }, [projectKey, sessionKey])
 
   const openGenerateDialog = () => {
     const projectSession = captureProjectSession(currentProject)

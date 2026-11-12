@@ -36,13 +36,27 @@ describe('model-credential-security', () => {
     expect(restored).toBe(plainKey)
   })
 
-  it('preserves plain key without changes when safeStorage is unavailable', () => {
+  it('does not treat the Linux basic_text backend as OS-backed encryption', () => {
+    const keyringStorage: SafeStorageLike = {
+      isEncryptionAvailable: () => true,
+      platform: 'linux',
+      getSelectedStorageBackend: () => 'basic_text',
+      encryptString: value => Buffer.from(value, 'utf8'),
+      decryptString: value => value.toString('utf8'),
+    }
+    const plainKey = 'sk-basic-text-test'
+
+    expect(() => protectModelApiKey(plainKey, keyringStorage)).toThrow('MODEL_CREDENTIAL_PROTECTION_UNAVAILABLE')
+    expect(unprotectModelApiKey(`${ENCRYPTED_KEY_PREFIX}${Buffer.from(plainKey).toString('base64')}`, keyringStorage)).toBe('')
+  })
+
+  it('rejects new keys when safeStorage is unavailable but still reads legacy plaintext', () => {
     const mockStorage: SafeStorageLike = {
       isEncryptionAvailable: () => false,
     }
 
     const plainKey = 'sk-local-test-key'
-    expect(protectModelApiKey(plainKey, mockStorage)).toBe(plainKey)
+    expect(() => protectModelApiKey(plainKey, mockStorage)).toThrow('MODEL_CREDENTIAL_PROTECTION_UNAVAILABLE')
     expect(unprotectModelApiKey(plainKey, mockStorage)).toBe(plainKey)
   })
 

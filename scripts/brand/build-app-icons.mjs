@@ -1,89 +1,173 @@
-// 从 docs/assets/brand/pagekin-icon.svg 生成 build/ 下的应用图标：icon.ico（Windows）、icon.icns（macOS）、icon.png（窗口图标）。
-// 在 Electron 的离屏窗口里按每个尺寸直接栅格化矢量图，小尺寸不靠缩放大图，边缘更干净。
-// 用法：npx electron scripts/brand/build-app-icons.mjs（失败时打印原因并以退出码 1 结束，不写任何图标）
+// 从 build/icon.ico 的产品源图标同步生成 Windows、macOS、Linux 与前端图标。
+// 统一为圆角透明画布，避免源图四角的不透明深色背景形成黑色方边。
+// 用法：npx electron scripts/brand/build-app-icons.mjs
 import { Buffer } from 'node:buffer'
 import { readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { app, BrowserWindow } from 'electron'
+import { deflateSync, inflateSync } from 'node:zlib'
+import { app, nativeImage } from 'electron'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
-const svg = readFileSync(path.join(root, 'docs/assets/brand/pagekin-icon.svg'), 'utf8')
+const sourceIcoPath = path.join(root, 'build/icon.ico')
+const sourceIco = readFileSync(sourceIcoPath)
 
-// macOS 图标网格：1024 画布里圆角方块占 824，四周留白，和 Dock 里其他应用一样大。
-const MAC_CONTENT_RATIO = 824 / 1024
-const ICO_SIZES = [16, 24, 32, 48, 64, 128, 256]
 const ICNS_ENTRIES = [
   ['icp4', 16], ['icp5', 32], ['icp6', 64], ['ic07', 128], ['ic08', 256], ['ic09', 512], ['ic10', 1024],
   ['ic11', 32], ['ic12', 64], ['ic13', 256], ['ic14', 512],
 ]
 
-// 每个尺寸开一个新窗口：透明窗口复用时，上一次较大渲染的抗锯齿边缘会残留在左上角。
-// 窗口太小时 capturePage 会失败，所以窗口固定 1024，只截左上角 size×size。
-// SVG 必须是块级：行内 SVG 落在文字基线上，16px 时会被行高往下推几像素，截图就丢掉底边。
-// 留白取整数像素，否则 16px 的 macOS 帧会糊成半像素边。
-async function render(size, contentRatio) {
-  const margin = Math.round((size - size * contentRatio) / 2)
-  const inner = size - margin * 2
-  const html = `<!doctype html><html><body style="margin:0;background:transparent;overflow:hidden">
-    <div style="position:absolute;left:${margin}px;top:${margin}px;width:${inner}px;height:${inner}px">${svg.replace('<svg ', '<svg style="display:block" width="100%" height="100%" ')}</div>
-  </body></html>`
-  // 隐藏窗口默认会节流 rAF 与绘制，可能永远等不到下一帧或截到空白。
-  const win = new BrowserWindow({ width: 1024, height: 1024, useContentSize: true, show: false, frame: false, transparent: true, webPreferences: { backgroundThrottling: false } })
-  try {
-    await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
-    await win.webContents.executeJavaScript('new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))')
-    const image = await win.webContents.capturePage({ x: 0, y: 0, width: size, height: size })
-    assertPlaced(image, size, margin)
-    return image.toPNG()
-  } finally {
-    win.destroy()
+function readIcoFrames(file) {
+  if (file.readUInt16LE(0) !== 0 || file.readUInt16LE(2) !== 1) throw new Error(`${sourceIcoPath} 不是有效 ICO`)
+  const count = file.readUInt16LE(4)
+  const frames = new Map()
+  for (let index = 0; index < count; index++) {
+    const entry = 6 + index * 16
+    const size = file[entry] || 256
+    const length = file.readUInt32LE(entry + 8)
+    const offset = file.readUInt32LE(entry + 12)
+    const png = file.subarray(offset, offset + length)
+    if (png.toString('hex', 0, 8) !== '89504e470d0a1a0a') continue
+    const image = nativeImage.createFromBuffer(png)
+    const dimensions = image.getSize()
+    if (dimensions.width !== size || dimensions.height !== size) {
+      throw new Error(`ICO ${size}px 帧的图像尺寸为 ${dimensions.width}×${dimensions.height}`)
+    }
+    frames.set(size, png)
   }
+  if (!frames.has(256)) throw new Error(`${sourceIcoPath} 缺少 256px PNG 图标帧`)
+  return frames
 }
 
-// 截图不对就别写进图标：尺寸、非全透明、四角透明、图形落在预期的留白里（四边都对上，才说明没被截掉或挪位）。
-// 满版渲染时图形铺满画布，包围盒发现不了背景不透明；图标是圆角方块，四角按设计透明，用它兜底。
-// 小尺寸圆角的抗锯齿会向外渗 1 像素，所以每边容差 1。
-function assertPlaced(image, size, margin) {
-  const { width, height } = image.getSize()
-  if (width !== size || height !== size) throw new Error(`渲染尺寸不对：要 ${size}，得到 ${width}×${height}`)
-  const bitmap = image.toBitmap()
-  let [left, top, right, bottom] = [size, size, -1, -1]
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      if (bitmap[(y * size + x) * 4 + 3] === 0) continue
-      left = Math.min(left, x)
-      top = Math.min(top, y)
-      right = Math.max(right, x)
-      bottom = Math.max(bottom, y)
+const sourceFrames = readIcoFrames(sourceIco)
+
+function paeth(left, up, upLeft) {
+  const estimate = left + up - upLeft
+  const distances = [Math.abs(estimate - left), Math.abs(estimate - up), Math.abs(estimate - upLeft)]
+  return distances[0] <= distances[1] && distances[0] <= distances[2] ? left : distances[1] <= distances[2] ? up : upLeft
+}
+
+function decodePng(png) {
+  const chunks = []
+  for (let offset = 8; offset < png.length;) {
+    const length = png.readUInt32BE(offset)
+    const type = png.toString('ascii', offset + 4, offset + 8)
+    chunks.push({ type, data: png.subarray(offset + 8, offset + 8 + length) })
+    offset += length + 12
+    if (type === 'IEND') break
+  }
+  const ihdr = chunks.find(chunk => chunk.type === 'IHDR')?.data
+  if (!ihdr) throw new Error('PNG 缺少 IHDR')
+  const width = ihdr.readUInt32BE(0)
+  const height = ihdr.readUInt32BE(4)
+  const bitDepth = ihdr[8]
+  const colorType = ihdr[9]
+  const channels = colorType === 6 ? 4 : colorType === 2 ? 3 : 0
+  if (bitDepth !== 8 || channels === 0 || ihdr[12] !== 0) throw new Error('只支持 8 位 RGB/RGBA 非隔行 PNG 图标')
+  const stride = width * channels
+  const packed = inflateSync(Buffer.concat(chunks.filter(chunk => chunk.type === 'IDAT').map(chunk => chunk.data)))
+  const decoded = Buffer.alloc(stride * height)
+  for (let y = 0; y < height; y++) {
+    const rowOffset = y * (stride + 1)
+    const filter = packed[rowOffset]
+    if (filter > 4) throw new Error(`不支持 PNG 行过滤器 ${filter}`)
+    for (let x = 0; x < stride; x++) {
+      const left = x >= channels ? decoded[y * stride + x - channels] : 0
+      const up = y > 0 ? decoded[(y - 1) * stride + x] : 0
+      const upLeft = x >= channels && y > 0 ? decoded[(y - 1) * stride + x - channels] : 0
+      const predictor = [0, left, up, (left + up) >> 1, paeth(left, up, upLeft)][filter]
+      decoded[y * stride + x] = (packed[rowOffset + 1 + x] + predictor) & 0xff
     }
   }
-  if (right < 0) throw new Error(`${size}px 截图全透明`)
-  const cornerAlphas = [[0, 0], [size - 1, 0], [0, size - 1], [size - 1, size - 1]].map(([x, y]) => bitmap[(y * size + x) * 4 + 3])
-  if (cornerAlphas.some(alpha => alpha !== 0)) throw new Error(`${size}px 四角不透明（alpha ${cornerAlphas.join(',')}），背景没有保持透明`)
-  const expected = [margin, margin, size - 1 - margin, size - 1 - margin]
-  if ([left, top, right, bottom].some((value, index) => Math.abs(value - expected[index]) > 1)) {
-    throw new Error(`${size}px 图形位置不对：要 ${expected.join(',')}，得到 ${[left, top, right, bottom].join(',')}`)
+  const pixels = Buffer.alloc(width * height * 4)
+  const transparentColor = colorType === 2 ? chunks.find(chunk => chunk.type === 'tRNS')?.data : undefined
+  for (let index = 0; index < width * height; index++) {
+    const input = index * channels
+    const output = index * 4
+    pixels[output] = decoded[input]
+    pixels[output + 1] = decoded[input + 1]
+    pixels[output + 2] = decoded[input + 2]
+    pixels[output + 3] = channels === 4 ? decoded[input + 3] : 255
+    if (transparentColor?.length >= 6 && decoded[input] === transparentColor.readUInt16BE(0) && decoded[input + 1] === transparentColor.readUInt16BE(2) && decoded[input + 2] === transparentColor.readUInt16BE(4)) pixels[output + 3] = 0
   }
+  return { width, height, ihdr, chunks, pixels }
 }
 
-function ico(images) {
-  const header = Buffer.alloc(6 + images.length * 16)
-  header.writeUInt16LE(0, 0)
-  header.writeUInt16LE(1, 2)
-  header.writeUInt16LE(images.length, 4)
-  let offset = header.length
-  images.forEach(({ size, png }, index) => {
+const CRC_TABLE = Uint32Array.from({ length: 256 }, (_, value) => {
+  let crc = value
+  for (let bit = 0; bit < 8; bit++) crc = (crc & 1) ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1
+  return crc >>> 0
+})
+
+function encodeChunk(type, data) {
+  const typeBytes = Buffer.from(type, 'ascii')
+  const crcInput = Buffer.concat([typeBytes, data])
+  let crc = 0xffffffff
+  for (const byte of crcInput) crc = CRC_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8)
+  const chunk = Buffer.alloc(data.length + 12)
+  chunk.writeUInt32BE(data.length, 0)
+  typeBytes.copy(chunk, 4)
+  data.copy(chunk, 8)
+  chunk.writeUInt32BE((crc ^ 0xffffffff) >>> 0, data.length + 8)
+  return chunk
+}
+
+function encodePng({ width, height, ihdr: sourceIhdr, chunks, pixels }) {
+  const ihdr = Buffer.from(sourceIhdr)
+  ihdr[9] = 6
+  const rows = Buffer.alloc(height * (width * 4 + 1))
+  for (let y = 0; y < height; y++) pixels.copy(rows, y * (width * 4 + 1) + 1, y * width * 4, (y + 1) * width * 4)
+  const metadata = chunks.filter(chunk => !['IHDR', 'IDAT', 'IEND', 'tRNS'].includes(chunk.type)).map(chunk => encodeChunk(chunk.type, chunk.data))
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    encodeChunk('IHDR', ihdr),
+    ...metadata,
+    encodeChunk('IDAT', deflateSync(rows)),
+    encodeChunk('IEND', Buffer.alloc(0)),
+  ])
+}
+
+function roundCorners(png, size) {
+  const image = decodePng(png)
+  if (image.width !== size || image.height !== size) throw new Error(`图标帧尺寸与 ICO 声明不符：${image.width}×${image.height}，声明 ${size}×${size}`)
+  const corners = [0, size - 1].flatMap(y => [0, size - 1].map(x => image.pixels[(y * size + x) * 4 + 3]))
+  // 已修过的图标保持不变，避免重复生成时反复柔化抗锯齿边缘。
+  if (corners.every(alpha => alpha === 0)) return nativeImage.createFromBuffer(png).toPNG()
+  const half = size / 2
+  const radius = size * 0.16
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const qx = Math.abs(x + 0.5 - half) - (half - radius)
+      const qy = Math.abs(y + 0.5 - half) - (half - radius)
+      const outside = Math.hypot(Math.max(qx, 0), Math.max(qy, 0))
+      const distance = outside + Math.min(Math.max(qx, qy), 0) - radius
+      const coverage = Math.max(0, Math.min(1, 0.5 - distance))
+      const alphaIndex = (y * size + x) * 4 + 3
+      image.pixels[alphaIndex] = Math.round(image.pixels[alphaIndex] * coverage)
+    }
+  }
+  // 在 16px 帧中，圆弧的亚像素覆盖率会让最外侧角点残留少量深色；角点本身必须完全透明。
+  for (const index of [0, size - 1, (size - 1) * size, size * size - 1]) image.pixels[index * 4 + 3] = 0
+  return nativeImage.createFromBuffer(encodePng(image)).toPNG()
+}
+
+function encodeIco(frames) {
+  const directory = Buffer.alloc(6 + frames.length * 16)
+  directory.writeUInt16LE(0, 0)
+  directory.writeUInt16LE(1, 2)
+  directory.writeUInt16LE(frames.length, 4)
+  let offset = directory.length
+  for (const [index, { size, png }] of frames.entries()) {
     const entry = 6 + index * 16
-    header.writeUInt8(size >= 256 ? 0 : size, entry)
-    header.writeUInt8(size >= 256 ? 0 : size, entry + 1)
-    header.writeUInt16LE(1, entry + 4)
-    header.writeUInt16LE(32, entry + 6)
-    header.writeUInt32LE(png.length, entry + 8)
-    header.writeUInt32LE(offset, entry + 12)
+    directory.writeUInt8(size === 256 ? 0 : size, entry)
+    directory.writeUInt8(size === 256 ? 0 : size, entry + 1)
+    directory.writeUInt16LE(1, entry + 4)
+    directory.writeUInt16LE(32, entry + 6)
+    directory.writeUInt32LE(png.length, entry + 8)
+    directory.writeUInt32LE(offset, entry + 12)
     offset += png.length
-  })
-  return Buffer.concat([header, ...images.map(image => image.png)])
+  }
+  return Buffer.concat([directory, ...frames.map(frame => frame.png)])
 }
 
 function icns(entries) {
@@ -100,21 +184,27 @@ function icns(entries) {
 }
 
 async function main() {
-  const full = new Map()
-  for (const size of [...ICO_SIZES, 512]) full.set(size, await render(size, 1))
-  const mac = new Map()
-  for (const size of new Set(ICNS_ENTRIES.map(([, size]) => size))) mac.set(size, await render(size, MAC_CONTENT_RATIO))
+  const roundedFrames = new Map()
+  for (const [size, png] of sourceFrames) roundedFrames.set(size, await roundCorners(png, size))
 
-  writeFileSync(path.join(root, 'build/icon.ico'), ico(ICO_SIZES.map(size => ({ size, png: full.get(size) }))))
+  const renderRounded = size => {
+    const sourceSize = roundedFrames.has(size) ? size : 256
+    const image = nativeImage.createFromBuffer(roundedFrames.get(sourceSize))
+    return (sourceSize === size ? image : image.resize({ width: size, height: size, quality: 'best' })).toPNG()
+  }
+
+  writeFileSync(sourceIcoPath, encodeIco([...roundedFrames].map(([size, png]) => ({ size, png }))))
+  const mac = new Map()
+  for (const size of new Set(ICNS_ENTRIES.map(([, size]) => size))) mac.set(size, renderRounded(size))
+
   writeFileSync(path.join(root, 'build/icon.icns'), icns(ICNS_ENTRIES.map(([type, size]) => ({ type, png: mac.get(size) }))))
-  writeFileSync(path.join(root, 'build/icon.png'), full.get(512))
-  console.log('build/icon.ico, build/icon.icns, build/icon.png 已生成')
+  writeFileSync(path.join(root, 'build/icon.png'), renderRounded(512))
+  const appIcon = roundedFrames.get(256)
+  writeFileSync(path.join(root, 'src/assets/brand/novel-writer-master-icon.png'), appIcon)
+  writeFileSync(path.join(root, 'public/novel-writer-master-icon.png'), appIcon)
+  console.log('build/icon.ico、build/icon.icns、build/icon.png 与前端图标已同步并添加透明圆角')
 }
 
-// 主进程脚本里顶层 await 会卡住 ready 事件，所以用 then 串起来。
-app.commandLine.appendSwitch('force-device-scale-factor', '1')
-// 每个尺寸用完就关窗口，别让「所有窗口已关闭」把应用提前退出。
-app.on('window-all-closed', () => {})
 app.whenReady().then(main).then(() => app.exit(0), error => {
   console.error(error)
   app.exit(1)

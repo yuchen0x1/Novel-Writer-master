@@ -224,7 +224,13 @@ test('planning diagnostic uses its six-chapter scope and native 64K profile with
   assert.deepEqual(planningNativeOperations(planningPolicy.caseId, 'review').map(item => item.kind), ['outline', 'outline', 'directory', 'directory', 'draft', 'review'])
   assert.deepEqual(planningPolicy.operations.slice(0, 4).map(item => [item.range, item.targetUnits]),
     [[[1, 5], 600], [[6, 6], 600], [[1, 5], 600], [[6, 6], 600]])
-  assert.ok(Object.values(planningPolicy.planningRootBudgets).every(budget => budget.maxPhysicalRequests === 32))
+  assert.deepEqual(Object.fromEntries(Object.entries(planningPolicy.planningRootBudgets)
+    .map(([operation, budget]) => [operation, budget.maxPhysicalRequests])), {
+    'planning-outline-1-5': 40,
+    'planning-outline-6': 32,
+    'planning-directory-1-5': 32,
+    'planning-directory-6': 32,
+  })
   assert.equal(planningPolicy.maxPhysicalRequests, Object.values(planningPolicy.physicalRequestBounds).reduce((sum, count) => sum + count, 0))
   assert.deepEqual(planningNativeOperations(planningPolicy.caseId, 'complete').map(item => item.kind), ['refine', 'final-review'])
   assert.throws(() => planningNativeOperations('R3', 'review'), /SCOPE/)

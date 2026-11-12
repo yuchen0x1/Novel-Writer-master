@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>书童 Pagekin</title>
+    <title>Novel Writer master</title>
   </head>
   <body style="margin: 0;">
     <!-- 同步读取主题，避免加载页与主界面背景色闪跳 -->
@@ -104,18 +104,13 @@
           animation: ai-writer-drift 9s ease-in-out infinite alternate-reverse;
         }
 
-        /* 朱红印章：启的品牌记号 */
+        /* 产品图标 */
         .ai-writer-seal {
-          display: grid;
-          place-items: center;
+          display: block;
           width: 64px;
           height: 64px;
-          border-radius: 12px;
-          background: var(--loader-seal, #B5473B);
-          color: var(--loader-paper, #FFFEFB);
-          font-size: 34px;
-          font-weight: 700;
-          box-shadow: 0 10px 30px -12px color-mix(in srgb, var(--loader-seal, #B5473B) 65%, transparent);
+          object-fit: contain;
+          filter: drop-shadow(0 10px 18px color-mix(in srgb, var(--loader-accent, #2C4A8C) 45%, transparent));
           animation: ai-writer-seal .8s cubic-bezier(.34, 1.56, .64, 1) both .15s;
         }
 
@@ -123,22 +118,10 @@
           margin: 6px 0 0;
           font-size: 24px;
           font-weight: 600;
-          letter-spacing: .12em;
+          letter-spacing: .02em;
           color: var(--loader-ink, #17171A);
           animation: ai-writer-fade .7s ease both .45s;
         }
-        .ai-writer-brand i {
-          font-style: italic;
-          font-family: Georgia, 'Times New Roman', serif;
-          letter-spacing: .02em;
-          background: linear-gradient(90deg, var(--loader-accent, #2C4A8C), var(--loader-vermilion, #B5473B), var(--loader-accent, #2C4A8C));
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-          animation: ai-writer-text-shine 3s linear infinite;
-        }
-
         .ai-writer-text {
           margin: 0;
           font-size: 13px;
@@ -189,9 +172,6 @@
           0% { left: -40%; }
           100% { left: 100%; }
         }
-        @keyframes ai-writer-text-shine {
-          to { background-position: 200% center; }
-        }
         @media (prefers-reduced-motion: reduce) {
           .ai-writer-scene *, .ai-writer-scene { animation-duration: .01s !important; animation-iteration-count: 1 !important; }
         }
@@ -200,8 +180,8 @@
         <div class="ai-writer-scene">
           <span class="ai-writer-wash ai-writer-wash--a" aria-hidden="true"></span>
           <span class="ai-writer-wash ai-writer-wash--b" aria-hidden="true"></span>
-          <span class="ai-writer-seal" aria-hidden="true">书</span>
-          <p class="ai-writer-brand">书童 <i>Pagekin</i></p>
+          <img class="ai-writer-seal" src="./novel-writer-master-icon.png" alt="" />
+          <p class="ai-writer-brand">Novel Writer master</p>
           <p class="ai-writer-text">正在铺纸研墨</p>
           <span class="ai-writer-grind" aria-hidden="true"><i></i></span>
         </div>

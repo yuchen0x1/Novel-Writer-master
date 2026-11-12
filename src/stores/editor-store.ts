@@ -5,6 +5,7 @@ import { sameProjectPathKey } from '../shared/project-session-context'
 import { countUnsavedEditorItems, countUnsavedEditorItemsForProject } from './editor-unsaved'
 import { useWritingGoalStore } from './writing-goal-store'
 import { countDraftUnits } from '../shared/draft-units'
+import { clearAllSaveRetries, clearSaveRetriesForOwner, clearSaveRetriesForProject } from './save-status-store'
 import { useLocaleStore } from './locale-store'
 import { canonicalResourceUri } from '../shared/project-paths'
 import type { GenerationRecoveryContext } from '../shared/generation-owner-contract'
@@ -239,8 +240,12 @@ export function registerEditorExitSaveHandler(handler: EditorExitSaveHandler): (
 // These store-owned removal paths are the handler lifetime boundary.
 function removeEditorExitSaveHandlers(tab: EditorTab): void {
   exitSaveHandlers.delete(`tab:${tab.id}`)
+  clearSaveRetriesForOwner(tab.id)
   if (tab.projectKey && !tab.planningRecovery && BACKGROUND_LEDGER_BY_EDITOR_TYPE[tab.type]) {
     exitSaveHandlers.delete(exitSaveTypeKey(tab.type, tab.projectKey))
+    if (tab.type === 'config' || tab.type === 'chapter-card') {
+      clearSaveRetriesForOwner(`${tab.type}:${tab.projectKey}`)
+    }
   }
 }
 
@@ -517,6 +522,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
 
   clearTabs: () => {
     exitSaveHandlers.clear()
+    clearAllSaveRetries()
     set({ tabs: [], activeTabId: null })
   },
 
@@ -524,6 +530,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     for (const tab of get().tabs) {
       if (tab.projectKey === projectKey) removeEditorExitSaveHandlers(tab)
     }
+    clearSaveRetriesForProject(projectKey)
     set((state) => {
       const tabs = state.tabs.filter(tab => tab.projectKey !== projectKey)
       const draftLedgers = Object.fromEntries(

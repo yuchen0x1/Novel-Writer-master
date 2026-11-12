@@ -7,6 +7,7 @@ import { countDraftUnits, draftTargetUnitRange } from '../../src/shared/draft-un
 import { isDraftVisibleTextVersion } from '../../src/shared/draft-visible-text'
 import { GenerationRunRepository, textHash, type DurableGenerationRun } from '../repositories/generation-run-repository'
 import { DraftRepository } from '../repositories/draft-repository'
+import { DraftSnapshotRepository } from '../repositories/draft-snapshot-repository'
 
 interface StoredDraftCommit extends GenerationDraftCommitReceipt {
   chapterNumber: number
@@ -161,6 +162,11 @@ export class GenerationDraftEffects {
       }
       const id = DraftRepository.create({ chapterNumber: request.chapterNumber, source: 'write', content: composition.text,
         wordCount: units, sourceDependencies: dependencies }, this.db)
+      try {
+        DraftSnapshotRepository.record({ draftId: id, chapterNumber: request.chapterNumber, source: 'create', content: composition.text, wordCount: units }, this.db)
+      } catch (error) {
+        console.warn('[Generation] 草稿快照记录失败（正文已保存）:', error instanceof Error ? error.name : 'unknown')
+      }
       const version = this.db.prepare('SELECT version FROM drafts WHERE id=?').pluck().get(id) as number
       const receipt: GenerationDraftCommitReceipt = { success: true, id, version, contentHash: composition.textHash, content: composition.text }
       const row = this.attempts(run.runId).find(item => item.attempt_id === artifact)!

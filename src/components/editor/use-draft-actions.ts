@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { formatResourceUri, parseResourceUri, resourceWriteAllowed } from '../../shared/project-paths'
 import { useProjectStore } from '../../stores/project-store'
 import { registerEditorExitSaveHandler, useEditorStore } from '../../stores/editor-store'
-import { reportSaveFailure, registerSaveRetry, unregisterSaveRetry, useSaveStatusStore } from '../../stores/save-status-store'
+import { beginSaveOperation, finishSaveOperation, registerSaveRetry, useSaveStatusStore } from '../../stores/save-status-store'
 import { useWorkflowStore, workflowResourceKey } from '../../stores/workflow-store'
 import { useLocaleStore } from '../../stores/locale-store'
 import { toast } from '../ui/Toast'
@@ -180,7 +180,7 @@ export function useDraftActions({ tabId, filePath, content, projectKey }: DraftT
     }
     setSaving(true)
     setSaveOutcome('idle')
-    useSaveStatusStore.getState().begin(projectSession.projectPath)
+    const saveOperationId = beginSaveOperation(projectSession)
     let failureMessage: string | null = null
     try {
       const resource = parseResourceUri(filePath)
@@ -214,9 +214,9 @@ export function useDraftActions({ tabId, filePath, content, projectKey }: DraftT
       if (propagateFailure) throw error
     } finally {
       // 会话已切换时只把计数收掉：失败属于上一个项目，不该画在新作品的顶栏上。
-      if (failureMessage !== null && isProjectSessionCurrent(projectSession)) reportSaveFailure(projectSession.projectPath, `draft:${tabId}`, failureMessage)
-      else if (isProjectSessionCurrent(projectSession)) useSaveStatusStore.getState().succeed(projectSession.projectPath)
-      else useSaveStatusStore.getState().release()
+      finishSaveOperation(projectSession.projectPath, saveOperationId,
+        failureMessage !== null ? 'failed' : isProjectSessionCurrent(projectSession) ? 'saved' : 'released',
+        failureMessage !== null ? `draft:${tabId}` : undefined, failureMessage ?? undefined)
       if (isProjectSessionCurrent(projectSession)) setSaving(false)
     }
   }
@@ -236,9 +236,9 @@ export function useDraftActions({ tabId, filePath, content, projectKey }: DraftT
 
   // 顶栏「保存失败 · 重试」重跑这一稿最近一次失败的保存。
   useEffect(() => {
-    const key = `draft:${tabId}`
-    registerSaveRetry(projectKey, key, () => { void exitSaveRef.current(currentBodyRef.current) })
-    return () => unregisterSaveRetry(projectKey, key)
+    const projectSession = captureProjectSession(useProjectStore.getState().currentProject)
+    if (!projectSession || !isProjectSessionPath(projectSession, projectKey)) return
+    registerSaveRetry(projectKey, `draft:${tabId}`, () => { void exitSaveRef.current(currentBodyRef.current) }, tabId)
   }, [projectKey, tabId])
 
   const freezeDraftSourceForAI = async (projectSession: NonNullable<ReturnType<typeof captureProjectSession>>) => {

@@ -7,7 +7,7 @@ import { installGlobalDataLocator, type GlobalDataRoots } from './app-data-locat
 export const GLOBAL_OBJECTS = ['config.json', 'models.json', 'recent-projects.json', 'mcp_config.json', 'prompts', 'skills', 'skins'] as const
 /** No verified product writer owns arbitrary contents of these shared legacy directories. */
 export const GLOBAL_PRESERVED_OBJECTS = ['logs', 'metadata', 'update'] as const
-type Ready = { state: 'ready'; globalGeneration: string; dataRoot: string; legacySourceIgnored: boolean; preservedUnknownCount: number }
+type Ready = { state: 'ready'; globalGeneration: string; dataRoot: string; legacySourceIgnored: boolean; preservedUnknownCount: number; config: Record<string, unknown> }
 export type GlobalMigrationResult = Ready | { state: 'blocked'; code: string }
 export interface GlobalMigrationOptions extends GlobalDataRoots {
   /** Main must hold the unchanged application single-instance lock before calling. */
@@ -155,7 +155,9 @@ export function runGlobalDataMigration(options: GlobalMigrationOptions): GlobalM
       if (!fs.existsSync(dataRoot)) fail('GLOBAL_COMMITTED_GENERATION_MISSING')
       if (receipt.requiredObjects.some(name => !fs.existsSync(path.join(dataRoot, name)))) fail('GLOBAL_COMMITTED_OBJECT_MISSING')
       validate(dataRoot)
-      const result: Ready = { state: 'ready', globalGeneration: receipt.generation, dataRoot,
+      const configFile = path.join(dataRoot, 'config.json')
+      const config = fs.existsSync(configFile) ? parse(configFile) as Record<string, unknown> : {}
+      const result: Ready = { state: 'ready', globalGeneration: receipt.generation, dataRoot, config,
         legacySourceIgnored: fs.existsSync(legacy), preservedUnknownCount: receipt.preservedUnknownCount }
       admitted.set(result, legacy); return result
     }
@@ -237,7 +239,11 @@ export function runGlobalDataMigration(options: GlobalMigrationOptions): GlobalM
     const receipt: Receipt = { version: 1, generation: journal.generation, completed: true, preservedUnknownCount: unknown,
       requiredObjects: GLOBAL_OBJECTS.filter(name => fs.existsSync(path.join(installed, name))) }
     durable(receiptPath, receipt); checkpoint('receipt')
-    return ready(receipt)
+    const configFile = path.join(installed, 'config.json')
+    const config = fs.existsSync(configFile) ? parse(configFile) as Record<string, unknown> : {}
+    const result: Ready = { state: 'ready', globalGeneration: journal.generation, dataRoot: installed, config,
+      legacySourceIgnored: fs.existsSync(legacy), preservedUnknownCount: unknown }
+    admitted.set(result, legacy); return result
   } catch (error) {
     const message = error instanceof Error ? error.message : ''
     return { state: 'blocked', code: /^GLOBAL_[A-Z_]+$/.test(message) ? message : 'GLOBAL_MIGRATION_IO_FAILED' }

@@ -301,7 +301,7 @@ describe('single global generation cutover using synthetic roots only', () => {
     expect(fs.readFileSync(path.join(outside, 'sentinel'), 'utf8')).toBe('untouched')
   })
   it('does not accept a forged ready result for locator activation', () => {
-    expect(() => activateGlobalData({ state: 'ready', globalGeneration: 'fake', dataRoot: 'fake', legacySourceIgnored: false, preservedUnknownCount: 0 })).toThrow('GLOBAL_RESULT_NOT_VERIFIED')
+    expect(() => activateGlobalData({ state: 'ready', globalGeneration: 'fake', dataRoot: 'fake', legacySourceIgnored: false, preservedUnknownCount: 0, config: {} })).toThrow('GLOBAL_RESULT_NOT_VERIFIED')
   })
   it('activates only the admitted generation and does not reopen legacy writes', async () => {
     const roots = fixture(); populate(roots.legacySource)

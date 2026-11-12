@@ -16,6 +16,7 @@ const arg = name => process.argv.find(value => value.startsWith(`--${name}=`))?.
 const macMountedApp = arg('mac-mounted-app')
 const macFixtureOnly = arg('mac-fixture-only') === '1'
 const macMode = Boolean(macMountedApp || macFixtureOnly)
+const pythonExecutable = process.platform === 'win32' ? 'python' : 'python3'
 const winInstalledApp = arg('win-installed-app')
 const winUnpackedApp = arg('win-unpacked-app')
 assert(!(winInstalledApp && winUnpackedApp), 'Select installed or unpacked Windows package, not both')
@@ -280,7 +281,7 @@ function comparisonDatabase(sourceCopy, root) {
   }
   const snapshot = path.join(root, 'sql-comparison.db')
   // SQLite merges any committed WAL entries into this independent, read-only comparison input.
-  execFileSync(macMode ? 'python3' : 'python', ['-c', `import sqlite3,sys
+  execFileSync(pythonExecutable, ['-c', `import sqlite3,sys
 source=sqlite3.connect('file:'+sys.argv[1]+'?mode=ro',uri=True)
 target=sqlite3.connect(sys.argv[2])
 source.backup(target)
@@ -338,7 +339,7 @@ async function seedSupplement(sourceCopy) {
       await table.update({ where: "id = 'upgrade-fixture-knowledge-document'", values: { filePath: original } })
     } finally { table.close() }
   } finally { connection.close() }
-  execFileSync('python', ['-c', seedOutboxSql, path.join(sourceCopy, '.vela', 'vela.db')])
+  execFileSync(pythonExecutable, ['-c', seedOutboxSql, path.join(sourceCopy, '.vela', 'vela.db')])
   let avatarSha256
   if (finalDelta) {
     const avatar = path.join(sourceCopy, '.vela', 'avatars', 'a11-synthetic-orphan.png')
@@ -542,7 +543,7 @@ const editorBody = locator => locator.evaluate(element => Array.from(element.que
 }).join('\n'))
 
 function draftBodies(target) {
-  return JSON.parse(execFileSync(macMode ? 'python3' : 'python', ['-c', `import json,sqlite3,sys
+  return JSON.parse(execFileSync(pythonExecutable, ['-c', `import json,sqlite3,sys
 db=sqlite3.connect('file:'+sys.argv[1]+'?mode=ro',uri=True)
 print(json.dumps([r[0] for r in db.execute('select body from contents')]))
 db.close()`, path.join(target, '.ai-novel', 'project.db')], { encoding: 'utf8' }))
@@ -694,7 +695,7 @@ async function verify(source) {
     assert.deepEqual(dialogs.map(dialog => dialog.type), ['open', 'open', 'confirm'])
     assert.deepEqual(inventory(sourceCopy), copiedBefore, 'Scratch old source changed during import')
     const oldDatabase = comparisonDatabase(sourceCopy, root)
-    const { avatarRows, ...counts } = JSON.parse(execFileSync('python', ['-c', compareSql,
+    const { avatarRows, ...counts } = JSON.parse(execFileSync(pythonExecutable, ['-c', compareSql,
       oldDatabase, path.join(target, '.ai-novel', 'project.db'), fieldPolicy], { encoding: 'utf8' }))
     assert.equal(counts.project_core, 1)
     if (supplement) assert.equal(counts.finalization_outbox, 1, 'Synthetic pending outbox was lost')
@@ -854,7 +855,7 @@ async function verify(source) {
       await quit(session.app, session.page, source.version)
       session = null
       const targetBeforeOldWrite = inventory(target)
-      execFileSync('python', ['-c', `import sqlite3,sys
+      execFileSync(pythonExecutable, ['-c', `import sqlite3,sys
 db=sqlite3.connect(sys.argv[1])
 updated=db.execute("update project_core set project_name='A11 旧源后续独立修改' where id='main'")
 assert updated.rowcount==1
@@ -925,7 +926,7 @@ function seedMac() {
   assert.deepEqual(files, entry.files)
   const sourceProjectId = JSON.parse(fs.readFileSync(path.join(source, '.vela', 'project.json'), 'utf8')).projectId
   const databaseSnapshot = comparisonDatabase(source, scratch)
-  const facts = JSON.parse(execFileSync(process.platform === 'win32' ? 'python' : 'python3', ['-c', `import json,sqlite3,sys
+  const facts = JSON.parse(execFileSync(pythonExecutable, ['-c', `import json,sqlite3,sys
 db=sqlite3.connect('file:'+sys.argv[1]+'?mode=ro',uri=True)
 tables=['project_core','contents','drafts','characters','blueprints','reviews','revisions','finalization_outbox']
 rows={table:db.execute('select count(*) from '+table).fetchone()[0] for table in tables}
@@ -943,7 +944,7 @@ db.close()`, databaseSnapshot], { encoding: 'utf8' }))
 }
 
 function inspectMacDatabases(snapshot, target) {
-  const result = JSON.parse(execFileSync(process.platform === 'win32' ? 'python' : 'python3', ['-c', `import json,sqlite3,sys
+  const result = JSON.parse(execFileSync(pythonExecutable, ['-c', `import json,sqlite3,sys
 a=sqlite3.connect('file:'+sys.argv[1]+'?mode=ro',uri=True)
 b=sqlite3.connect('file:'+sys.argv[2]+'?mode=ro',uri=True)
 tables={'project_core':['id','project_name','characters_arch','core_outline','world_setting'],
@@ -974,7 +975,7 @@ a.close(); b.close()`, snapshot, path.join(target, '.ai-novel', 'project.db')], 
 }
 
 function macLlmCalls(target) {
-  return Number(execFileSync(process.platform === 'win32' ? 'python' : 'python3', ['-c', `import sqlite3,sys
+  return Number(execFileSync(pythonExecutable, ['-c', `import sqlite3,sys
 db=sqlite3.connect('file:'+sys.argv[1]+'?mode=ro',uri=True)
 print(db.execute('select count(*) from llm_calls').fetchone()[0])
 db.close()`, path.join(target, '.ai-novel', 'project.db')], { encoding: 'utf8' }).trim())

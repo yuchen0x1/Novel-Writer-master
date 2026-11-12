@@ -12,7 +12,7 @@ import {
 import { Button } from '../components/ui/Button'
 
 const meta = {
-  title: 'AI Novel Writer UI/Dialog',
+  title: 'Novel Writer master UI/Dialog',
   component: Dialog,
   tags: ['autodocs'],
   parameters: {

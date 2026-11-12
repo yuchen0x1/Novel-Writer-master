@@ -273,8 +273,8 @@ function Test-AiNovelVisibleMainWindow {
   if ([string]::IsNullOrWhiteSpace($title)) {
     return $false
   }
-  # 1.3.0 之后窗口标题改为「书童 Pagekin」；升级测试里的旧版本仍用旧标题，两种都认。
-  foreach ($productTitle in @('书童', 'Pagekin', 'AI小说作家', 'AI Novel Writer')) {
+  # 升级测试可能启动历史版本；当前与旧版窗口标题都要认。
+  foreach ($productTitle in @('Novel Writer master', '书童', 'Pagekin', 'AI小说作家', 'AI Novel Writer')) {
     if ($title.IndexOf($productTitle, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
       return $true
     }
@@ -936,10 +936,10 @@ function Get-AiNovelInstalledVersion {
   return [pscustomobject]@{ productVersion = $productVersion; packageVersion = $packageVersion }
 }
 
-# 安装包产品名（exe 与卸载程序的文件名）。1.3.0 之后由 AI小说作家 改为书童（ADR-0022）：
-# 本次构建用第一个，升级测试里的旧版本用第二个。名单与 scripts/product-identity.mjs 一致。
+# 安装包产品名（exe 与卸载程序的文件名）。名单中的历史名称用于覆盖旧版本升级场景，
+# 与 scripts/product-identity.mjs 保持一致。
 function Get-AiNovelProductNames {
-  return @('书童', 'AI小说作家')
+  return @('Novel Writer master', '书童', 'AI小说作家')
 }
 
 function Get-AiNovelProductExecutableNames {

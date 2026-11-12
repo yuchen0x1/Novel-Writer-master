@@ -5,12 +5,12 @@
 </div>
 
 <p align="center">
-  <img src="docs/assets/brand/pagekin-icon-256.png" width="112" height="112" alt="Pagekin logo: a sheet of paper with a curled corner and two round eyes" />
+  <img src="public/novel-writer-master-icon.png" width="112" height="112" alt="Novel Writer master app icon: a quill above an open book" />
 </p>
 
-<h1 align="center">Pagekin</h1>
+<h1 align="center">Novel Writer master</h1>
 
-<p align="center"><sub>Formerly “AI Novel Writer” (AI 小说作家). Chinese name: 书童, “the scholar’s page”.</sub></p>
+<p align="center"><sub>Formerly “书童 Pagekin”.</sub></p>
 
 <p align="center">
   <strong>Free, open-source AI novel writing software for the desktop, built for long novels and serialized web fiction.</strong><br />
@@ -32,34 +32,15 @@
   <img src="docs/assets/readme/v130-hero-en.webp" alt="Pagekin 1.3.0: product summary on the left and real screenshots of the library, chapter view, blueprint, run sheet, architecture, and cast on the right" width="100%" />
 </p>
 
-> ## What's new in 1.9.0
->
-> - Draft auto snapshots: every save and generation records a snapshot (up to 30 per draft). The version menu lists them by time, word count, and source, and any snapshot can be restored as a new draft without touching existing versions.
-> - Top bar save status: saving, saved (with time), unsaved, and save failed are clearly distinguished, with one-click retry for a failed save. Status is owned by the book, so switching books never shows stale state.
-> - Fixed schema-8 projects being unable to upgrade in place to schema 9; merging a review revision into a draft now records a snapshot too.
->
-> See the [1.9.0 release notes](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.9.0) for details.
->
-> ## What's new in 1.7.1
->
-> - Scene cards are now available in each chapter blueprint with persisted location, time, participants, goals, conflicts, and transitions.
-> - Chinese projects gain an objective Chinese proofreading dimension, and review-center navigation lands on the quoted source anchor.
-> - Fixed mixed JSON configuration parsing, stale scene data during project switches, and release preflight issues.
->
-> See the [1.7.1 release notes](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.7.1) for details.
->
-> ## What's new in 1.4.0
->
-> - Plot outlines continue automatically through the configured sub-chapters, with checkpoint recovery and bounded retries.
-> - Writing Skills and prompt templates now cover volume planning, character continuity, review self-checks, and failure recovery.
-> - The writing workspace adds run status, progress feedback, and restrained motion with reduced-motion support.
-> - In-app updates, the official homepage, and release assets now point to `yuchen0x1/Pagekin`.
->
-> See the [1.4.0 release notes](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.4.0) for details.
+## Latest update
+
+- **Novel Writer master 1.10.0**: updated the app name and Windows/macOS icons while preserving the existing app-data directory; API keys are encrypted with the OS key store; save status and retries are isolated to the active project session.
+- If no secure system key store is available, the app explains that new API keys were not saved instead of writing them in plaintext.
+- See the [1.10.0 release notes](https://github.com/yuchen0x1/Pagekin/releases/tag/v1.10.0) or the [full release history](https://github.com/yuchen0x1/Pagekin/releases).
 
 ## What it does
 
-Pagekin works in the order a novel gets written: you are the author, it is your page. Each step is saved in the book and feeds the next one. AI drafts, and you confirm every step.
+Novel Writer master follows the stages of writing a novel: setup, architecture, blueprint, and manuscript. Each step is saved in your project for you to review, with AI assisting the drafting.
 
 ### Library: all your books in one place
 
@@ -131,7 +112,7 @@ Appearance offers light and dark. The interface is available in Chinese and Engl
 
 ## Supported models and services
 
-Pagekin does not provide models or host quotas. In settings, enter your own service address, model name, and API key. Two request protocols are supported:
+Novel Writer master does not provide models or host quotas. In settings, enter your own service address, model name, and API key. Two request protocols are supported:
 
 - **OpenAI-compatible**: any service compatible with the Chat Completions API.
 - **Native Gemini**: Google Gemini.
@@ -182,6 +163,8 @@ ai-novel-writer-setup-<version>.exe
 
 The installer is not code-signed at present. Windows may show an unknown-publisher warning. Continue only after confirming that the download page is this repository's official GitHub Release.
 
+See [Automatic updates and formal releases](docs/AUTO_UPDATE.md) for the runtime architecture, release workflow, integrity checks, CI gates, and signing limitations.
+
 ### macOS (Apple Silicon and Intel)
 
 ```text
@@ -202,7 +185,7 @@ ai-novel-writer-mac-x64-<version>-installer.dmg
 | Imported reference material | Stays in the local book unless you send it to a cloud model. |
 | Local model requests | Sent to the local or LAN inference service you configure. |
 | Cloud model requests | Prompts and context go to the provider you choose. |
-| Model settings and API keys | Stored in the `ai-novel-writer` folder of your app data directory (`%APPDATA%\ai-novel-writer` on Windows, `~/Library/Application Support/ai-novel-writer` on macOS). Protect your OS account and do not share this folder. |
+| Model settings and API keys | Settings are stored in the `ai-novel-writer` app-data directory; API keys are encrypted with the OS key store. Linux requires GNOME Keyring or KWallet. New API keys are not saved if no secure system key store is available. Protect your OS account and do not share the settings folder. |
 | App preferences | Stored in the same folder as the model settings. |
 
 Earlier versions kept settings in `~/.vela`. The current version copies them to the folder above at startup and leaves the original untouched.
@@ -211,7 +194,7 @@ The app does not provide model accounts, cloud generation, or promotional messag
 
 ## FAQ
 
-**Is Pagekin free?**
+**Is Novel Writer master free?**
 Yes. It is open source under the GPL-3.0 license. Any cost of calling a cloud model is between you and the model provider. A local model through Ollama needs no provider at all.
 
 **Which models do I need?**
@@ -249,8 +232,8 @@ The Windows installer is unsigned, and the Mac installers are only ad-hoc signed
 You need Node.js 20 or later and the pnpm version pinned in the repository.
 
 ```sh
-git clone https://github.com/yuchen0x1/Pagekin.git
-cd AI-Novel-Writer
+git clone https://github.com/yuchen0x1/Pagekin.git Novel-Writer-master
+cd Novel-Writer-master
 pnpm install --frozen-lockfile
 pnpm rebuild:electron
 pnpm dev

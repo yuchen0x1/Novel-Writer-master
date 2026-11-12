@@ -35,9 +35,8 @@ function toMeta(row: SnapshotRow): DraftSnapshotMeta {
  * 不把一次成功的保存翻成失败。内容与上一份相同时跳过，每稿只留最近 KEEP 份。
  */
 export const DraftSnapshotRepository = {
-  record(params: { draftId: number; chapterNumber: number; source: DraftSnapshotSource; content: string; wordCount: number }): void {
+  record(params: { draftId: number; chapterNumber: number; source: DraftSnapshotSource; content: string; wordCount: number }, db = database()): void {
     if (params.content.length === 0) return
-    const db = database()
     const contentHash = createHash('sha256').update(params.content, 'utf8').digest('hex')
     const latest = db.prepare('SELECT content_hash FROM draft_snapshots WHERE draft_id = ? ORDER BY snapshot_id DESC LIMIT 1')
       .get(params.draftId) as { content_hash: string } | undefined

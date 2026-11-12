@@ -17,15 +17,19 @@ export function UpdateNotifier() {
   const text = useLocaleStore(s => s.text)
   const model = useUpdateState()
   const { state, presentation } = model
+  const [dismissedVersion, setDismissedVersion] = useState<string>()
   const [updating, setUpdating] = useState(false)
   const version = state.availableVersion
   const open = presentation.kind === 'available'
     && version !== undefined
     && !state.isReminderDeferred
+    && dismissedVersion !== version
     && !dismissedVersions.has(version)
 
   const remindLater = () => {
-    if (version) dismissedVersions.add(version)
+    if (!version) return
+    dismissedVersions.add(version)
+    setDismissedVersion(version)
   }
 
   const updateNow = async () => {
@@ -35,6 +39,7 @@ export function UpdateNotifier() {
       if (presentation.canDownload) await model.downloadUpdate()
       else if (presentation.canOpenRelease) await model.openRelease()
       dismissedVersions.add(version)
+      setDismissedVersion(version)
     } finally {
       setUpdating(false)
     }

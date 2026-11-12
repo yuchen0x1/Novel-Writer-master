@@ -7,7 +7,7 @@ import {
   GLOBAL_CONFIG_PATH,
   DEFAULT_GLOBAL_CONFIG,
 } from '../utils/config-utils'
-import { protectModelApiKey, unprotectModelApiKey } from '../utils/model-credential-security'
+import { protectModelApiKey, unprotectModelApiKey, ModelCredentialProtectionUnavailableError } from '../utils/model-credential-security'
 import type { GlobalConfig, LLMFinishReason, LLMRequest, LLMResponse, ModelDiscoveryRequest, ModelProfile, TokenUsage } from '../../src/shared/ipc-channels'
 import { knownAppErrorMessage } from '../../src/i18n/app-errors'
 import { isProjectSessionContext } from '../../src/shared/project-session-context'
@@ -132,7 +132,7 @@ function recordProviderOutcome(
     })
   } catch (error) {
     // Statistics are diagnostic only and must never change generation outcome.
-    console.warn('[AI Novel Writer] LLM call statistics were not recorded.', error)
+    console.warn('[Novel Writer master] LLM call statistics were not recorded.', error)
   }
 }
 
@@ -351,7 +351,9 @@ export function registerLLMController() {
       saveModelConfigs(models)
       return { success: true }
     } catch (error) {
-      return { success: false, error: String(error) }
+      return { success: false, error: error instanceof ModelCredentialProtectionUnavailableError
+        ? mainText(app.getLocale(), '当前系统没有可用的安全密钥库，API Key 未保存。请先启用系统密钥库后重试。', 'No secure system key store is available, so the API key was not saved. Enable a system key store and try again.')
+        : String(error) }
     }
   })
 
@@ -388,7 +390,7 @@ export function registerLLMController() {
           try {
             writeJsonFile(GLOBAL_CONFIG_PATH, originalConfig)
           } catch (rollbackError) {
-            console.error('[AI Novel Writer] Model deletion failed and the default model settings were not restored.', { error, rollbackError })
+            console.error('[Novel Writer master] Model deletion failed and the default model settings were not restored.', { error, rollbackError })
             throw new Error('LLM_DEFAULT_MODEL_ROLLBACK_FAILED', { cause: rollbackError })
           }
         }

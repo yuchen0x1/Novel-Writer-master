@@ -5,7 +5,6 @@ import { useLocaleStore } from '../../../stores/locale-store'
 import { FONT_OPTIONS, useThemeStore, type FontId } from '../../../stores/theme-store'
 import { useAutoOpenNextChapter } from '../../settings/use-auto-open-next-chapter'
 import { useHardwareAcceleration } from '../../settings/use-hardware-acceleration'
-import { toast } from '../../ui/Toast'
 import { Button } from '../../ui/Button'
 import { Check } from '../../ui/Check'
 import { commandLabel } from '../shortcut-keys'
@@ -127,10 +126,10 @@ export default function AppearanceSection() {
         desc={text('默认开启。如果整个应用都卡顿、拖动窗口不流畅，可尝试关闭改用软件渲染；更改在重启应用后生效。', 'On by default. If the whole app feels laggy or dragging stutters, turn this off to use software rendering. Applies after restart.')}
         control={<Check kind="switch" checked={hardwareAcceleration.enabled} disabled={hardwareAcceleration.saving} onChange={checked => {
           void hardwareAcceleration.set(checked)
-          if (hardwareAcceleration.error === null) toast.info(text('更改将在重启应用后生效', 'The change applies after the app restarts'))
         }}
           label={<span className="stage-visually-hidden">{text('硬件加速', 'Hardware acceleration')}</span>} />}
       >
+        {hardwareAcceleration.pendingRestart && <p>{text('更改将在重启应用后生效。', 'The change applies after the app restarts.')}</p>}
         {hardwareAcceleration.error && <p className="stage-set-error" role="alert">{hardwareAcceleration.error}</p>}
       </Row>
     </div>

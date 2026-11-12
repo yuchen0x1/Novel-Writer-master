@@ -10,6 +10,7 @@ import {
   verifyPackagedLanceLoad,
   verifyWindowsPackage,
 } from '../verify-win-package.mjs'
+import { WINDOWS_EXECUTABLE_NAME } from '../product-identity.mjs'
 
 const fixtures: string[] = []
 
@@ -33,7 +34,7 @@ describe('Windows package verification', () => {
   it('rejects a package without the LanceDB native binding', () => {
     const root = fixture()
     write(root, 'resources/app.asar')
-    write(root, '书童.exe')
+    write(root, WINDOWS_EXECUTABLE_NAME)
 
     expect(() => verifyWindowsPackage(root)).toThrow('Missing LanceDB Windows native binding')
   })
@@ -42,7 +43,7 @@ describe('Windows package verification', () => {
     const root = fixture()
     const relative = 'resources/app.asar.unpacked/node_modules/@lancedb/lancedb-win32-x64-msvc/lancedb.win32-x64-msvc.node'
     write(root, 'resources/app.asar')
-    write(root, '书童.exe')
+    write(root, WINDOWS_EXECUTABLE_NAME)
     write(root, relative)
     const betterSqliteRelative =
       'resources/app.asar.unpacked/node_modules/better-sqlite3/build/Release/better_sqlite3.node'
@@ -54,7 +55,7 @@ describe('Windows package verification', () => {
     expect(findBetterSqliteBinding(root)).toBe(path.join(root, betterSqliteRelative))
     expect(findWindowsSafeFileSystemHelper(root)).toBe(path.join(root, helperRelative))
     expect(verifyWindowsPackage(root)).toMatchObject({
-      executable: path.join(root, '书童.exe'),
+      executable: path.join(root, WINDOWS_EXECUTABLE_NAME),
       nativeBinding: path.join(root, relative),
       betterSqliteBinding: path.join(root, betterSqliteRelative),
       secureFileSystemHelper: path.join(root, helperRelative),
@@ -64,7 +65,7 @@ describe('Windows package verification', () => {
   it('rejects a package without the better-sqlite3 native binding', () => {
     const root = fixture()
     write(root, 'resources/app.asar')
-    write(root, '书童.exe')
+    write(root, WINDOWS_EXECUTABLE_NAME)
     write(
       root,
       'resources/app.asar.unpacked/node_modules/@lancedb/lancedb-win32-x64-msvc/lancedb.win32-x64-msvc.node',
@@ -76,7 +77,7 @@ describe('Windows package verification', () => {
   it('rejects a package missing the Windows secure file-system helper', () => {
     const root = fixture()
     write(root, 'resources/app.asar')
-    write(root, '书童.exe')
+    write(root, WINDOWS_EXECUTABLE_NAME)
     write(
       root,
       'resources/app.asar.unpacked/node_modules/@lancedb/lancedb-win32-x64-msvc/lancedb.win32-x64-msvc.node',
@@ -98,7 +99,7 @@ describe('Windows package verification', () => {
 
     expect(verifyPackagedLanceLoad(root, runner)).toBe('PACKAGED_LANCEDB_LOAD_OK')
     expect(calls).toHaveLength(1)
-    expect(calls[0].command).toBe(path.join(root, '书童.exe'))
+    expect(calls[0].command).toBe(path.join(root, WINDOWS_EXECUTABLE_NAME))
     expect(calls[0].args.join(' ')).toContain('@lancedb/lancedb')
     expect(calls[0].options).toMatchObject({
       cwd: root,
@@ -108,7 +109,7 @@ describe('Windows package verification', () => {
 
   it('opens an in-memory SQLite database with the packaged executable in Electron Node mode', () => {
     const root = fixture()
-    write(root, '书童.exe')
+    write(root, WINDOWS_EXECUTABLE_NAME)
     const calls: Array<{ command: string; args: string[]; options: Record<string, unknown> }> = []
     const runner = (command: string, args: string[], options: Record<string, unknown>) => {
       calls.push({ command, args, options })

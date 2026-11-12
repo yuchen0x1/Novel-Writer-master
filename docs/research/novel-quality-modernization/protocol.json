@@ -3153,10 +3153,10 @@
       },
       "planningRootBudgets": {
         "planning-outline-1-5": {
-          "maxPhysicalRequests": 32,
-          "maxTokenLiability": 33554432,
+          "maxPhysicalRequests": 40,
+          "maxTokenLiability": 41943040,
           "maxOutputPerRequest": 65536,
-          "maxActiveElapsedMs": 3600000
+          "maxActiveElapsedMs": 4500000
         },
         "planning-outline-6": {
           "maxPhysicalRequests": 32,

@@ -262,7 +262,7 @@ export function createMainGenerationOwner(deps: MainGenerationOwnerDependencies)
         LLMHistoryRepository.logCall({ modelId: model.id, modelName: model.name || model.modelName, purpose: task.purpose,
           promptTokens: usage?.promptTokens ?? null, completionTokens, totalTokens: usage?.totalTokens ?? null,
           durationMs: Math.max(0, Date.now() - startedAt), success, errorMessage }, deps.database)
-      } catch (error) { console.warn('[AI Novel Writer] LLM call statistics were not recorded.', error) }
+      } catch (error) { console.warn('[Novel Writer master] LLM call statistics were not recorded.', error) }
     }
     const recordCancelled = () => record(false, null, 'cancelled')
     unrecordedCalls.add(recordCancelled)
