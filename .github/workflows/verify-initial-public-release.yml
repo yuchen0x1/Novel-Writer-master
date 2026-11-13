@@ -1,0 +1,27 @@
+name: Verify public Novel-Writer-master 0.0.1 downloads
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.20.0
+      - name: Download every public asset and verify its bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/verify-initial-public-release.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: public-v0.0.1-verification
+          if-no-files-found: error
+          path: |
+            .runtime/rebrand-v0.0.1/published/verification.json
+            .runtime/rebrand-v0.0.1/published/SHA256SUMS.txt
