@@ -1535,7 +1535,7 @@ $uncaptured = Get-GateExitFailure ([pscustomobject]@{ ProcessId = 704; ExitCode 
     const output = runReleaseMonitorLibrary(`
 $installRoot = 'C:\\e2e\\installed app'
 $oldExe = $installRoot + '\\AI' + [char]0x5C0F + [char]0x8BF4 + [char]0x4F5C + [char]0x5BB6 + '.exe'
-$pendingExe = 'C:\\Users\\runneradmin\\AppData\\Local\\ai-novel-writer-updater\\pending\\ai-novel-writer-setup-0.7.0.exe'
+$pendingExe = 'C:\\Users\\runneradmin\\AppData\\Local\\ai-novel-writer-updater\\pending\\Novel-Writer-master-setup-0.7.0.exe'
 $old = [pscustomobject]@{
   processId = 410
   startTimeTicks = '638900000000000410'
@@ -1547,7 +1547,7 @@ $bridge = [pscustomobject]@{
   State = 'armed'
   OldApplicationIdentity = $old
   ExpectedPendingInstallerPath = $pendingExe
-  ExpectedInstallerName = 'ai-novel-writer-setup-0.7.0.exe'
+  ExpectedInstallerName = 'Novel-Writer-master-setup-0.7.0.exe'
   InstallRoot = $installRoot
   ObservedInstallerIdentity = $null
   AllowedWizardWindowKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
@@ -1730,7 +1730,7 @@ $terminatedAt = [DateTime]::new(2026, 8, 8, 0, 0, 0, [DateTimeKind]::Utc)
 $installer = [pscustomobject]@{
   processId = 5568
   startTimeTicks = '639218304000005568'
-  executablePath = 'C:\\Users\\runneradmin\\AppData\\Local\\ai-novel-writer-updater\\pending\\ai-novel-writer-setup-0.7.0.exe'
+  executablePath = 'C:\\Users\\runneradmin\\AppData\\Local\\ai-novel-writer-updater\\pending\\Novel-Writer-master-setup-0.7.0.exe'
   identityCaptured = $true
 }
 $bridge = [pscustomobject]@{
@@ -1785,7 +1785,7 @@ $armedAt = [DateTime]::new(2026, 8, 8, 0, 0, 0, [DateTimeKind]::Utc)
 $installer = [pscustomobject]@{
   processId = 1032
   startTimeTicks = '639218304000001032'
-  executablePath = 'C:\\Users\\runneradmin\\AppData\\Local\\ai-novel-writer-updater\\pending\\ai-novel-writer-setup-0.7.0.exe'
+  executablePath = 'C:\\Users\\runneradmin\\AppData\\Local\\ai-novel-writer-updater\\pending\\Novel-Writer-master-setup-0.7.0.exe'
   identityCaptured = $true
 }
 $bridge = [pscustomobject]@{
@@ -1850,7 +1850,7 @@ $wrongStateRejected = -not (Test-AiNovelGateLegacyBridgeTerminationArmedCleanupW
   windowsPowerShellIt('classifies only the exact historical old app breakpoint after a bound installer handoff', () => {
     const output = runReleaseMonitorLibrary(`
 $oldExe = 'D:\\e2e\\installed-app\\AI' + [char]0x5C0F + [char]0x8BF4 + [char]0x4F5C + [char]0x5BB6 + '.exe'
-$pendingExe = 'C:\\Users\\runneradmin\\AppData\\Local\\ai-novel-writer-updater\\pending\\ai-novel-writer-setup-0.7.0.exe'
+$pendingExe = 'C:\\Users\\runneradmin\\AppData\\Local\\ai-novel-writer-updater\\pending\\Novel-Writer-master-setup-0.7.0.exe'
 $old = [pscustomobject]@{ processId = 3472; startTimeTicks = '639217245409219881'; executablePath = $oldExe; identityCaptured = $true }
 $installer = [pscustomobject]@{
   processId = 5180
@@ -1914,7 +1914,7 @@ $e2eEvidenceRoot = 'D:\\a\\_temp\\ai-novel-windows-in-app-update-e2e'
 $env:AI_NOVEL_UPDATE_E2E_EVIDENCE_ROOT = $e2eEvidenceRoot
 $oldExe = $e2eEvidenceRoot + '\\runtime\\installed-app\\AI' + [char]0x5C0F + [char]0x8BF4 + [char]0x4F5C + [char]0x5BB6 + '.exe'
 $pendingRoot = Join-Path $env:LOCALAPPDATA 'ai-novel-writer-updater\\pending'
-$pendingExe = Join-Path $pendingRoot 'ai-novel-writer-setup-0.8.0.exe'
+$pendingExe = Join-Path $pendingRoot 'Novel-Writer-master-setup-0.8.0.exe'
 $old = [pscustomobject]@{
   processId = 5660
   startTimeTicks = '639219070367704249'
@@ -1961,7 +1961,7 @@ $preHandoffRejected = -not (Test-AiNovelGateNativeUpdaterOldApplicationExit -Ste
 $multipleCandidates = New-NativeUpdaterTrackedProcesses -Installer $installer
 $multipleCandidates[5013] = New-NativeUpdaterInstallerIdentity -ProcessId 5013
 $multipleCandidatesRejected = -not (Test-AiNovelGateNativeUpdaterOldApplicationExit -Step 'windows-in-app-update-e2e' -Event $breakpoint -ProcessIdentity $old -TrackedProcessIdentities $multipleCandidates)
-$wrongPathRejected = -not (Test-AiNovelGateNativeUpdaterOldApplicationExit -Step 'windows-in-app-update-e2e' -Event $breakpoint -ProcessIdentity $old -TrackedProcessIdentities (New-NativeUpdaterTrackedProcesses -Installer (New-NativeUpdaterInstallerIdentity -Path 'C:\\temp\\ai-novel-writer-setup-0.8.0.exe')))
+$wrongPathRejected = -not (Test-AiNovelGateNativeUpdaterOldApplicationExit -Step 'windows-in-app-update-e2e' -Event $breakpoint -ProcessIdentity $old -TrackedProcessIdentities (New-NativeUpdaterTrackedProcesses -Installer (New-NativeUpdaterInstallerIdentity -Path 'C:\\temp\\Novel-Writer-master-setup-0.8.0.exe')))
 $wrongOldExe = 'D:\\e2e-other\\runtime\\installed-app\\AI' + [char]0x5C0F + [char]0x8BF4 + [char]0x4F5C + [char]0x5BB6 + '.exe'
 $wrongOldPath = [pscustomobject]@{ processId = 5660; startTimeTicks = '639219070367704249'; executablePath = $wrongOldExe; identityCaptured = $true; commandLineCaptured = $true }
 $wrongOldPathRejected = -not (Test-AiNovelGateNativeUpdaterOldApplicationExit -Step 'windows-in-app-update-e2e' -Event $breakpoint -ProcessIdentity $wrongOldPath -TrackedProcessIdentities (New-NativeUpdaterTrackedProcesses -Installer (New-NativeUpdaterInstallerIdentity -ParentPath $wrongOldExe) -TrackedOld $wrongOldPath))
@@ -1973,7 +1973,7 @@ try {
 finally {
   $env:AI_NOVEL_UPDATE_E2E_EVIDENCE_ROOT = $evidenceRootBeforeMissingEnvironmentCheck
 }
-$nonFinalSemverRejected = -not (Test-AiNovelGateNativeUpdaterOldApplicationExit -Step 'windows-in-app-update-e2e' -Event $breakpoint -ProcessIdentity $old -TrackedProcessIdentities (New-NativeUpdaterTrackedProcesses -Installer (New-NativeUpdaterInstallerIdentity -Path (Join-Path $pendingRoot 'ai-novel-writer-setup-0.8.0-beta.1.exe'))))
+$nonFinalSemverRejected = -not (Test-AiNovelGateNativeUpdaterOldApplicationExit -Step 'windows-in-app-update-e2e' -Event $breakpoint -ProcessIdentity $old -TrackedProcessIdentities (New-NativeUpdaterTrackedProcesses -Installer (New-NativeUpdaterInstallerIdentity -Path (Join-Path $pendingRoot 'Novel-Writer-master-setup-0.8.0-beta.1.exe'))))
 $wrongParentRejected = -not (Test-AiNovelGateNativeUpdaterOldApplicationExit -Step 'windows-in-app-update-e2e' -Event $breakpoint -ProcessIdentity $old -TrackedProcessIdentities (New-NativeUpdaterTrackedProcesses -Installer (New-NativeUpdaterInstallerIdentity -ParentProcessId 9999)))
 $pidReuseRejected = -not (Test-AiNovelGateNativeUpdaterOldApplicationExit -Step 'windows-in-app-update-e2e' -Event $breakpoint -ProcessIdentity $old -TrackedProcessIdentities (New-NativeUpdaterTrackedProcesses -Installer (New-NativeUpdaterInstallerIdentity -ParentStartTimeTicks '639219070367704250')))
 $missingIdentityCaptureRejected = -not (Test-AiNovelGateNativeUpdaterOldApplicationExit -Step 'windows-in-app-update-e2e' -Event $breakpoint -ProcessIdentity $old -TrackedProcessIdentities (New-NativeUpdaterTrackedProcesses -Installer (New-NativeUpdaterInstallerIdentity -IdentityCaptured $false)))
@@ -2035,7 +2035,7 @@ $otherProcessRejected = -not (Test-AiNovelGateNativeUpdaterOldApplicationExit -S
 $e2eEvidenceRoot = 'D:\\a\\_temp\\ai-novel-windows-in-app-update-e2e'
 $env:AI_NOVEL_UPDATE_E2E_EVIDENCE_ROOT = $e2eEvidenceRoot
 $oldExe = $e2eEvidenceRoot + '\\runtime\\installed-app\\AI' + [char]0x5C0F + [char]0x8BF4 + [char]0x4F5C + [char]0x5BB6 + '.exe'
-$pendingExe = Join-Path $env:LOCALAPPDATA 'ai-novel-writer-updater\\pending\\ai-novel-writer-setup-0.8.0.exe'
+$pendingExe = Join-Path $env:LOCALAPPDATA 'ai-novel-writer-updater\\pending\\Novel-Writer-master-setup-0.8.0.exe'
 $oldUninstallerPath = Join-Path (Join-Path ([System.IO.Path]::GetTempPath()) 'nsn315E.tmp') 'old-uninstaller.exe'
 $system32 = Join-Path $env:SystemRoot 'System32\\WindowsPowerShell\\v1.0\\powershell.exe'
 $cmdPath = Join-Path $env:SystemRoot 'System32\\cmd.exe'
@@ -2148,7 +2148,7 @@ $cmdCommand = '"' + $cmdPath + '" /C tasklist /FI "USERNAME eq %USERNAME%" /FI "
 $findCommand = '"' + $findPath + '"  "AI' + [char]0x5C0F + [char]0x8BF4 + [char]0x4F5C + [char]0x5BB6 + '.exe"'
 $event = [pscustomobject]@{ ProcessId = 7956; ExitCode = 1; ExitCodeCaptured = $true; JobMessage = 7 }
 $installRoot = 'D:\\a\\_temp\\ai-novel-e2e\\runtime\\installed-app'
-$stagingPath = 'D:\\a\\_temp\\ai-novel-e2e\\runtime\\legacy-bridge-staging\\ai-novel-writer-setup-0.6.0.exe'
+$stagingPath = 'D:\\a\\_temp\\ai-novel-e2e\\runtime\\legacy-bridge-staging\\Novel-Writer-master-setup-0.6.0.exe'
 $tempRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())
 $oldUninstallerPath = Join-Path (Join-Path $tempRoot 'nsh2922.tmp') 'old-uninstaller.exe'
 $armedRoot = [pscustomobject]@{
@@ -2224,7 +2224,7 @@ $bridge = [pscustomobject]@{
   SourceTag = 'v0.5.2'
   State = 'terminated'
   InstallRoot = $installRoot
-  ExpectedInstallerName = 'ai-novel-writer-setup-0.6.0.exe'
+  ExpectedInstallerName = 'Novel-Writer-master-setup-0.6.0.exe'
 }
 $tracked = @{
   1 = $armedRoot
@@ -2269,7 +2269,7 @@ $bridge.SourceTag = 'v0.7.0'
 $nativeSourceRejected = -not (Test-LegacyOldUninstallerProbe)
 $bridge.SourceTag = 'v0.5.2'
 $wrongStaging = $stagingInstaller.PSObject.Copy()
-$wrongStaging.executablePath = 'D:\\a\\_temp\\ai-novel-e2e\\runtime\\other\\ai-novel-writer-setup-0.6.0.exe'
+$wrongStaging.executablePath = 'D:\\a\\_temp\\ai-novel-e2e\\runtime\\other\\Novel-Writer-master-setup-0.6.0.exe'
 $wrongStagingRejected = -not (Test-LegacyOldUninstallerProbe -GrandParent $wrongStaging)
 $wrongHelper = $oldUninstaller.PSObject.Copy()
 $wrongHelper.executablePath = Join-Path (Join-Path $tempRoot 'nsh2922.tmp') 'other.exe'
@@ -2455,7 +2455,7 @@ $control = Get-AiNovelGateControl
 $system32 = Join-Path $env:SystemRoot 'System32\\WindowsPowerShell\\v1.0\\powershell.exe'
 $sysWow64 = Join-Path $env:SystemRoot 'SysWOW64\\WindowsPowerShell\\v1.0\\powershell.exe'
 $event = [pscustomobject]@{ ProcessId = 701; ExitCode = 1; ExitCodeCaptured = $true; JobMessage = 7 }
-$parentPath = 'C:\\temp\\ai-novel-writer-setup-0.4.0.exe'
+$parentPath = 'C:\\temp\\Novel-Writer-master-setup-0.4.0.exe'
 $parentStartTimeTicks = '638900000000000000'
 $parent = [pscustomobject]@{
   processId = 700
@@ -2517,7 +2517,7 @@ $validAvailability = New-ProbeIdentity -ImagePath $system32 -CommandLine $availa
 $validPolicy = New-ProbeIdentity -ImagePath $system32 -CommandLine $policyCommand
 $validRunningProcess = New-ProbeIdentity -ImagePath $sysWow64 -CommandLine $runningProcessCommand
 $wrongParent = [pscustomobject]@{ processId = 700; startTimeTicks = $parentStartTimeTicks; identityCaptured = $true; executablePath = 'C:\\temp\\unrelated.exe' }
-$relativeParent = [pscustomobject]@{ processId = 700; startTimeTicks = $parentStartTimeTicks; identityCaptured = $true; executablePath = 'ai-novel-writer-setup-0.4.0.exe' }
+$relativeParent = [pscustomobject]@{ processId = 700; startTimeTicks = $parentStartTimeTicks; identityCaptured = $true; executablePath = 'Novel-Writer-master-setup-0.4.0.exe' }
 $nonOne = [pscustomobject]@{ ProcessId = 701; ExitCode = 2; ExitCodeCaptured = $true; JobMessage = 7 }
 $abnormal = [pscustomobject]@{ ProcessId = 701; ExitCode = 1; ExitCodeCaptured = $true; JobMessage = 8 }
 
@@ -2538,8 +2538,8 @@ $abnormal = [pscustomobject]@{ ProcessId = 701; ExitCode = 1; ExitCodeCaptured =
   ExtraWhitespace = Test-SyntheticNsisProbe -Step 'smoke:win-installer' -Event $event -Identity (New-ProbeIdentity -ImagePath $system32 -CommandLine $extraWhitespaceCommand) -Parent $parent
   WrongParent = Test-SyntheticNsisProbe -Step 'smoke:win-installer' -Event $event -Identity $validAvailability -Parent $wrongParent
   ReusedParentPid = Test-SyntheticNsisProbe -Step 'smoke:win-installer' -Event $event -Identity (New-ProbeIdentity -ImagePath $system32 -CommandLine $availabilityCommand -ParentStartTimeTicks '638899999999999999') -Parent $parent
-  ParentPathMismatch = Test-SyntheticNsisProbe -Step 'smoke:win-installer' -Event $event -Identity (New-ProbeIdentity -ImagePath $system32 -CommandLine $availabilityCommand -ParentExecutablePath 'C:\\temp\\other\\ai-novel-writer-setup-0.4.0.exe') -Parent $parent
-  RelativeInstallerParent = Test-SyntheticNsisProbe -Step 'smoke:win-installer' -Event $event -Identity (New-ProbeIdentity -ImagePath $system32 -CommandLine $availabilityCommand -ParentExecutablePath 'ai-novel-writer-setup-0.4.0.exe') -Parent $relativeParent
+  ParentPathMismatch = Test-SyntheticNsisProbe -Step 'smoke:win-installer' -Event $event -Identity (New-ProbeIdentity -ImagePath $system32 -CommandLine $availabilityCommand -ParentExecutablePath 'C:\\temp\\other\\Novel-Writer-master-setup-0.4.0.exe') -Parent $parent
+  RelativeInstallerParent = Test-SyntheticNsisProbe -Step 'smoke:win-installer' -Event $event -Identity (New-ProbeIdentity -ImagePath $system32 -CommandLine $availabilityCommand -ParentExecutablePath 'Novel-Writer-master-setup-0.4.0.exe') -Parent $relativeParent
   NonOneExit = Test-SyntheticNsisProbe -Step 'smoke:win-installer' -Event $nonOne -Identity $validAvailability -Parent $parent
   AbnormalExit = Test-SyntheticNsisProbe -Step 'smoke:win-installer' -Event $abnormal -Identity $validAvailability -Parent $parent
   ProductProcess = Test-SyntheticNsisProbe -Step 'smoke:win-installer' -Event $event -Identity (New-ProbeIdentity -ImagePath 'C:\\temp\\AI小说作家.exe' -CommandLine $availabilityCommand) -Parent $parent
@@ -2588,7 +2588,7 @@ $system32Find = Join-Path $env:SystemRoot 'System32\\find.exe'
 $sysWow64Find = Join-Path $env:SystemRoot 'SysWOW64\\find.exe'
 $system32Where = Join-Path $env:SystemRoot 'System32\\where.exe'
 $sysWow64Where = Join-Path $env:SystemRoot 'SysWOW64\\where.exe'
-$installerPath = 'C:\\temp\\ai-novel-writer-setup-0.4.0.exe'
+$installerPath = 'C:\\temp\\Novel-Writer-master-setup-0.4.0.exe'
 $installer = [pscustomobject]@{
   processId = 700
   startTimeTicks = '638900000000000000'
@@ -2669,7 +2669,7 @@ $relativeArgvZeroCommand = 'System32\\WindowsPowerShell\\v1.0\\powershell.exe -C
     const output = runReleaseMonitorLibrary(`
 $cmdPath = Join-Path $env:SystemRoot 'System32\\cmd.exe'
 $findPath = Join-Path $env:SystemRoot 'System32\\find.exe'
-$installerPath = 'C:\\temp\\ai-novel-writer-setup-0.4.0.exe'
+$installerPath = 'C:\\temp\\Novel-Writer-master-setup-0.4.0.exe'
 $installerStart = '638900000000000000'
 $cmdStart = '638900000000000100'
 $event = [pscustomobject]@{ ProcessId = 701; ExitCode = 1; ExitCodeCaptured = $true; JobMessage = 7 }
@@ -2789,7 +2789,7 @@ $sysWow64Findstr = Join-Path $env:SystemRoot 'SysWOW64\\findstr.exe'
 $system32Find = Join-Path $env:SystemRoot 'System32\\find.exe'
 $sysWow64Find = Join-Path $env:SystemRoot 'SysWOW64\\find.exe'
 $step = 'windows-in-app-update-e2e'
-$installerPath = 'D:\\a\\_temp\\ai-novel-windows-in-app-update-e2e-39109174811\\official-assets\\v1.1.0\\ai-novel-writer-setup-1.1.0.exe'
+$installerPath = 'D:\\a\\_temp\\ai-novel-windows-in-app-update-e2e-39109174811\\official-assets\\v1.1.0\\Novel-Writer-master-setup-1.1.0.exe'
 $installerStart = '639279068899332431'
 $cmdStart = '639279068996769297'
 $installer = [pscustomobject]@{ processId = 7912; startTimeTicks = $installerStart; executablePath = $installerPath; identityCaptured = $true }
@@ -2914,7 +2914,7 @@ $outsideSystemFindstr = 'D:\\a\\_temp\\findstr.exe'
     const output = runReleaseMonitorLibrary(`
 $cmdPath = Join-Path $env:SystemRoot 'System32\\cmd.exe'
 $findPath = Join-Path $env:SystemRoot 'System32\\find.exe'
-$installerPath = 'C:\\temp\\ai-novel-writer-setup-0.4.0.exe'
+$installerPath = 'C:\\temp\\Novel-Writer-master-setup-0.4.0.exe'
 $installer = [pscustomobject]@{
   processId = 700
   startTimeTicks = '638900000000000000'
@@ -3003,7 +3003,7 @@ $reusedPidResolved = Register-AiNovelGateVerifiedNsisFindParent -VerifiedFindPar
     const output = runReleaseMonitorLibrary(`
 $cmdPath = Join-Path $env:SystemRoot 'System32\\cmd.exe'
 $findPath = Join-Path $env:SystemRoot 'System32\\find.exe'
-$installerPath = 'C:\\temp\\ai-novel-writer-setup-0.4.0.exe'
+$installerPath = 'C:\\temp\\Novel-Writer-master-setup-0.4.0.exe'
 $installer = [pscustomobject]@{
   processId = 700
   startTimeTicks = '638900000000000000'

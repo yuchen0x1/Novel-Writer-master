@@ -115,6 +115,8 @@ describe('设置页', () => {
     await click(byName('关于与更新'))
     expect(useLayoutStore.getState().settingsSection).toBe('about')
     expect(heading()).toBe('关于与更新')
+    expect(host!.textContent).toContain('Novel-Writer-master')
+    expect(host!.textContent).not.toMatch(/书童|Pagekin|Novel Writer master/)
   })
 
   it('AI 模型与检索模型标为必需，没配默认模型时导航和页头都标「未配置」', async () => {

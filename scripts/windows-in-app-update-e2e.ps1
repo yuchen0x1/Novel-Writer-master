@@ -1,4 +1,4 @@
-param(
+﻿param(
   [Parameter(Mandatory = $true)][string]$PlanPath,
   [Parameter(Mandatory = $true)][string]$EvidenceRoot,
   [string]$MonitorControlPath,
@@ -296,7 +296,7 @@ function Get-E2eExpectedPendingInstallerPath {
 
   Assert-E2eCondition -Condition ($env:LOCALAPPDATA -match '^[A-Za-z]:\\') -Message 'The Windows in-app update E2E requires an absolute LOCALAPPDATA path.'
   $installerName = [string]$Plan.expected.assets.installer.name
-  Assert-E2eCondition -Condition ($installerName -match '^ai-novel-writer-setup-\d+\.\d+\.\d+\.exe$') -Message 'The expected pending installer name is unsafe.'
+  Assert-E2eCondition -Condition ($installerName -match '^(?:Novel-Writer-master|ai-novel-writer)-setup-\d+\.\d+\.\d+\.exe$') -Message 'The expected pending installer name is unsafe.'
   $pendingRoot = [System.IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'ai-novel-writer-updater\pending'))
   $pendingInstallerPath = [System.IO.Path]::GetFullPath((Join-Path $pendingRoot $installerName))
   Assert-E2eCondition -Condition ((Split-Path -Parent $pendingInstallerPath) -eq $pendingRoot) -Message 'The expected pending installer path escaped its canonical cache directory.'
@@ -318,7 +318,7 @@ function Get-E2eLegacyBridgeContract {
   $installerName = [string]$installer.name
   $installerSha256 = [string]$installer.sha256
   $installerSize = [long]$installer.size
-  Assert-E2eCondition -Condition ($installerName -match '^ai-novel-writer-setup-\d+\.\d+\.\d+\.exe$') -Message 'The legacy bridge expected installer name is unsafe.'
+  Assert-E2eCondition -Condition ($installerName -match '^(?:Novel-Writer-master|ai-novel-writer)-setup-\d+\.\d+\.\d+\.exe$') -Message 'The legacy bridge expected installer name is unsafe.'
   Assert-E2eCondition -Condition ($installerSize -gt 0) -Message 'The legacy bridge expected installer size is invalid.'
   Assert-E2eCondition -Condition ($installerSha256 -match '^[a-fA-F0-9]{64}$') -Message 'The legacy bridge expected installer SHA-256 is invalid.'
   $pendingRoot = [System.IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'ai-novel-writer-updater\pending'))

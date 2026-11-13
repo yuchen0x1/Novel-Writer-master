@@ -1,8 +1,16 @@
 # 自动更新与正式发布
 
-本文档描述 Novel Writer master 当前已经接入的桌面应用更新系统。更新源是本项目的官方 GitHub Releases：
+本文档描述 Novel-Writer-master 当前已经接入的桌面应用更新系统。更新源是本项目的官方 GitHub Releases：
 
 <https://github.com/yuchen0x1/Novel-Writer-master/releases>
+
+## 0.0.1 新版本序列
+
+产品名称统一为 `Novel-Writer-master`，版本号从 `0.0.1` 重新开始。旧 `1.x` 客户端不会被强制自动降级，需要手动安装一次 `0.0.1`，后续继续使用当前仓库的更新源。
+
+首个版本通过 `.github/workflows/initial-brand-release.yml` 从同一冻结提交构建 Windows x64、macOS ARM64 和 macOS Intel 安装包。各平台完成原生依赖、构建和实际安装包运行检查后才会发布。此初始版本验证全新安装；原有工作流的 v0.2.5/v1.1.0 迁移验证不作为本次重新初始化的已通过项目。
+
+Windows 安装资产以 `Novel-Writer-master-setup-` 开头；macOS 资产以 `Novel-Writer-master-mac-` 开头。`latest.yml` 与 `.blockmap` 随 Windows 新安装包一并生成上传。稳定 appId 和已有数据目录保持兼容。
 
 ## 已支持的平台和动作
 

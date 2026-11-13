@@ -1,8 +1,8 @@
 {
   "name": "ai-novel-writer",
-  "version": "1.10.0",
-  "description": "Novel Writer master - a local-first production workspace for long-form fiction",
-  "author": "Novel Writer master Maintainers",
+  "version": "0.0.1",
+  "description": "Novel-Writer-master - a local-first production workspace for long-form fiction",
+  "author": "Novel-Writer-master Maintainers",
   "repository": {
     "type": "git",
     "url": "https://github.com/yuchen0x1/Novel-Writer-master.git"
@@ -69,7 +69,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@uiw/react-codemirror": "^4.25.9",
     "apache-arrow": "^18.1.0",
-    "better-sqlite3": "^12.8.0",
+    "better-sqlite3": "12.11.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "diff-match-patch": "^1.0.5",

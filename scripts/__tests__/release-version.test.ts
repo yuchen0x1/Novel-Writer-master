@@ -18,13 +18,13 @@ describe('release metadata', () => {
 
     expect(profile.releaseChannel).toEqual({ draft: false, prerelease: false, expectedLatest: true })
     expect(profile.releaseAssets.map(({ name }) => name.replaceAll('{version}', pkg.version))).toEqual([
-      `ai-novel-writer-setup-${pkg.version}.exe`,
-      `ai-novel-writer-setup-${pkg.version}.exe.blockmap`,
+      `Novel-Writer-master-setup-${pkg.version}.exe`,
+      `Novel-Writer-master-setup-${pkg.version}.exe.blockmap`,
       'latest.yml',
-      `ai-novel-writer-mac-arm64-${pkg.version}-installer.dmg`,
-      `ai-novel-writer-mac-arm64-${pkg.version}-installer.dmg.sha256`,
-      `ai-novel-writer-mac-x64-${pkg.version}-installer.dmg`,
-      `ai-novel-writer-mac-x64-${pkg.version}-installer.dmg.sha256`,
+      `Novel-Writer-master-mac-arm64-${pkg.version}-installer.dmg`,
+      `Novel-Writer-master-mac-arm64-${pkg.version}-installer.dmg.sha256`,
+      `Novel-Writer-master-mac-x64-${pkg.version}-installer.dmg`,
+      `Novel-Writer-master-mac-x64-${pkg.version}-installer.dmg.sha256`,
     ])
   })
 
@@ -63,10 +63,10 @@ describe('release metadata', () => {
       'not notarized',
     ]) expect(notes).toContain(expected)
 
-    expect(chineseReadme).toContain('> ## 1.4.0 更新')
-    expect(englishReadme).toContain("> ## What's new in 1.4.0")
+    expect(chineseReadme).toContain('**Novel-Writer-master 0.0.1**')
+    expect(englishReadme).toContain('**Novel-Writer-master 0.0.1**')
     for (const readme of [chineseReadme, englishReadme]) {
-      expect(readme).toContain('https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v1.4.0)')
+      expect(readme).toContain('https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.1)')
     }
 
     const zhRetained = previousNotes
@@ -92,14 +92,14 @@ describe('release metadata', () => {
         'Windows x64',
         'Apple Silicon',
         'Intel',
-        '1.3.0',
+        '0.0.1',
         'https://github.com/yuchen0x1/Novel-Writer-master/releases/latest)',
       ]) expect(readme).toContain(expected)
 
       for (const installer of [
-        /ai-novel-writer-setup-<[^>\r\n]+>\.exe/u,
-        /ai-novel-writer-mac-arm64-<[^>\r\n]+>-installer\.dmg/u,
-        /ai-novel-writer-mac-x64-<[^>\r\n]+>-installer\.dmg/u,
+        /Novel-Writer-master-setup-<[^>\r\n]+>\.exe/u,
+        /Novel-Writer-master-mac-arm64-<[^>\r\n]+>-installer\.dmg/u,
+        /Novel-Writer-master-mac-x64-<[^>\r\n]+>-installer\.dmg/u,
       ]) expect(readme).toMatch(installer)
     }
 

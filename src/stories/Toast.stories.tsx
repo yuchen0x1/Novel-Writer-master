@@ -3,7 +3,7 @@ import { toast } from '../components/ui/Toast'
 import { Button } from '../components/ui/Button'
 
 const meta = {
-  title: 'Novel Writer master UI/Toast',
+  title: 'Novel-Writer-master UI/Toast',
   parameters: {
     docs: {
       description: {

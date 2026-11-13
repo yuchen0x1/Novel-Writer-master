@@ -5,12 +5,10 @@
 </div>
 
 <p align="center">
-  <img src="public/novel-writer-master-icon.png" width="112" height="112" alt="Novel Writer master app icon: a quill above an open book" />
+  <img src="public/novel-writer-master-icon.png" width="112" height="112" alt="Novel-Writer-master app icon: a quill above an open book" />
 </p>
 
-<h1 align="center">Novel Writer master</h1>
-
-<p align="center"><sub>Formerly “书童 Pagekin”.</sub></p>
+<h1 align="center">Novel-Writer-master</h1>
 
 <p align="center">
   <strong>Free, open-source AI novel writing software for the desktop, built for long novels and serialized web fiction.</strong><br />
@@ -28,25 +26,23 @@
   <a href="https://github.com/yuchen0x1/Novel-Writer-master/stargazers"><img src="https://badgen.net/github/stars/yuchen0x1/Novel-Writer-master" alt="GitHub stars" /></a>
 </p>
 
-<p align="center">
-  <img src="docs/assets/readme/v130-hero-en.webp" alt="Pagekin 1.3.0: product summary on the left and real screenshots of the library, chapter view, blueprint, run sheet, architecture, and cast on the right" width="100%" />
-</p>
+![Novel-Writer-master 0.0.1](docs/assets/readme/v001-hero-en.webp)
 
 ## Latest update
 
-- **Novel Writer master 1.10.0**: updated the app name and Windows/macOS icons while preserving the existing app-data directory; API keys are encrypted with the OS key store; save status and retries are isolated to the active project session.
-- If no secure system key store is available, the app explains that new API keys were not saved instead of writing them in plaintext.
-- See the [1.10.0 release notes](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v1.10.0) or the [full release history](https://github.com/yuchen0x1/Novel-Writer-master/releases).
+- **Novel-Writer-master 0.0.1**: consistent name and icons, fresh Chinese and English screenshots, and installers and updates from this repository.
+- Versioning restarts at `0.0.1`. Users of the previous `1.x` series should install this release manually once; later updates follow the new version sequence. Existing books and settings keep their storage locations.
+- See the [0.0.1 release notes](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.1) or [full update history](docs/releases/release-notes.md).
 
 ## What it does
 
-Novel Writer master follows the stages of writing a novel: setup, architecture, blueprint, and manuscript. Each step is saved in your project for you to review, with AI assisting the drafting.
+Novel-Writer-master follows the stages of writing a novel: setup, architecture, blueprint, and manuscript. Each step is saved in your project for you to review, with AI assisting the drafting.
 
 ### Library: all your books in one place
 
 The library lists every book you have written. Select a cover to preview it: the current step, word count, final chapters, and characters. You can start a new book or import a copy of a project from an older version.
 
-![Library with two books on the shelf and the preview and progress of "Lighthouse" on the right](docs/assets/readme/v130-en-library.webp)
+![Library with two books on the shelf and the preview and progress of "Lighthouse" on the right](docs/assets/readme/v001-en-library.webp)
 
 ### Breakdown, imitation, continuation, and rewriting
 
@@ -61,11 +57,11 @@ The library lists every book you have written. Select a cover to preview it: the
 
 The setup page records the genre, audience, writing language, total chapters, and words per chapter. The architecture page has four sections: premise, cast, worldbuilding, and plot outline. AI can generate each section, or you can write it yourself. When all four are confirmed, move on to chapter blueprints.
 
-![Architecture page with the premise, cast, worldbuilding, and plot outline all confirmed](docs/assets/readme/v130-en-architecture.webp)
+![Architecture page with the premise, cast, worldbuilding, and plot outline all confirmed](docs/assets/readme/v001-en-architecture.webp)
 
 The cast is edited alongside the architecture. Each character has a profile, a current state, and a relationship graph. You can paste character cards or import them from a file.
 
-![Cast page with four characters on the left and the profile of the protagonist Mara Lind on the right](docs/assets/readme/v130-en-cast.webp)
+![Cast page with four characters on the left and the profile of the protagonist Mara Lind on the right](docs/assets/readme/v001-en-cast.webp)
 
 ### Chapter blueprints: plan each chapter before writing
 
@@ -73,13 +69,13 @@ The blueprint page plans the book chapter by chapter. Each chapter states the pr
 
 The main button is "Write chapter N". The small popover next to it holds only the options for this run: which model to use and an optional line of author guidance. To write several chapters in a row, use "Batch write", up to 10 chapters at a time.
 
-![Blueprint page with chapter 3 "The Fog Bell" selected and the options popover for "Write chapter 3" open](docs/assets/readme/v130-en-blueprint.webp)
+![Blueprint page with chapter 3 "The Fog Bell" selected and the options popover for "Write chapter 3" open](docs/assets/readme/v001-en-blueprint.webp)
 
 ### Manuscript: draft, review, revise, finalize
 
 The single-chapter view takes a chapter from unwritten to final. After AI writes a draft, you can edit it yourself or ask AI to review it. The review report lists each note. You check or ignore each one, and you can add your own. The revision comes back as a diff that you confirm paragraph by paragraph, so nothing is overwritten. When it reads right, finalize the chapter.
 
-![Single-chapter view: the setup, architecture, blueprint, and manuscript steps on the left, chapter 3 prose in the middle, and the review report on the right](docs/assets/readme/v130-en-chapter.webp)
+![Single-chapter view: the setup, architecture, blueprint, and manuscript steps on the left, chapter 3 prose in the middle, and the review report on the right](docs/assets/readme/v001-en-chapter.webp)
 
 While writing, AI receives this chapter's blueprint, the related characters, the worldbuilding, summaries of earlier chapters, and the full previous chapter, not a chat transcript of the whole book.
 
@@ -89,7 +85,7 @@ In the prose editor, Tab inserts two full-width spaces as a paragraph indent. A 
 
 Every generation run appears in the run sheet, with In progress, History, and Diagnostics tabs. You can watch the output as it is written and cancel at any time. A batch can be paused. If a run fails, the text written so far is kept as a recovery candidate that you can copy or discard.
 
-![Run sheet writing chapter 3 with live output appearing sentence by sentence](docs/assets/readme/v130-en-run.webp)
+![Run sheet writing chapter 3 with live output appearing sentence by sentence](docs/assets/readme/v001-en-run.webp)
 
 ### References and versions: keep track of a long book
 
@@ -108,11 +104,11 @@ Only self-contained SKILL.md prompts are supported. Scripts, hooks, subagents, a
 
 Appearance offers light and dark. The interface is available in Chinese and English. A book's writing language can be Chinese or English.
 
-![Single-chapter view in the dark theme](docs/assets/readme/v130-en-chapter-dark.webp)
+![Single-chapter view in the dark theme](docs/assets/readme/v001-en-chapter-dark.webp)
 
 ## Supported models and services
 
-Novel Writer master does not provide models or host quotas. In settings, enter your own service address, model name, and API key. Two request protocols are supported:
+Novel-Writer-master does not provide models or host quotas. In settings, enter your own service address, model name, and API key. Two request protocols are supported:
 
 - **OpenAI-compatible**: any service compatible with the Chat Completions API.
 - **Native Gemini**: Google Gemini.
@@ -154,7 +150,7 @@ Download official installers only from [GitHub Releases](https://github.com/yuch
 ### Windows x64
 
 ```text
-ai-novel-writer-setup-<version>.exe
+Novel-Writer-master-setup-<version>.exe
 ```
 
 1. Run the installer. An upgrade updates only the application and does not delete books, character cards, or settings. Back up important work first anyway.
@@ -168,8 +164,8 @@ See [Automatic updates and formal releases](docs/AUTO_UPDATE.md) for the runtime
 ### macOS (Apple Silicon and Intel)
 
 ```text
-ai-novel-writer-mac-arm64-<version>-installer.dmg
-ai-novel-writer-mac-x64-<version>-installer.dmg
+Novel-Writer-master-mac-arm64-<version>-installer.dmg
+Novel-Writer-master-mac-x64-<version>-installer.dmg
 ```
 
 1. `arm64` is for Apple Silicon Macs (M1, M2, M3, M4, and later). `x64` is for Intel Macs.
@@ -194,7 +190,7 @@ The app does not provide model accounts, cloud generation, or promotional messag
 
 ## FAQ
 
-**Is Novel Writer master free?**
+**Is Novel-Writer-master free?**
 Yes. It is open source under the GPL-3.0 license. Any cost of calling a cloud model is between you and the model provider. A local model through Ollama needs no provider at all.
 
 **Which models do I need?**
@@ -209,14 +205,14 @@ You set the total number of chapters, with no fixed limit. For each chapter, AI 
 **Does it support writing in English?**
 Yes. The interface is available in Chinese and English, and each book's writing language can be Chinese or English.
 
-**How do I upgrade projects from an older version to 1.4.0?**
-If you have 1.1.0, 1.2.x, or 1.3.x installed, upgrade through the in-app updater (on macOS, download the new installer by hand). Upgrading leaves your books unchanged and migrates the old appearance preference to light or dark. To convert an older project to the new format, choose "Import" in the library and then "Import an old project copy". Importing creates a new copy and leaves the original project untouched.
+**How do I switch from a previous version to 0.0.1?**
+Install 0.0.1 manually once when switching from the previous 1.x series. Later releases use the new update sequence. Existing books and settings keep their storage locations. Use Import legacy project copy for older project formats.
 
 **Can I import skills, such as one that removes the AI tone?**
 Yes. On the "Writing skills" settings page, choose a local skill folder or SKILL.md, or enter the skill's GitHub address, review its content, install it, and bind it to a stage such as drafting or revision. Only prompt-only SKILL.md files are supported; no scripts are installed or run.
 
 **Where did the assistant chat go?**
-The 1.4.0 interface hides the assistant chat entry for now. It will return separately. Drafting, review, revision, and the rest of the workflow are unaffected.
+The current interface hides the assistant chat entry for now. It will return separately. Drafting, review, revision, and the rest of the workflow are unaffected.
 
 **Windows or macOS says the installer is unsafe. What should I do?**
 The Windows installer is unsigned, and the Mac installers are only ad-hoc signed and not notarized by Apple, so the system warns you. After confirming the installer came from this repository's official GitHub Release, follow the steps under "Download and install" to allow it.

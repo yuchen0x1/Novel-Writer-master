@@ -1,0 +1,143 @@
+name: Build Novel-Writer-master initial release
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Full source commit to build and release
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: novel-writer-master-v0.0.1
+  cancel-in-progress: false
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            os: windows-2022
+          - platform: macos-arm64
+            os: macos-15
+          - platform: macos-x64
+            os: macos-15-intel
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ inputs.expected_sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
+        with:
+          version: 11.11.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.20.0
+          cache: pnpm
+      - name: Verify frozen initial version
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          node -e "if(require('./package.json').version !== '0.0.1') throw Error('Unexpected version')"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prepare:native-node
+      - name: Verify branding, release configuration, and updater
+        run: pnpm exec vitest run src/shared/__tests__/brand.test.ts scripts/__tests__/product-identity.test.ts scripts/__tests__/release-version.test.ts scripts/__tests__/release-profile-contract.test.ts scripts/__tests__/verify-win-update-artifacts.test.ts electron/services/__tests__/update-service.test.ts electron/services/__tests__/github-release-update-backend.test.ts
+      - name: Build Windows installer
+        if: matrix.platform == 'windows'
+        run: |
+          pnpm rebuild:electron
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pnpm build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pnpm exec electron-builder --win --x64 --publish never
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify Windows package and update manifest
+        if: matrix.platform == 'windows'
+        run: |
+          pnpm verify:win-package
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pnpm verify:win-update-artifacts
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify Windows launch, install, and uninstall
+        if: matrix.platform == 'windows'
+        run: |
+          pnpm smoke:win-app
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pnpm smoke:win-installer
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build and verify macOS ARM64 DMG
+        if: matrix.platform == 'macos-arm64'
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm build:mac:arm64:artifacts
+          AI_NOVEL_RELEASE_TARGET_ARCH=arm64 pnpm smoke:mac-dmg
+      - name: Build and verify macOS Intel DMG
+        if: matrix.platform == 'macos-x64'
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm build:mac:x64:artifacts
+          AI_NOVEL_RELEASE_TARGET_ARCH=x64 pnpm smoke:mac-dmg
+      - name: Upload verified installers
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: initial-${{ matrix.platform }}
+          if-no-files-found: error
+          compression-level: 0
+          path: |
+            release/0.0.1/*.exe
+            release/0.0.1/*.blockmap
+            release/0.0.1/latest.yml
+            release/0.0.1/*.dmg
+            release/0.0.1/*.dmg.sha256
+      - name: Preserve verification receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: initial-${{ matrix.platform }}-receipts
+          if-no-files-found: ignore
+          path: release/0.0.1/qualification/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ inputs.expected_sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: initial-*
+          path: downloaded
+      - name: Publish only after all platform checks pass
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir assets
+          for platform in windows macos-arm64 macos-x64; do
+            cp downloaded/initial-$platform/* assets/
+          done
+          test "$(find assets -maxdepth 1 -type f | wc -l)" -eq 7
+          cd assets
+          sha256sum * > SHA256SUMS.txt
+          cd ..
+          gh release create v0.0.1 --draft --target "$EXPECTED_SHA" --title 'Novel-Writer-master 0.0.1' --notes-file .release/notes/v0.0.1.md
+          gh release upload v0.0.1 assets/*
+          gh release edit v0.0.1 --draft=false --latest

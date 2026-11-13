@@ -8,6 +8,7 @@ import { sameProjectPathKey } from '../../shared/project-session-context'
 import { ipc } from '../../services/ipc-client'
 import { useLocaleStore } from '../../stores/locale-store'
 import { displayedErrorMessage } from '../../i18n/app-errors'
+import { bindWritingGoalPersistence, flushWritingGoalPersistence } from '../../stores/writing-goal-store'
 
 export interface ExitRequest {
   requestId: string
@@ -24,7 +25,10 @@ export function useWindowCloseGuard() {
   const [exitBusy, setExitBusy] = useState(false)
   const [exitError, setExitError] = useState<string | null>(null)
 
+  useEffect(bindWritingGoalPersistence, [])
+
   useEffect(() => ipc.on('window:close-requested', ({ requestId }) => {
+    flushWritingGoalPersistence()
     const projectPath = useProjectStore.getState().currentProject?.path
     const hasActiveWorkflow = !!projectPath && useWorkflowStore.getState().activeRuns.some(
       run => sameProjectPathKey(run.projectPath, projectPath),
@@ -67,6 +71,7 @@ export function useWindowCloseGuard() {
     setExitBusy(true)
     setExitError(null)
     try {
+      flushWritingGoalPersistence()
       const result = await ipc.invoke('window:resolve-close', request.requestId, 'proceed')
       if (!result.success) throw new Error(text('退出请求已失效，请重试', 'The exit request expired. Try again.'))
       discardAllEditorChanges()
@@ -85,6 +90,7 @@ export function useWindowCloseGuard() {
     setExitError(null)
     try {
       await saveDirtyEditorChangesForExit(useProjectStore.getState().currentProject?.path)
+      flushWritingGoalPersistence()
       const result = await ipc.invoke('window:resolve-close', request.requestId, 'proceed')
       if (!result.success) throw new Error(text('退出请求已失效，请重试', 'The exit request expired. Try again.'))
     } catch (error) {

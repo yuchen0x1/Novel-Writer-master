@@ -1264,7 +1264,7 @@ $event = [pscustomobject]@{ ProcessId = 42; ExitCodeCaptured = $true; ExitCode =
     const statusPath = join(root, 'status.json')
     const evidencePath = join(root, 'evidence')
     const sourcePath = join(root, 'ExactNsisProbeParent.cs')
-    const installerPath = join(root, 'ai-novel-writer-setup-0.4.0.exe')
+    const installerPath = join(root, 'Novel-Writer-master-setup-0.4.0.exe')
     const probeResultPath = join(root, 'probe-results.txt')
     const systemPowerShell = join(
       process.env.SystemRoot ?? 'C:\\Windows',
@@ -1445,7 +1445,7 @@ internal static class ExactNsisProbeParent {
           step,
           rootProcessId: gate.child.pid,
           rootProcessStartTimeTicks: windowsProcessStartTimeTicks(gate.child.pid),
-          relatedTargetNames: ['ai-novel-writer-setup-0.4.0', 'powershell'],
+          relatedTargetNames: ['Novel-Writer-master-setup-0.4.0', 'powershell'],
         })}\n`,
         'utf8',
       )

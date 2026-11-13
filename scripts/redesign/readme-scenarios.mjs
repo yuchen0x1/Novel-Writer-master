@@ -243,8 +243,8 @@ const scenario = (sample, options) => ({ model: true, shell: 'stage', setup: con
   } })
 
 export const README_SCENARIOS = {
-  'readme-zh': scenario(ZH, { prefix: 'v130-zh' }),
-  'readme-en': scenario(EN, { prefix: 'v130-en' }),
+  'readme-zh': scenario(ZH, { prefix: 'v001-zh' }),
+  'readme-en': scenario(EN, { prefix: 'v001-en' }),
   // README 顶部主图（docs/readme-visuals）要 4:3 的完整窗口截图。
   'readme-hero-zh': scenario(ZH, { prefix: 'hero-zh', viewport: { width: 1440, height: 1080 } }),
   'readme-hero-en': scenario(EN, { prefix: 'hero-en', viewport: { width: 1440, height: 1080 } }),

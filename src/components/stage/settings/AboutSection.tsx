@@ -12,7 +12,6 @@ export default function AboutSection() {
         <span className="stage-set-about-mark" aria-hidden="true" />
         <div>
           <p className="stage-set-about-name">{text(APP_BRAND.zhName, APP_BRAND.enName)}</p>
-          <p className="stage-set-about-former">{text(`原名「${APP_BRAND.formerZhName}」`, `Formerly “${APP_BRAND.formerEnName}”`)}</p>
           <p className="stage-set-about-version">{text('版本', 'Version')} <span className="pi-num">{__APP_VERSION__}</span></p>
         </div>
       </div>

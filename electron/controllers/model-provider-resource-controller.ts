@@ -25,7 +25,7 @@ export function registerModelProviderResourceController({
       await openExternal(MODEL_PROVIDER_RESOURCE_URLS[resource])
       return { success: true }
     } catch (error) {
-      console.warn('[Novel Writer master] Unable to open model provider resource.', error)
+      console.warn('[Novel-Writer-master] Unable to open model provider resource.', error)
       return { success: false, error: 'Unable to open the model provider resource.' }
     }
   })

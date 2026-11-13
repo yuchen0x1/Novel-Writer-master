@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   update-through-real-installed-ui:
-    if: ${{ github.repository == 'yuchen0x1/Pagekin' }}
+    if: ${{ github.repository == 'yuchen0x1/Novel-Writer-master' }}
     runs-on: windows-2022
     timeout-minutes: 45
     steps:

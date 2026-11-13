@@ -214,7 +214,7 @@ function ConvertTo-Snapshot {
   windowsIt('classifies synthetic NSIS process-check exits into a closed verdict set', () => {
     const result = runMonitorLibrary(String.raw`
 $sys = $env:SystemRoot
-$setupPath = 'C:\Users\runneradmin\AppData\Local\Temp\ai-novel-release-gate-nsis-probes-sMkF7V\ai-novel-writer-setup-0.4.0.exe'
+$setupPath = 'C:\Users\runneradmin\AppData\Local\Temp\ai-novel-release-gate-nsis-probes-sMkF7V\Novel-Writer-master-setup-0.4.0.exe'
 $nodePath = 'C:\hostedtoolcache\windows\node\22.23.1\x64\node.exe'
 $cmdPath = "$sys\System32\cmd.exe"
 $findPath = "$sys\System32\find.exe"

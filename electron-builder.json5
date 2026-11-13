@@ -13,7 +13,7 @@
     "node_modules/@lancedb/lancedb-win32-x64-msvc/**/*"
   ],
   // exe、.app、卸载程序与任务管理器里显示的名字。安装目录、注册表键、设置目录与更新缓存都不随它变（ADR-0022）。
-  "productName": "Novel Writer master",
+  "productName": "Novel-Writer-master",
   "directories": {
     "output": "release/${version}"
   },
@@ -25,7 +25,7 @@
   ],
   "mac": {
     "target": ["dmg"],
-    "artifactName": "ai-novel-writer-mac-${arch}-${version}-installer.${ext}",
+    "artifactName": "Novel-Writer-master-mac-${arch}-${version}-installer.${ext}",
     "category": "public.app-category.productivity",
     "identity": "-",
     "hardenedRuntime": false,
@@ -51,7 +51,7 @@
       {
         "provider": "github",
         "owner": "yuchen0x1",
-        "repo": "Pagekin",
+        "repo": "Novel-Writer-master",
         "channel": "latest",
         "releaseType": "release",
         "publishAutoUpdate": true,
@@ -74,15 +74,15 @@
     ]
   },
   "nsis": {
-    "artifactName": "ai-novel-writer-setup-${version}.${ext}",
+    "artifactName": "Novel-Writer-master-setup-${version}.${ext}",
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
-    // 快捷方式与「应用和功能」里显示中英双名（按 app-builder-lib 26.15.3 的 NSIS 模板核实，见 ADR-0022）。
+    // 快捷方式与「应用和功能」使用当前产品名（按 app-builder-lib 26.15.3 的 NSIS 模板核实，见 ADR-0022）。
     // 从旧产品名升级时新 exe 尚不存在，不走保留快捷方式的改名分支：旧卸载程序按注册表里的旧 ShortcutName
     // 删掉旧快捷方式，新安装程序再按新名字建，不会多出一份。「应用和功能」的条目按 appId 定位，只改显示名。
-    "shortcutName": "Novel Writer master",
-    "uninstallDisplayName": "Novel Writer master ${version}",
+    "shortcutName": "Novel-Writer-master",
+    "uninstallDisplayName": "Novel-Writer-master ${version}",
     "deleteAppDataOnUninstall": false
   },
   "linux": {

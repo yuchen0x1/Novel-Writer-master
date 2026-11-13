@@ -1,0 +1,319 @@
+{
+  "version": "0.0.1",
+  "sessions": [
+    {
+      "scenario": "readme-zh",
+      "theme": "light",
+      "timing": {
+        "launchToInteractiveMs": 828,
+        "readyToShowToInteractiveMs": 245,
+        "navigationToInteractiveMs": 388
+      },
+      "model": "local fixture",
+      "externalRequests": [],
+      "residualProcesses": [],
+      "externalWrites": []
+    },
+    {
+      "scenario": "readme-zh",
+      "theme": "dark",
+      "timing": {
+        "launchToInteractiveMs": 839,
+        "readyToShowToInteractiveMs": 234,
+        "navigationToInteractiveMs": 386
+      },
+      "model": "local fixture",
+      "externalRequests": [],
+      "residualProcesses": [],
+      "externalWrites": []
+    },
+    {
+      "scenario": "readme-hero-zh",
+      "theme": "light",
+      "timing": {
+        "launchToInteractiveMs": 804,
+        "readyToShowToInteractiveMs": 233,
+        "navigationToInteractiveMs": 374
+      },
+      "model": "local fixture",
+      "externalRequests": [],
+      "residualProcesses": [],
+      "externalWrites": []
+    },
+    {
+      "scenario": "readme-en",
+      "theme": "light",
+      "timing": {
+        "launchToInteractiveMs": 852,
+        "readyToShowToInteractiveMs": 243,
+        "navigationToInteractiveMs": 382
+      },
+      "model": "local fixture",
+      "externalRequests": [],
+      "residualProcesses": [],
+      "externalWrites": []
+    },
+    {
+      "scenario": "readme-en",
+      "theme": "dark",
+      "timing": {
+        "launchToInteractiveMs": 903,
+        "readyToShowToInteractiveMs": 254,
+        "navigationToInteractiveMs": 435
+      },
+      "model": "local fixture",
+      "externalRequests": [],
+      "residualProcesses": [],
+      "externalWrites": []
+    },
+    {
+      "scenario": "readme-hero-en",
+      "theme": "light",
+      "timing": {
+        "launchToInteractiveMs": 830,
+        "readyToShowToInteractiveMs": 227,
+        "navigationToInteractiveMs": 386
+      },
+      "model": "local fixture",
+      "externalRequests": [],
+      "residualProcesses": [],
+      "externalWrites": []
+    }
+  ],
+  "captures": [
+    {
+      "source": "screens-zh/v001-zh-library-light.png",
+      "file": "docs/assets/readme/v001-zh-library.webp",
+      "size": [
+        1440,
+        900
+      ],
+      "sha256": "6bb39635974c093d37fb8032cecf1cce773e2f43d5be7428afb3ca15e8b23e04"
+    },
+    {
+      "source": "screens-zh/v001-zh-chapter-light.png",
+      "file": "docs/assets/readme/v001-zh-chapter.webp",
+      "size": [
+        1440,
+        900
+      ],
+      "sha256": "136cf576f5e1ef97fa55834db488c3cff07ee5ed2196a0c6b0db527c6e66f14a"
+    },
+    {
+      "source": "screens-zh/v001-zh-blueprint-light.png",
+      "file": "docs/assets/readme/v001-zh-blueprint.webp",
+      "size": [
+        1440,
+        900
+      ],
+      "sha256": "de78e2977d7261d2e3708b10ccba7dcee1d0be4451b7368383f9cba380579797"
+    },
+    {
+      "source": "screens-zh/v001-zh-run-light.png",
+      "file": "docs/assets/readme/v001-zh-run.webp",
+      "size": [
+        1440,
+        900
+      ],
+      "sha256": "1f0a991faa372b09a6f49be61de7ef4ec10d994ce92125b3dc8be85744b1f69a"
+    },
+    {
+      "source": "screens-zh/v001-zh-architecture-light.png",
+      "file": "docs/assets/readme/v001-zh-architecture.webp",
+      "size": [
+        1440,
+        900
+      ],
+      "sha256": "98973764ed5637d65c54562b1f7335e6c027e65b8c7a5fbc996941a0c7c3bd98"
+    },
+    {
+      "source": "screens-zh/v001-zh-cast-light.png",
+      "file": "docs/assets/readme/v001-zh-cast.webp",
+      "size": [
+        1440,
+        900
+      ],
+      "sha256": "5a022639d73959b9f30c8dc066345ed857940af09eb5ce527c7089fc56a46ce3"
+    },
+    {
+      "source": "readme-zh-dark/v001-zh-chapter-dark.png",
+      "file": "docs/assets/readme/v001-zh-chapter-dark.webp",
+      "size": [
+        1440,
+        900
+      ],
+      "sha256": "86cb8a0ce47be1357360f1c2c945866815c131478bcd38ee363074b29de54697"
+    },
+    {
+      "source": "readme-hero-zh-light/hero-zh-library-light.png",
+      "file": "docs/assets/readme/hero-captures/v001/zh/01-library.webp",
+      "size": [
+        1440,
+        1080
+      ],
+      "sha256": "06d0949336e997d7bbde676e4f9dad7c692323cbeb01b03c72693196cdeea229"
+    },
+    {
+      "source": "readme-hero-zh-light/hero-zh-chapter-light.png",
+      "file": "docs/assets/readme/hero-captures/v001/zh/02-chapter.webp",
+      "size": [
+        1440,
+        1080
+      ],
+      "sha256": "b5c71e60fedfd6a6b94717e2c05af5acef8f96ebfe3f6291fd68e48596a8e4e4"
+    },
+    {
+      "source": "readme-hero-zh-light/hero-zh-blueprint-light.png",
+      "file": "docs/assets/readme/hero-captures/v001/zh/03-blueprint.webp",
+      "size": [
+        1440,
+        1080
+      ],
+      "sha256": "8a35d50413eeffb1effa0fc18f10b939b914ea97415a759c92a475f45154da4f"
+    },
+    {
+      "source": "readme-hero-zh-light/hero-zh-run-light.png",
+      "file": "docs/assets/readme/hero-captures/v001/zh/04-run.webp",
+      "size": [
+        1440,
+        1080
+      ],
+      "sha256": "2501a78628b77957f90a16212838438597311cc82236ee7f3dfe4c67b535b618"
+    },
+    {
+      "source": "readme-hero-zh-light/hero-zh-architecture-light.png",
+      "file": "docs/assets/readme/hero-captures/v001/zh/05-architecture.webp",
+      "size": [
+        1440,
+        1080
+      ],
+      "sha256": "f0cde07e80ae0755638c0c143ac738db5fa12757c99cfbe8e17be66634fef38c"
+    },
+    {
+      "source": "readme-hero-zh-light/hero-zh-cast-light.png",
+      "file": "docs/assets/readme/hero-captures/v001/zh/06-cast.webp",
+      "size": [
+        1440,
+        1080
+      ],
+      "sha256": "0a2795fe77cf85325e1e966a59960f51ab2d6e8c38b05592c4d54b6071f0d344"
+    },
+    {
+      "source": "screens-en/v001-en-library-light.png",
+      "file": "docs/assets/readme/v001-en-library.webp",
+      "size": [
+        1440,
+        900
+      ],
+      "sha256": "f340c3cc7d8ae446e4dddc0b5454c3463dbc6c0864dfd36c8be49a11b1703d4c"
+    },
+    {
+      "source": "screens-en/v001-en-chapter-light.png",
+      "file": "docs/assets/readme/v001-en-chapter.webp",
+      "size": [
+        1440,
+        900
+      ],
+      "sha256": "e830b7be1b62b501fbea89c8bc1fda21c9c12480d2b0eddda764d6ee0a91b1a5"
+    },
+    {
+      "source": "screens-en/v001-en-blueprint-light.png",
+      "file": "docs/assets/readme/v001-en-blueprint.webp",
+      "size": [
+        1440,
+        900
+      ],
+      "sha256": "cafa7a73b4d699ce9a9d4628a6bbebcb3c22d3e2003c7c11dfd318501337b91a"
+    },
+    {
+      "source": "screens-en/v001-en-run-light.png",
+      "file": "docs/assets/readme/v001-en-run.webp",
+      "size": [
+        1440,
+        900
+      ],
+      "sha256": "7d0a871dea721e6d3d387f2519c1889c5958b1984da9b9ed44c01a148eea178d"
+    },
+    {
+      "source": "screens-en/v001-en-architecture-light.png",
+      "file": "docs/assets/readme/v001-en-architecture.webp",
+      "size": [
+        1440,
+        900
+      ],
+      "sha256": "6a889b8f9e52a7a811da5bfe56f1f0dc446becab450cce0b3c565ff5fd2048e2"
+    },
+    {
+      "source": "screens-en/v001-en-cast-light.png",
+      "file": "docs/assets/readme/v001-en-cast.webp",
+      "size": [
+        1440,
+        900
+      ],
+      "sha256": "2dfa0de8f9f15a674707fb4514a6467ee30c618b57ddb77842b16402d4836c08"
+    },
+    {
+      "source": "readme-en-dark/v001-en-chapter-dark.png",
+      "file": "docs/assets/readme/v001-en-chapter-dark.webp",
+      "size": [
+        1440,
+        900
+      ],
+      "sha256": "ceb54fa27e9e6dfa2f7bdac781e5361d0a9bf929703fd8cce7e858ef2ee9ddc3"
+    },
+    {
+      "source": "readme-hero-en-light/hero-en-library-light.png",
+      "file": "docs/assets/readme/hero-captures/v001/en/01-library.webp",
+      "size": [
+        1440,
+        1080
+      ],
+      "sha256": "56dcea2d6984df9bd5e2c762605d54c4fbe7dabfa8db0d1b9a0736c20407d512"
+    },
+    {
+      "source": "readme-hero-en-light/hero-en-chapter-light.png",
+      "file": "docs/assets/readme/hero-captures/v001/en/02-chapter.webp",
+      "size": [
+        1440,
+        1080
+      ],
+      "sha256": "2fcc089d8f0c6654ce564cf2529c8c9eb9827b30c8ca3f1ffab45a6dc1e2d3b7"
+    },
+    {
+      "source": "readme-hero-en-light/hero-en-blueprint-light.png",
+      "file": "docs/assets/readme/hero-captures/v001/en/03-blueprint.webp",
+      "size": [
+        1440,
+        1080
+      ],
+      "sha256": "7d3093677fb074d2914478a926250f8b711591c6156b96ff2267e0dd5f3e2d6f"
+    },
+    {
+      "source": "readme-hero-en-light/hero-en-run-light.png",
+      "file": "docs/assets/readme/hero-captures/v001/en/04-run.webp",
+      "size": [
+        1440,
+        1080
+      ],
+      "sha256": "615ff6fc0a7b74d0280e68faa485f6315a4000b00093bba0db237ef6f74bef6c"
+    },
+    {
+      "source": "readme-hero-en-light/hero-en-architecture-light.png",
+      "file": "docs/assets/readme/hero-captures/v001/en/05-architecture.webp",
+      "size": [
+        1440,
+        1080
+      ],
+      "sha256": "3f972505f0502c4e3c06febe153f4336b5eb9a655761e1bada12a93786ec7b4e"
+    },
+    {
+      "source": "readme-hero-en-light/hero-en-cast-light.png",
+      "file": "docs/assets/readme/hero-captures/v001/en/06-cast.webp",
+      "size": [
+        1440,
+        1080
+      ],
+      "sha256": "9048184add614b4feecb1b08aad31e121af554e5be6b06b4c10e00cde7021be8"
+    }
+  ]
+}

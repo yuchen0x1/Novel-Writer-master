@@ -91,13 +91,13 @@ describe('desktop release profile contract', () => {
       ],
     })
     expect(profile.releaseAssets).toEqual([
-      { name: 'ai-novel-writer-setup-{version}.exe', platform: 'windows', role: 'installer' },
-      { name: 'ai-novel-writer-setup-{version}.exe.blockmap', platform: 'windows', role: 'update-metadata' },
+      { name: 'Novel-Writer-master-setup-{version}.exe', platform: 'windows', role: 'installer' },
+      { name: 'Novel-Writer-master-setup-{version}.exe.blockmap', platform: 'windows', role: 'update-metadata' },
       { name: 'latest.yml', platform: 'windows', role: 'update-metadata' },
-      { name: 'ai-novel-writer-mac-arm64-{version}-installer.dmg', platform: 'macos-arm64', role: 'installer' },
-      { name: 'ai-novel-writer-mac-arm64-{version}-installer.dmg.sha256', platform: 'macos-arm64', role: 'checksum' },
-      { name: 'ai-novel-writer-mac-x64-{version}-installer.dmg', platform: 'macos-x64', role: 'installer' },
-      { name: 'ai-novel-writer-mac-x64-{version}-installer.dmg.sha256', platform: 'macos-x64', role: 'checksum' },
+      { name: 'Novel-Writer-master-mac-arm64-{version}-installer.dmg', platform: 'macos-arm64', role: 'installer' },
+      { name: 'Novel-Writer-master-mac-arm64-{version}-installer.dmg.sha256', platform: 'macos-arm64', role: 'checksum' },
+      { name: 'Novel-Writer-master-mac-x64-{version}-installer.dmg', platform: 'macos-x64', role: 'installer' },
+      { name: 'Novel-Writer-master-mac-x64-{version}-installer.dmg.sha256', platform: 'macos-x64', role: 'checksum' },
     ])
     expect(profile.promotion).toEqual({
       workflow: '.github/workflows/cross-platform-runtime-artifact-promotion.yml',

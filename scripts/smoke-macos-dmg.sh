@@ -24,7 +24,7 @@ if [[ "$runner_machine_arch" != "$expected_runner_machine_arch" ]]; then
   echo "macOS runner architecture mismatch: expected $expected_runner_machine_arch for $target_arch, got $runner_machine_arch" >&2
   exit 1
 fi
-dmg="$release_directory/ai-novel-writer-mac-$target_arch-$version-installer.dmg"
+dmg="$release_directory/Novel-Writer-master-mac-$target_arch-$version-installer.dmg"
 qualification_directory="$release_directory/qualification"
 evidence_root="${AI_NOVEL_RELEASE_EVIDENCE_ROOT:-$qualification_directory}"
 acceptance_directory="$evidence_root/acceptance"

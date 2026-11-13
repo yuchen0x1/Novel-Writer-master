@@ -28,7 +28,7 @@ const apiBaseUrl = 'https://api.github.com'
 /** The release source is deliberately not configurable by workflow inputs or CLI flags. */
 export const OFFICIAL_UPDATE_REPOSITORY = Object.freeze({
   owner: 'yuchen0x1',
-  repo: 'Pagekin',
+  repo: 'Novel-Writer-master',
 })
 
 // A cold GitHub Windows runner spends around 15 seconds compiling the monitor's

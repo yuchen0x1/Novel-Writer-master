@@ -203,7 +203,7 @@ function relativeArtifactPath(version, file) {
 
 function platformArtifactSet(platform, version) {
   if (platform === 'windows') {
-    const installer = `ai-novel-writer-setup-${version}.exe`
+    const installer = `Novel-Writer-master-setup-${version}.exe`
     return [
       { path: relativeArtifactPath(version, installer), role: 'installer' },
       { path: relativeArtifactPath(version, `${installer}.blockmap`), role: 'installer-blockmap' },
@@ -212,7 +212,7 @@ function platformArtifactSet(platform, version) {
   }
 
   const { architecture } = macosQualificationEntity(platform)
-  const dmg = `ai-novel-writer-mac-${architecture}-${version}-installer.dmg`
+  const dmg = `Novel-Writer-master-mac-${architecture}-${version}-installer.dmg`
   return [
     { path: relativeArtifactPath(version, dmg), role: 'dmg' },
     { path: relativeArtifactPath(version, `${dmg}.sha256`), role: 'dmg-checksum' },
@@ -735,7 +735,7 @@ function validateWindowsReceipt(receipt, name, bundleRoot, version) {
     validateReferenceSet(receipt, expected, bundleRoot, 'Windows packaged-smoke receipt')
   } else if (name === 'signing') {
     const expectedStatus = receipt.status === 'signed' ? 'Valid' : 'NotSigned'
-    const installer = fileWithin(bundleRoot, `ai-novel-writer-setup-${version}.exe`, 'Windows installer')
+    const installer = fileWithin(bundleRoot, `Novel-Writer-master-setup-${version}.exe`, 'Windows installer')
     assert(direct.authenticodeStatus === expectedStatus && receipt.validationResult === expectedStatus, 'Windows signing receipt status is inconsistent')
     assert(validSha256(direct.installerSha256) && direct.installerSha256.toLowerCase() === sha256File(installer), 'Windows signing receipt installer SHA-256 is invalid')
   }
@@ -744,7 +744,7 @@ function validateWindowsReceipt(receipt, name, bundleRoot, version) {
 function validateMacosReceipt(receipt, name, bundleRoot, version, platform) {
   const { architecture, runnerMachineArchitecture } = macosQualificationEntity(platform)
   const direct = receipt.direct
-  const dmg = `ai-novel-writer-mac-${architecture}-${version}-installer.dmg`
+  const dmg = `Novel-Writer-master-mac-${architecture}-${version}-installer.dmg`
   const dmgSha256 = sha256File(fileWithin(bundleRoot, dmg, 'macOS DMG'))
   const expectedKinds = { 'dmg-mount': 'dmg-mount', 'packaged-smoke': 'packaged-smoke', signing: 'signing' }
   assert(receipt.kind === expectedKinds[name] && receipt.platform === 'darwin' && receipt.arch === architecture, `macOS acceptance receipt identity is invalid: ${name}`)
@@ -961,7 +961,7 @@ export function finalizeReleaseEvidence({ platform, evidenceRoot, releaseRoot })
     artifacts,
     evidence: [...provenanceEvidence, ...acceptanceEvidence, ...packagedEvidence],
     ...(isMacosQualificationEntity(selectedPlatform)
-      ? { dmgChecksum: `ai-novel-writer-mac-${macosQualificationEntity(selectedPlatform).architecture}-${contract.frozen.version}-installer.dmg.sha256` }
+      ? { dmgChecksum: `Novel-Writer-master-mac-${macosQualificationEntity(selectedPlatform).architecture}-${contract.frozen.version}-installer.dmg.sha256` }
       : {}),
   }
   const manifestPath = path.join(resolvedReleaseRoot, 'manifest.json')
@@ -1179,7 +1179,7 @@ export function verifyQualificationBundle({
     assert(sha256File(fileWithin(resolvedBundleRoot, file, 'Checksum file')) === digest, `Qualification SHA-256 mismatch: ${file}`)
   }
   if (isMacosQualificationEntity(selectedPlatform)) {
-    const dmg = `ai-novel-writer-mac-${macosQualificationEntity(selectedPlatform).architecture}-${version}-installer.dmg`
+    const dmg = `Novel-Writer-master-mac-${macosQualificationEntity(selectedPlatform).architecture}-${version}-installer.dmg`
     const checksum = `${dmg}.sha256`
     assert(manifest.dmgChecksum === checksum, 'macOS qualification manifest checksum file is invalid')
     assert(readFileSync(fileWithin(resolvedBundleRoot, checksum, 'macOS DMG checksum'), 'utf8').trim() === `${sha256File(fileWithin(resolvedBundleRoot, dmg, 'macOS DMG'))}  ${dmg}`, 'macOS DMG checksum file does not match the DMG')

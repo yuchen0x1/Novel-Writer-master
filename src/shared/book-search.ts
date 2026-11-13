@@ -51,6 +51,18 @@ export interface SearchMatch {
   length: number
 }
 
+/** Literal, case-insensitive matches in original UTF-16 coordinates (no HTML). */
+export function findSearchHighlights(content: string, terms: readonly string[]): SearchMatch[] {
+  const escaped = [...new Set(terms.filter(Boolean))]
+    .sort((a, b) => b.length - a.length)
+    .map(term => term.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'))
+  if (escaped.length === 0) return []
+  return Array.from(content.matchAll(new RegExp(escaped.join('|'), 'giu')), match => ({
+    index: match.index,
+    length: match[0].length,
+  }))
+}
+
 /** 在已转小写的文本里找出一个词的前几处位置。 */
 export function findTermMatches(lowerContent: string, lowerTerm: string, max: number): SearchMatch[] {
   if (lowerTerm === '' || max <= 0) return []

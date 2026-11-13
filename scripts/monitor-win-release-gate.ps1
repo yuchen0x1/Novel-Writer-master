@@ -1273,7 +1273,7 @@ function Test-AiNovelGateNsisInstallerImage {
       return $false
     }
     $fileName = [System.IO.Path]::GetFileName($ImagePath)
-    return $fileName -match '^ai-novel-writer-setup-\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?\.exe$'
+    return $fileName -match '^(?:Novel-Writer-master|ai-novel-writer)-setup-\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?\.exe$'
   }
   catch {
     return $false
@@ -2899,7 +2899,7 @@ function New-AiNovelGateLegacyBridgeState {
   $installer = $bridge.expectedInstaller
   if (
     $null -eq $installer -or
-    [string]$installer.name -notmatch '^ai-novel-writer-setup-\d+\.\d+\.\d+\.exe$' -or
+    [string]$installer.name -notmatch '^(?:Novel-Writer-master|ai-novel-writer)-setup-\d+\.\d+\.\d+\.exe$' -or
     [long]$installer.size -le 0 -or
     [string]$installer.sha256 -notmatch '^[a-fA-F0-9]{64}$' -or
     [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA) -or
@@ -3155,7 +3155,7 @@ function Test-AiNovelGateNativeUpdaterPendingInstallerIdentity {
   }
   try {
     $installerName = [System.IO.Path]::GetFileName([string]$InstallerIdentity.executablePath)
-    if ($installerName -notmatch '^ai-novel-writer-setup-\d+\.\d+\.\d+\.exe$') {
+    if ($installerName -notmatch '^(?:Novel-Writer-master|ai-novel-writer)-setup-\d+\.\d+\.\d+\.exe$') {
       return $false
     }
     $expectedPendingInstallerPath = [System.IO.Path]::GetFullPath((Join-Path `

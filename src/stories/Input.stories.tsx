@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react' // eslint-disable-line st
 import { Input } from '../components/ui/Input'
 
 const meta = {
-  title: 'Novel Writer master UI/Input',
+  title: 'Novel-Writer-master UI/Input',
   component: Input,
   tags: ['autodocs'],
   argTypes: {

@@ -20,7 +20,7 @@ export function registerOfficialHomepageController({
       await openExternal(OFFICIAL_HOMEPAGE_URL)
       return { success: true }
     } catch (error) {
-      console.warn('[Novel Writer master] Unable to open official homepage.', error)
+      console.warn('[Novel-Writer-master] Unable to open official homepage.', error)
       return { success: false, error: 'Unable to open the official homepage.' }
     }
   })

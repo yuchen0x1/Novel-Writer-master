@@ -11,7 +11,7 @@ const semanticVersionPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:
 const expectedGithubSource = Object.freeze({
   provider: 'github',
   owner: 'yuchen0x1',
-  repo: 'Pagekin',
+  repo: 'Novel-Writer-master',
   releaseType: 'release',
   channel: 'latest',
   tagNamePrefix: 'v',
@@ -182,7 +182,7 @@ export function verifyWindowsUpdateBuildConfig(config) {
   assert(updateSource.publishAutoUpdate === true, 'electron-builder must publish latest.yml update metadata')
   assert(updateSource.tagNamePrefix === 'v', 'electron-builder must use v-prefixed formal release tags')
   assert(
-    nsis.artifactName === 'ai-novel-writer-setup-${version}.${ext}',
+    nsis.artifactName === 'Novel-Writer-master-setup-${version}.${ext}',
     'electron-builder NSIS artifactName must match the installer name written to latest.yml',
   )
 

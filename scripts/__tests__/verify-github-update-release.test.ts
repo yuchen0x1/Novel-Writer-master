@@ -26,9 +26,9 @@ function sha256(content: string | Buffer) {
 }
 
 function createArtifacts(root: string) {
-  const installer = write(root, 'ai-novel-writer-setup-0.2.6.exe', 'installer')
+  const installer = write(root, 'Novel-Writer-master-setup-0.2.6.exe', 'installer')
   const latestMetadata = write(root, 'latest.yml', 'version: 0.2.6\nsha512: verified\n')
-  const blockMap = write(root, 'ai-novel-writer-setup-0.2.6.exe.blockmap', 'blockmap')
+  const blockMap = write(root, 'Novel-Writer-master-setup-0.2.6.exe.blockmap', 'blockmap')
   return { installer, latestMetadata, blockMap, version: '0.2.6' }
 }
 
@@ -78,7 +78,7 @@ describe('GitHub Windows update release verification', () => {
       apiBaseUrl: 'https://api.example.test',
     })).resolves.toMatchObject({
       tag: 'v0.2.6',
-      installer: 'ai-novel-writer-setup-0.2.6.exe',
+      installer: 'Novel-Writer-master-setup-0.2.6.exe',
     })
   })
 
@@ -113,9 +113,9 @@ describe('GitHub Windows update release verification', () => {
       fetcher,
       apiBaseUrl: 'https://api.example.test',
     })).resolves.toMatchObject({
-      installer: 'ai-novel-writer-setup-0.2.6.exe',
+      installer: 'Novel-Writer-master-setup-0.2.6.exe',
       latestMetadata: 'latest.yml',
-      blockMap: 'ai-novel-writer-setup-0.2.6.exe.blockmap',
+      blockMap: 'Novel-Writer-master-setup-0.2.6.exe.blockmap',
     })
 
     expect(fetcher.mock.calls.map(([url]) => url)).toEqual([

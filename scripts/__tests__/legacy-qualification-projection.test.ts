@@ -8,7 +8,7 @@ import { projectLegacyQualificationBundle } from '../../.release/scripts/project
 const roots: string[] = []
 const repositoryRoot = path.resolve(import.meta.dirname, '..', '..')
 const version = (JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package.json'), 'utf8')) as { version: string }).version
-const dmg = `ai-novel-writer-mac-arm64-${version}-installer.dmg`
+const dmg = `Novel-Writer-master-mac-arm64-${version}-installer.dmg`
 const checksum = `${dmg}.sha256`
 const acceptance = [
   'qualification/acceptance/dmg-mount.json',
@@ -55,8 +55,8 @@ function fixture() {
       },
     },
     releaseAssets: [
-      { name: 'ai-novel-writer-mac-arm64-{version}-installer.dmg', platform: 'macos-arm64', role: 'installer' },
-      { name: 'ai-novel-writer-mac-arm64-{version}-installer.dmg.sha256', platform: 'macos-arm64', role: 'checksum' },
+      { name: 'Novel-Writer-master-mac-arm64-{version}-installer.dmg', platform: 'macos-arm64', role: 'installer' },
+      { name: 'Novel-Writer-master-mac-arm64-{version}-installer.dmg.sha256', platform: 'macos-arm64', role: 'checksum' },
     ],
   }))
   const manifest = {

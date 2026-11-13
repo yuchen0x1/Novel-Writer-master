@@ -123,7 +123,7 @@ function response(body: unknown, contentType = 'application/json'): Response {
 
 function releaseFixture(tag: string) {
   const version = tag.slice(1)
-  const installerName = `ai-novel-writer-setup-${version}.exe`
+  const installerName = `Novel-Writer-master-setup-${version}.exe`
   const installer = Buffer.from(`official installer ${tag}`, 'utf8')
   const blockMap = Buffer.from(`official blockmap ${tag}`, 'utf8')
   const latestYml = Buffer.from([
@@ -282,7 +282,7 @@ describe('Windows official in-app update E2E contract', () => {
   })
 
   it('pins the official repository and accepts final semantic release tags only', () => {
-    expect(OFFICIAL_UPDATE_REPOSITORY).toEqual({ owner: 'yuchen0x1', repo: 'Pagekin' })
+    expect(OFFICIAL_UPDATE_REPOSITORY).toEqual({ owner: 'yuchen0x1', repo: 'Novel-Writer-master' })
     expect(normalizeFinalReleaseTag('v0.5.2', 'from_tag')).toBe('v0.5.2')
     expect(normalizeFinalReleaseTag('0.6.0', 'expected_tag')).toBe('v0.6.0')
 
@@ -309,7 +309,7 @@ describe('Windows official in-app update E2E contract', () => {
       expected: { tag: 'v0.6.0', version: '0.6.0' },
       latest: { tag: 'v0.6.0' },
     })
-    expect(plan.expected.assets.installer.name).toBe('ai-novel-writer-setup-0.6.0.exe')
+    expect(plan.expected.assets.installer.name).toBe('Novel-Writer-master-setup-0.6.0.exe')
     expect(readFileSync(join(evidenceRoot, 'release-plan.json'), 'utf8')).toContain('sha256:')
     expect(requests).toEqual(expect.arrayContaining([
       'https://api.github.com/repos/yuchen0x1/Novel-Writer-master/releases/latest',
@@ -399,7 +399,7 @@ describe('Windows official in-app update E2E contract', () => {
         tag: 'v0.7.0',
         assets: {
           installer: {
-            name: 'ai-novel-writer-setup-0.7.0.exe',
+            name: 'Novel-Writer-master-setup-0.7.0.exe',
             size: 234_679_883,
             sha256: 'd751d4ed6edbef1589380304c1cfff521f0b97eeb9f1a2f0936b0032f579f66c',
           },
@@ -412,9 +412,9 @@ describe('Windows official in-app update E2E contract', () => {
     })).toEqual({
       mode: 'legacy-bridge',
       sourceTag: 'v0.6.0',
-      expectedPendingInstallerPath: 'C:\\Users\\runneradmin\\AppData\\Local\\ai-novel-writer-updater\\pending\\ai-novel-writer-setup-0.7.0.exe',
+      expectedPendingInstallerPath: 'C:\\Users\\runneradmin\\AppData\\Local\\ai-novel-writer-updater\\pending\\Novel-Writer-master-setup-0.7.0.exe',
       expectedInstaller: {
-        name: 'ai-novel-writer-setup-0.7.0.exe',
+        name: 'Novel-Writer-master-setup-0.7.0.exe',
         size: 234_679_883,
         sha256: 'd751d4ed6edbef1589380304c1cfff521f0b97eeb9f1a2f0936b0032f579f66c',
       },
@@ -701,7 +701,7 @@ $velaHome = 'C:\\polluted-by-dot-source'
   })
 
   windowsPowerShellIt('waits only for the exact pending installer root to exit before force-run cleanup', () => {
-    const pendingInstallerPath = 'C:\\Users\\runneradmin\\AppData\\Local\\ai-novel-writer-updater\\pending\\ai-novel-writer-setup-0.8.0.exe'
+    const pendingInstallerPath = 'C:\\Users\\runneradmin\\AppData\\Local\\ai-novel-writer-updater\\pending\\Novel-Writer-master-setup-0.8.0.exe'
     const output = runWindowsE2ePowerShellFunctions([
       'Assert-E2eCondition',
       'Test-E2eSameAbsolutePath',
@@ -755,7 +755,7 @@ try {
     return [pscustomobject]@{
       processId = 5936
       startTimeTicks = '639219050918203812'
-      executablePath = 'C:\\unexpected\\ai-novel-writer-setup-0.8.0.exe'
+      executablePath = 'C:\\unexpected\\Novel-Writer-master-setup-0.8.0.exe'
     }
   })
 }

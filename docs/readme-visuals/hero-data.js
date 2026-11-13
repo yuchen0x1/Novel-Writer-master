@@ -3,13 +3,13 @@ window.README_HERO_CONFIG = {
   locales: {
     zh: {
       htmlLang: "zh-CN",
-      brand: "书童",
-      byline: "Pagekin · EthanYoQ",
-      logo: "../assets/brand/pagekin-icon-512.png",
+      brand: "Novel-Writer-master",
+      byline: "Local-first · 0.0.1",
+      logo: "../../public/novel-writer-master-icon.png",
       headline: ["AI 长篇小说写作软件", "从设定到定稿，一章一章写。"],
       proof: {
         title: "设定 → 架构 → 蓝图 → 正文",
-        subtitle: "真实桌面界面 · 1.3.0 纸墨界面",
+        subtitle: "真实桌面界面 · 0.0.1 纸墨界面",
         logos: []
       },
       features: [
@@ -19,23 +19,23 @@ window.README_HERO_CONFIG = {
         "作品存在本地，模型自己配：DeepSeek、OpenAI 兼容、Ollama"
       ],
       screenshots: [
-        "../assets/readme/hero-captures/v130/zh/01-library.webp",
-        "../assets/readme/hero-captures/v130/zh/02-chapter.webp",
-        "../assets/readme/hero-captures/v130/zh/03-blueprint.webp",
-        "../assets/readme/hero-captures/v130/zh/04-run.webp",
-        "../assets/readme/hero-captures/v130/zh/05-architecture.webp",
-        "../assets/readme/hero-captures/v130/zh/06-cast.webp"
+        "../assets/readme/hero-captures/v001/zh/01-library.webp",
+        "../assets/readme/hero-captures/v001/zh/02-chapter.webp",
+        "../assets/readme/hero-captures/v001/zh/03-blueprint.webp",
+        "../assets/readme/hero-captures/v001/zh/04-run.webp",
+        "../assets/readme/hero-captures/v001/zh/05-architecture.webp",
+        "../assets/readme/hero-captures/v001/zh/06-cast.webp"
       ]
     },
     en: {
       htmlLang: "en",
-      brand: "Pagekin",
-      byline: "书童 · EthanYoQ",
-      logo: "../assets/brand/pagekin-icon-512.png",
+      brand: "Novel-Writer-master",
+      byline: "Local-first · 0.0.1",
+      logo: "../../public/novel-writer-master-icon.png",
       headline: ["AI app for long novels", "Plan, draft, and finalize."],
       proof: {
         title: "Setup → Architecture → Blueprint → Manuscript",
-        subtitle: "Real desktop UI · 1.3.0 Paper and Ink",
+        subtitle: "Real desktop UI · 0.0.1 Paper and Ink",
         logos: []
       },
       features: [
@@ -45,12 +45,12 @@ window.README_HERO_CONFIG = {
         "Books stay local; bring DeepSeek, OpenAI-compatible, or Ollama"
       ],
       screenshots: [
-        "../assets/readme/hero-captures/v130/en/01-library.webp",
-        "../assets/readme/hero-captures/v130/en/02-chapter.webp",
-        "../assets/readme/hero-captures/v130/en/03-blueprint.webp",
-        "../assets/readme/hero-captures/v130/en/04-run.webp",
-        "../assets/readme/hero-captures/v130/en/05-architecture.webp",
-        "../assets/readme/hero-captures/v130/en/06-cast.webp"
+        "../assets/readme/hero-captures/v001/en/01-library.webp",
+        "../assets/readme/hero-captures/v001/en/02-chapter.webp",
+        "../assets/readme/hero-captures/v001/en/03-blueprint.webp",
+        "../assets/readme/hero-captures/v001/en/04-run.webp",
+        "../assets/readme/hero-captures/v001/en/05-architecture.webp",
+        "../assets/readme/hero-captures/v001/en/06-cast.webp"
       ]
     }
   }

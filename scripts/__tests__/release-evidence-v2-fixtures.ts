@@ -80,7 +80,7 @@ export function windowsV025CopyProof() {
 }
 
 export function windowsAcceptanceReceipt(releaseRoot: string, version: string, name: string) {
-  const sha256 = sha256File(path.join(releaseRoot, `ai-novel-writer-setup-${version}.exe`))
+  const sha256 = sha256File(path.join(releaseRoot, `Novel-Writer-master-setup-${version}.exe`))
   const receipts: Record<string, unknown> = {
     install: { ...base(name), kind: 'windows-install', direct: { installerExitCode: 0, installedExecutable: 'C:/AI/AI小说作家.exe', installedExecutableExists: true } },
     launch: { ...base(name), kind: 'windows-launch', expectedVersion: version, direct: { executablePath: 'C:/AI/AI小说作家.exe', productVersion: version.split(/[+-]/)[0], ...(/[+-]/.test(version) ? { packageVersion: version } : {}), processId: 101, processStartTimeTicks: '12345', visibleMainWindowCount: 1 } },
@@ -99,7 +99,7 @@ export function windowsAcceptanceReceipt(releaseRoot: string, version: string, n
 }
 
 export function macosAcceptanceReceipt(releaseRoot: string, version: string, name: string) {
-  const dmg = `ai-novel-writer-mac-arm64-${version}-installer.dmg`
+  const dmg = `Novel-Writer-master-mac-arm64-${version}-installer.dmg`
   const dmgSha256 = sha256File(path.join(releaseRoot, dmg))
   const outputSha256 = 'b'.repeat(64)
   const receipts: Record<string, unknown> = {

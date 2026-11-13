@@ -16,8 +16,8 @@ export function stripInlineMarkdown(text: string): string {
 
 /** 按空行分段；段内换行折成空格（中文段落内部不应有硬换行）。 */
 export function proseParagraphs(content: string): string[] {
-  return stripInlineMarkdown(content)
-    .split(/\n{2,}/u)
+  return stripInlineMarkdown(content.replace(/\r\n?/gu, '\n'))
+    .split(/\n[\t ]*\n(?:[\t ]*\n)*/u)
     .map(paragraph => paragraph.replace(/\n/gu, ' ').trim())
     .filter(paragraph => paragraph.length > 0)
 }

@@ -87,7 +87,7 @@ try {
   const accelerationConfig = tryReadJsonFile<{ hardwareAcceleration?: boolean }>(GLOBAL_CONFIG_PATH)
   if (accelerationConfig.status === 'ok' && accelerationConfig.value?.hardwareAcceleration === false) {
     app.disableHardwareAcceleration()
-    console.warn('[Novel Writer master] 硬件加速已关闭（设置 · 外观），本次启动使用软件渲染。')
+    console.warn('[Novel-Writer-master] 硬件加速已关闭（设置 · 外观），本次启动使用软件渲染。')
   }
 } catch { /* 配置读不到时按默认开启处理 */ }
 
@@ -188,7 +188,7 @@ function createWindow() {
   win.webContents.setWindowOpenHandler(createOfficialHomepageWindowOpenHandler({
     openExternal: url => shell.openExternal(url),
     onOpenExternalError: error => {
-    console.warn('[Novel Writer master] Unable to open official homepage from a window request.', error)
+    console.warn('[Novel-Writer-master] Unable to open official homepage from a window request.', error)
     },
   }))
   // 渲染进程不能把现有主窗口导航到外部内容。
@@ -287,9 +287,9 @@ app.whenReady().then(async () => {
   // 更新功能失败不能阻断作者进入应用；窗口先于更新运行时创建。
   try {
     const gpuStatus = app.getGPUFeatureStatus()
-    console.warn('[Novel Writer master] GPU 状态:', JSON.stringify(gpuStatus))
+    console.warn('[Novel-Writer-master] GPU 状态:', JSON.stringify(gpuStatus))
     if (gpuStatus.gpu_compositing === 'software' || gpuStatus.gpu_compositing === 'disabled') {
-    console.warn('[Novel Writer master] 当前使用软件合成。若整体卡顿，可在「设置 · 外观」尝试切换硬件加速。')
+    console.warn('[Novel-Writer-master] 当前使用软件合成。若整体卡顿，可在「设置 · 外观」尝试切换硬件加速。')
     }
   } catch { /* GPU 状态仅用于诊断 */ }
   createWindow()
@@ -322,7 +322,7 @@ app.whenReady().then(async () => {
   })
 }).catch((error: unknown) => {
   clearReleaseSmokeTimeout()
-  console.error('[Novel Writer master] Electron 启动失败，现有配置已保留。')
+  console.error('[Novel-Writer-master] Electron 启动失败，现有配置已保留。')
   if (releaseSmokeRequested) {
     // Controlled qualification errors have safe fixed codes; never print config values.
     if (error instanceof Error && /^[A-Z_]+$/.test(error.message)) console.error(error.message)

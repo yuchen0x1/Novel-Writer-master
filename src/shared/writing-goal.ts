@@ -30,15 +30,24 @@ export function shiftDays(now: Date, days: number): Date {
 
 /** 只累计正向增量：删改、回退不应该把"今天写了多少"扣回去。 */
 export function addWords(ledger: WritingLedger, day: string, delta: number): WritingLedger {
-  if (!Number.isFinite(delta) || delta <= 0) return ledger
-  return { ...ledger, [day]: (ledger[day] ?? 0) + Math.round(delta) }
+  if (!isCalendarDay(day) || !Number.isFinite(delta) || Math.round(delta) <= 0) return ledger
+  return { ...ledger, [day]: Math.min(Number.MAX_SAFE_INTEGER, wordsOn(ledger, day) + Math.round(delta)) }
+}
+
+/** Validate actual calendar days, including leap years, without UTC conversion. */
+function isCalendarDay(day: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(day)) return false
+  const [year, month, date] = day.split('-').map(Number)
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)
+  const lengths = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+  return year > 0 && month >= 1 && month <= 12 && date >= 1 && date <= lengths[month - 1]
 }
 
 export function pruneLedger(ledger: WritingLedger, now: Date, keepDays = WRITING_LEDGER_KEEP_DAYS): WritingLedger {
   const oldest = localDayKey(shiftDays(now, -(keepDays - 1)))
   const kept: Record<string, number> = {}
   for (const [day, words] of Object.entries(ledger)) {
-    if (/^\d{4}-\d{2}-\d{2}$/u.test(day) && day >= oldest && Number.isFinite(words) && words > 0) kept[day] = words
+    if (isCalendarDay(day) && day >= oldest && Number.isFinite(words) && words > 0) kept[day] = words
   }
   return kept
 }
@@ -65,13 +74,13 @@ export function currentStreak(ledger: WritingLedger, now: Date): number {
 }
 
 export function goalPercent(words: number, goal: number): number {
-  if (!Number.isFinite(goal) || goal <= 0) return 0
+  if (!Number.isFinite(words) || !Number.isFinite(goal) || goal <= 0) return 0
   return Math.max(0, Math.min(100, Math.round((words / goal) * 100)))
 }
 
 /** 0 = 没写，1 = 不足一半，2 = 过半，3 = 达标，4 = 超额 150% 以上。 */
 export function heatLevel(words: number, goal: number): 0 | 1 | 2 | 3 | 4 {
-  if (words <= 0) return 0
+  if (!Number.isFinite(words) || words <= 0) return 0
   if (!Number.isFinite(goal) || goal <= 0) return 3
   if (words >= goal * 1.5) return 4
   if (words >= goal) return 3
@@ -93,6 +102,7 @@ export function heatmapCells(ledger: WritingLedger, now: Date, goal: number, day
 }
 
 export function normalizeGoal(value: unknown): number {
+  if (typeof value !== 'number' && (typeof value !== 'string' || value.trim() === '')) return WRITING_GOAL_DEFAULT
   const numeric = typeof value === 'number' ? value : Number(value)
   if (!Number.isFinite(numeric)) return WRITING_GOAL_DEFAULT
   return Math.min(WRITING_GOAL_MAX, Math.max(WRITING_GOAL_MIN, Math.round(numeric)))
@@ -106,8 +116,8 @@ export function parsePersistedGoal(raw: unknown): { dailyGoal: number; ledger: W
   const ledger: Record<string, number> = {}
   if (typeof record.ledger === 'object' && record.ledger !== null) {
     for (const [day, words] of Object.entries(record.ledger as Record<string, unknown>)) {
-      if (/^\d{4}-\d{2}-\d{2}$/u.test(day) && typeof words === 'number' && Number.isFinite(words) && words > 0) {
-        ledger[day] = Math.round(words)
+      if (isCalendarDay(day) && typeof words === 'number' && Number.isFinite(words) && Math.round(words) > 0) {
+        ledger[day] = Math.min(Number.MAX_SAFE_INTEGER, Math.round(words))
       }
     }
   }

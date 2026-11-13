@@ -132,7 +132,7 @@ function recordProviderOutcome(
     })
   } catch (error) {
     // Statistics are diagnostic only and must never change generation outcome.
-    console.warn('[Novel Writer master] LLM call statistics were not recorded.', error)
+    console.warn('[Novel-Writer-master] LLM call statistics were not recorded.', error)
   }
 }
 
@@ -390,7 +390,7 @@ export function registerLLMController() {
           try {
             writeJsonFile(GLOBAL_CONFIG_PATH, originalConfig)
           } catch (rollbackError) {
-            console.error('[Novel Writer master] Model deletion failed and the default model settings were not restored.', { error, rollbackError })
+            console.error('[Novel-Writer-master] Model deletion failed and the default model settings were not restored.', { error, rollbackError })
             throw new Error('LLM_DEFAULT_MODEL_ROLLBACK_FAILED', { cause: rollbackError })
           }
         }

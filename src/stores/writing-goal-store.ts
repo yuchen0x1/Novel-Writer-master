@@ -72,7 +72,7 @@ export const useWritingGoalStore = create<WritingGoalState>((set, get) => ({
   },
 
   recordWords: (delta, now = new Date()) => {
-    if (!Number.isFinite(delta) || delta <= 0) return
+    if (!Number.isFinite(delta) || delta <= 0 || !Number.isFinite(now.getTime())) return
     set(state => ({
       ledger: pruneLedger(addWords(state.ledger, localDayKey(now), delta), now),
     }))
@@ -82,16 +82,28 @@ export const useWritingGoalStore = create<WritingGoalState>((set, get) => ({
 
 /** 测试与"立即落盘"场景（例如退出前）用：跳过延迟写。 */
 export function flushWritingGoalPersistence(): void {
-  const store = storage()
-  if (!store) return
   if (persistTimer) {
     clearTimeout(persistTimer)
     persistTimer = null
   }
+  const store = storage()
+  if (!store) return
   try {
     const { dailyGoal, ledger } = useWritingGoalStore.getState()
     store.setItem(STORAGE_KEY, JSON.stringify({ dailyGoal, ledger }))
   } catch {
     /* same as schedulePersist */
+  }
+}
+
+/** Flush when backgrounded or unloaded; callers own the listener lifetime. */
+export function bindWritingGoalPersistence(): () => void {
+  const onHidden = () => { if (document.visibilityState === 'hidden') flushWritingGoalPersistence() }
+  window.addEventListener('pagehide', flushWritingGoalPersistence)
+  document.addEventListener('visibilitychange', onHidden)
+  return () => {
+    window.removeEventListener('pagehide', flushWritingGoalPersistence)
+    document.removeEventListener('visibilitychange', onHidden)
+    flushWritingGoalPersistence()
   }
 }

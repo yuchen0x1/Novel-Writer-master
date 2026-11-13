@@ -55,7 +55,7 @@ function validWindowsReceipt(name: string, releaseRoot: string) {
       reference('packaged-vector-smoke', 'packaged-vector-smoke.json'),
       reference('packaged-official-homepage-smoke', 'packaged-official-homepage-smoke.json'),
     ] },
-    signing: { ...base, kind: 'windows-signing', direct: { authenticodeStatus: 'NotSigned', installerSha256: sha256(path.join(releaseRoot, `ai-novel-writer-setup-${releaseVersion}.exe`)) }, status: 'unsigned', validationResult: 'NotSigned', unsignedDistributionImpact: 'Windows may display an unknown-publisher warning.' },
+    signing: { ...base, kind: 'windows-signing', direct: { authenticodeStatus: 'NotSigned', installerSha256: sha256(path.join(releaseRoot, `Novel-Writer-master-setup-${releaseVersion}.exe`)) }, status: 'unsigned', validationResult: 'NotSigned', unsignedDistributionImpact: 'Windows may display an unknown-publisher warning.' },
   }
   return receipts[name]
 }
@@ -297,8 +297,8 @@ describe('release evidence v2 CLI', () => {
         name: 'macOS Intel x64 cloud package qualification',
       },
       artifactSet: [
-        { path: `release/${releaseVersion}/ai-novel-writer-mac-x64-${releaseVersion}-installer.dmg`, role: 'dmg' },
-        { path: `release/${releaseVersion}/ai-novel-writer-mac-x64-${releaseVersion}-installer.dmg.sha256`, role: 'dmg-checksum' },
+        { path: `release/${releaseVersion}/Novel-Writer-master-mac-x64-${releaseVersion}-installer.dmg`, role: 'dmg' },
+        { path: `release/${releaseVersion}/Novel-Writer-master-mac-x64-${releaseVersion}-installer.dmg.sha256`, role: 'dmg-checksum' },
       ],
     })
   })
@@ -329,7 +329,7 @@ describe('release evidence v2 CLI', () => {
     ], { cwd: repositoryRoot, encoding: 'utf8' })
     expect(init.status, init.stderr).toBe(0)
 
-    const installer = `ai-novel-writer-setup-${version}.exe`
+    const installer = `Novel-Writer-master-setup-${version}.exe`
     writeFileSync(path.join(releaseRoot, installer), 'installer', 'utf8')
     writeFileSync(path.join(releaseRoot, `${installer}.blockmap`), 'blockmap', 'utf8')
     writeFileSync(path.join(releaseRoot, 'latest.yml'), `version: ${version}\n`, 'utf8')

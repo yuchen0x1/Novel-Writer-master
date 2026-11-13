@@ -119,6 +119,8 @@ function concat(chunks: readonly Uint8Array[]): Uint8Array {
 
 export function escapeXmlText(value: string): string {
   return value
+    // XML 1.0 rejects control characters and lone surrogates from pasted text.
+    .replace(/[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/gu, '')
     .replace(/&/gu, '&amp;')
     .replace(/</gu, '&lt;')
     .replace(/>/gu, '&gt;')
@@ -156,7 +158,7 @@ function xhtmlDocument(title: string, language: string, body: string, stylesheet
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<!DOCTYPE html>',
-    `<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${language}" lang="${language}">`,
+    `<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${escapeXmlText(language)}" lang="${escapeXmlText(language)}">`,
     '<head>',
     '<meta charset="utf-8"/>',
     `<title>${escapeXmlText(title)}</title>`,

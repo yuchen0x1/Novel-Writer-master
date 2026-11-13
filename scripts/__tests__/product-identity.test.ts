@@ -38,7 +38,9 @@ describe('product identity used by release scripts', () => {
       expect(resolveWindowsExecutable(legacyOnly)).toBe(join(legacyOnly, '书童.exe'))
       writeFileSync(join(legacyOnly, 'Novel Writer master.exe'), '')
       expect(resolveWindowsExecutable(legacyOnly)).toBe(join(legacyOnly, 'Novel Writer master.exe'))
-      expect(resolveWindowsExecutable(join(root, 'missing'))).toBe(join(root, 'missing', 'Novel Writer master.exe'))
+      writeFileSync(join(legacyOnly, 'Novel-Writer-master.exe'), '')
+      expect(resolveWindowsExecutable(legacyOnly)).toBe(join(legacyOnly, 'Novel-Writer-master.exe'))
+      expect(resolveWindowsExecutable(join(root, 'missing'))).toBe(join(root, 'missing', 'Novel-Writer-master.exe'))
     } finally {
       rmSync(root, { recursive: true, force: true })
     }
@@ -51,11 +53,11 @@ describe('product identity used by release scripts', () => {
       writeFileSync(join(root, '书童.exe'), '')
       const selected = resolvePackagedWindowsExecutable(root, { freshBuild: true })
       rmSync(join(root, '书童.exe'))
-      writeFileSync(join(root, 'Novel Writer master.exe'), '')
-      expect(selected).toBe(join(root, 'Novel Writer master.exe'))
+      writeFileSync(join(root, 'Novel-Writer-master.exe'), '')
+      expect(selected).toBe(join(root, 'Novel-Writer-master.exe'))
       expect(existsSync(selected)).toBe(true)
       // 复用已有产物时，仍按实际存在的文件找。
-      rmSync(join(root, 'Novel Writer master.exe'))
+      rmSync(join(root, 'Novel-Writer-master.exe'))
       writeFileSync(join(root, 'AI小说作家.exe'), '')
       expect(resolvePackagedWindowsExecutable(root, { freshBuild: false })).toBe(join(root, 'AI小说作家.exe'))
     } finally {
@@ -67,14 +69,14 @@ describe('product identity used by release scripts', () => {
     const result = runReleaseMonitorLibrary(`
 $variants = @(Get-AiNovelGateNsisCmdProcessCheckVariants)
 [pscustomobject]@{
-  NewUninstaller = Test-AiNovelGateNsisUninstallerImage -ImagePath 'C:\\app\\Uninstall Novel Writer master.exe'
+  NewUninstaller = Test-AiNovelGateNsisUninstallerImage -ImagePath 'C:\\app\\Uninstall Novel-Writer-master.exe'
   OldUninstaller = Test-AiNovelGateNsisUninstallerImage -ImagePath 'C:\\app\\Uninstall AI小说作家.exe'
   OtherUninstaller = Test-AiNovelGateNsisUninstallerImage -ImagePath 'C:\\app\\Uninstall Other.exe'
-  NewSetupTitle = Test-AiNovelGateNsisSetupWindowTitle -Title 'Novel Writer master Setup  '
+  NewSetupTitle = Test-AiNovelGateNsisSetupWindowTitle -Title 'Novel-Writer-master Setup  '
   OldSetupTitle = Test-AiNovelGateNsisSetupWindowTitle -Title 'AI小说作家 Setup'
   OtherSetupTitle = Test-AiNovelGateNsisSetupWindowTitle -Title 'Other Setup'
   OldExeInRoot = Test-AiNovelGateProductExecutableInRoot -ExecutablePath 'D:\\e2e\\installed-app\\AI小说作家.exe' -InstallRoot 'D:\\e2e\\installed-app'
-  NewExeInRoot = Test-AiNovelGateProductExecutableInRoot -ExecutablePath 'D:\\e2e\\installed-app\\Novel Writer master.exe' -InstallRoot 'D:\\e2e\\installed-app'
+  NewExeInRoot = Test-AiNovelGateProductExecutableInRoot -ExecutablePath 'D:\\e2e\\installed-app\\Novel-Writer-master.exe' -InstallRoot 'D:\\e2e\\installed-app'
   OtherExeInRoot = Test-AiNovelGateProductExecutableInRoot -ExecutablePath 'D:\\e2e\\installed-app\\Other.exe' -InstallRoot 'D:\\e2e\\installed-app'
   CmdVariantNames = @($variants | ForEach-Object { $_.FilterFileName + '|' + $_.FilterArguments })
 } | ConvertTo-Json -Compress
@@ -90,6 +92,8 @@ $variants = @(Get-AiNovelGateNsisCmdProcessCheckVariants)
       NewExeInRoot: true,
       OtherExeInRoot: false,
       CmdVariantNames: [
+        'find.exe|  "Novel-Writer-master.exe"',
+        'findstr.exe|  /B /I /C:"\\"Novel-Writer-master.exe\\""',
         'find.exe|  "Novel Writer master.exe"',
         'findstr.exe|  /B /I /C:"\\"Novel Writer master.exe\\""',
         'find.exe|  "书童.exe"',

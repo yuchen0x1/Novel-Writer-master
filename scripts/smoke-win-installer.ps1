@@ -1,4 +1,4 @@
-param(
+﻿param(
   [string]$InstallerPath,
   [string]$PreviousInstallerPath,
   [string]$PreviousPortableZipPath,
@@ -24,7 +24,7 @@ $script:aiNovelUpgradeDataFixtureScript = Join-Path $PSScriptRoot 'upgrade-data-
 $script:aiNovelElectronNodeRunner = Join-Path $root 'node_modules\electron\dist\electron.exe'
 $packageJson = Get-Content -LiteralPath (Join-Path $root 'package.json') -Raw | ConvertFrom-Json
 if ([string]::IsNullOrWhiteSpace($InstallerPath)) {
-  $InstallerPath = Join-Path $root ("release\{0}\ai-novel-writer-setup-{0}.exe" -f [string]$packageJson.version)
+  $InstallerPath = Join-Path $root ("release\{0}\Novel-Writer-master-setup-{0}.exe" -f [string]$packageJson.version)
 }
 
 $resolvedInstaller = (Resolve-Path -LiteralPath $InstallerPath).Path

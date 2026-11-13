@@ -21,10 +21,10 @@ const legacyPrefixPattern = new RegExp('ve' + 'la-', 'i')
 const formerNamePattern = /AI ?小说作家|AI Novel Writer/
 
 describe('APP_BRAND', () => {
-  it('uses the requested Novel Writer master product name in every locale', () => {
-    expect(APP_BRAND.zhName).toBe('Novel Writer master')
-    expect(APP_BRAND.enName).toBe('Novel Writer master')
-    expect(APP_BRAND.shortName).toBe('Novel Writer master')
+  it('uses the requested Novel-Writer-master product name in every locale', () => {
+    expect(APP_BRAND.zhName).toBe('Novel-Writer-master')
+    expect(APP_BRAND.enName).toBe('Novel-Writer-master')
+    expect(APP_BRAND.shortName).toBe('Novel-Writer-master')
     expect(Object.values(APP_BRAND).join(' ')).not.toMatch(legacyNamePattern)
   })
 
@@ -34,7 +34,7 @@ describe('APP_BRAND', () => {
 
     expect(APP_BRAND.formerZhName).toBe('书童 Pagekin')
     expect(APP_BRAND.formerEnName).toBe('Pagekin')
-    expect(productIdentity).toContain("PRODUCT_NAMES = [PRODUCT_NAME, '书童', 'AI小说作家']")
+    expect(productIdentity).toContain("PRODUCT_NAMES = [PRODUCT_NAME, 'Novel Writer master', '书童', 'AI小说作家']")
   })
 
   it('does not expose legacy product naming in visible brand surfaces', () => {

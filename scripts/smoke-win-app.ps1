@@ -274,7 +274,7 @@ function Test-AiNovelVisibleMainWindow {
     return $false
   }
   # 升级测试可能启动历史版本；当前与旧版窗口标题都要认。
-  foreach ($productTitle in @('Novel Writer master', '书童', 'Pagekin', 'AI小说作家', 'AI Novel Writer')) {
+  foreach ($productTitle in @('Novel-Writer-master', 'Novel Writer master', '书童', 'Pagekin', 'AI小说作家', 'AI Novel Writer')) {
     if ($title.IndexOf($productTitle, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
       return $true
     }
@@ -939,7 +939,7 @@ function Get-AiNovelInstalledVersion {
 # 安装包产品名（exe 与卸载程序的文件名）。名单中的历史名称用于覆盖旧版本升级场景，
 # 与 scripts/product-identity.mjs 保持一致。
 function Get-AiNovelProductNames {
-  return @('Novel Writer master', '书童', 'AI小说作家')
+  return @('Novel-Writer-master', 'Novel Writer master', '书童', 'AI小说作家')
 }
 
 function Get-AiNovelProductExecutableNames {

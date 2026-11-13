@@ -842,8 +842,10 @@ export const STAGE_SCENARIOS = {
   'stage-settings-about': { model: false, shell: 'stage', setup: seedStageSample, run: async ({ page }) => {
     await stage.openSettings(page)
     await stage.showSettingsPage(page, '关于与更新')
-    await stage.root(page).getByText('Novel Writer master', { exact: true }).waitFor({ state: 'visible' })
-    await stage.root(page).getByText('原名「书童 Pagekin」', { exact: true }).waitFor({ state: 'visible' })
+    const name = stage.root(page).locator('.stage-set-about-name')
+    await name.waitFor({ state: 'visible' })
+    assert.equal(await name.innerText(), 'Novel-Writer-master')
+    assert.equal(await stage.root(page).getByText(/书童|Pagekin/).count(), 0, '当前关于页不显示旧品牌')
     const marks = await page.evaluate(() => ['.stage-brand', '.stage-set-about-mark'].map(selector => {
       const mark = document.querySelector(selector)
       return mark ? getComputedStyle(mark).backgroundImage : 'missing'

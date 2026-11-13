@@ -5,12 +5,10 @@
 </div>
 
 <p align="center">
-  <img src="public/novel-writer-master-icon.png" width="112" height="112" alt="Novel Writer master 应用图标：羽毛笔与打开的书" />
+  <img src="public/novel-writer-master-icon.png" width="112" height="112" alt="Novel-Writer-master 应用图标：羽毛笔与打开的书" />
 </p>
 
-<h1 align="center">Novel Writer master</h1>
-
-<p align="center"><sub>原名「书童 Pagekin」</sub></p>
+<h1 align="center">Novel-Writer-master</h1>
 
 <p align="center">
   <strong>开源免费的 AI 小说写作桌面软件，为长篇小说和网文连载设计。</strong><br />
@@ -20,8 +18,6 @@
 
 <p align="center">
   <a href="https://github.com/yuchen0x1/Novel-Writer-master/releases/latest"><img src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD-Windows%20%7C%20macOS-2b4c8c?style=for-the-badge" alt="下载 Windows 与 macOS 安装包" /></a><br />
-  <a href="https://www.orz.md/ai-novel-writer/demo/">观看 32 秒中文实录：选段续写与改成对话</a><br />
-  <sub>1.3.0 实录，模型等待段已剪短，AI 配音；32 秒是片长，不是生成耗时。</sub>
 </p>
 
 <p align="center">
@@ -30,25 +26,23 @@
   <a href="https://github.com/yuchen0x1/Novel-Writer-master/stargazers"><img src="https://badgen.net/github/stars/yuchen0x1/Novel-Writer-master" alt="GitHub stars" /></a>
 </p>
 
-<p align="center">
-  <img src="docs/assets/readme/v130-hero-zh.webp" alt="书童 Pagekin 1.3.0：左侧是产品介绍，右侧是书房、正文、蓝图、运行侧页、架构和角色名单的真实界面截图" width="100%" />
-</p>
+![Novel-Writer-master 0.0.1](docs/assets/readme/v001-hero-zh.webp)
 
 ## 最新更新
 
-- **Novel Writer master 1.10.0**：统一更新应用名称与 Windows/macOS 图标，保留旧安装的数据目录；模型 API Key 使用系统安全密钥库加密保存；保存状态与重试按当前作品会话隔离。
-- 新系统密钥库不可用时会明确提示，新的 API Key 不会以明文保存。
-- 查看 [1.10.0 更新说明](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v1.10.0) 或[完整发布历史](https://github.com/yuchen0x1/Novel-Writer-master/releases)。
+- **Novel-Writer-master 0.0.1**：新名称、新图标、重新拍摄的中英文界面，以及指向当前仓库的安装包和更新源。
+- 版本从 `0.0.1` 重新开始。旧 `1.x` 用户请手动安装一次；后续使用新的版本序列更新。作品与设置目录继续沿用。
+- 查看 [0.0.1 发布说明](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.1) 或[完整更新记录](docs/releases/release-notes.md)。
 
 ## 它能做什么
 
-Novel Writer master 按写一本小说的顺序工作：从设定、架构、蓝图到正文，每一步的结果都存进作品并由你确认，AI 协助起草。
+Novel-Writer-master 按写一本小说的顺序工作：从设定、架构、蓝图到正文，每一步的结果都存进作品并由你确认，AI 协助起草。
 
 ### 书房：管理你的全部作品
 
 书房列出你写过的每一部作品。点封面可以先看概览：写到第几步、正文字数、定稿章数、角色数。可以新建作品，也可以把旧版本的项目导入成一份副本。
 
-![书房：书架上有两部作品，右侧是《灯塔》的概览和进度](docs/assets/readme/v130-zh-library.webp)
+![书房：书架上有两部作品，右侧是《灯塔》的概览和进度](docs/assets/readme/v001-zh-library.webp)
 
 ### 拆解、仿写、续写与改写
 
@@ -63,11 +57,11 @@ Novel Writer master 按写一本小说的顺序工作：从设定、架构、蓝
 
 设定页写下类型、受众、写作语言、总章数和每章字数。架构页分四节：故事前提、角色名单、世界观、情节大纲。每一节都可以让 AI 生成，也可以自己写。四节都确认后，再进入章节蓝图。
 
-![架构页：故事前提、角色名单、世界观、情节大纲四节都已确认](docs/assets/readme/v130-zh-architecture.webp)
+![架构页：故事前提、角色名单、世界观、情节大纲四节都已确认](docs/assets/readme/v001-zh-architecture.webp)
 
 角色名单和架构放在一起编辑。每个角色有基础设定、当前状态和关系图谱。角色卡可以粘贴或从文件导入。
 
-![角色名单：左侧列出四个角色，右侧是主角林岚的档案](docs/assets/readme/v130-zh-cast.webp)
+![角色名单：左侧列出四个角色，右侧是主角林岚的档案](docs/assets/readme/v001-zh-cast.webp)
 
 ### 章节蓝图：动笔前先想清楚每一章
 
@@ -75,13 +69,13 @@ Novel Writer master 按写一本小说的顺序工作：从设定、架构、蓝
 
 主按钮是「写第 N 章」。旁边的小弹层只放这一次写作的选项：用哪个模型，要不要补一句作者指导。想连写几章，用「批量创作」，一次最多 10 章。
 
-![蓝图页：选中第 3 章「雾钟」，「写第 3 章」的写作选项弹层已打开](docs/assets/readme/v130-zh-blueprint.webp)
+![蓝图页：选中第 3 章「雾钟」，「写第 3 章」的写作选项弹层已打开](docs/assets/readme/v001-zh-blueprint.webp)
 
 ### 正文：写稿、审稿、修稿、定稿
 
 正文单章视图把一章从待写带到定稿。AI 写出草稿后，你可以直接改，也可以让 AI 审稿。审稿报告列出每条意见，你逐条勾选或忽略，也可以加上自己的意见。修稿结果以差异给你逐段确认，不会直接覆盖原稿。确认无误后定稿。
 
-![正文单章视图：左侧是设定、架构、蓝图、正文四步流程，中间是第 3 章正文，右侧是审稿报告](docs/assets/readme/v130-zh-chapter.webp)
+![正文单章视图：左侧是设定、架构、蓝图、正文四步流程，中间是第 3 章正文，右侧是审稿报告](docs/assets/readme/v001-zh-chapter.webp)
 
 写作时，AI 拿到的是这一章的蓝图、相关角色、世界观、前文摘要和上一章全文，而不是整本书的聊天记录。
 
@@ -91,7 +85,7 @@ Novel Writer master 按写一本小说的顺序工作：从设定、架构、蓝
 
 所有生成任务都在运行侧页里，分进行中、历史、诊断三页。写作时可以实时看到输出，随时取消。批量创作可以暂停。生成失败时，已经写出的文字会留成恢复候选，可以复制或放弃。
 
-![运行侧页：正在写第 3 章，实时输出逐句出现](docs/assets/readme/v130-zh-run.webp)
+![运行侧页：正在写第 3 章，实时输出逐句出现](docs/assets/readme/v001-zh-run.webp)
 
 ### 作品资料与版本：写长篇不丢线索
 
@@ -110,11 +104,11 @@ Novel Writer master 按写一本小说的顺序工作：从设定、架构、蓝
 
 外观有浅色和深色两套。界面支持中文和英文。作品的写作语言可以选中文或英文。
 
-![深色主题下的正文单章视图](docs/assets/readme/v130-zh-chapter-dark.webp)
+![深色主题下的正文单章视图](docs/assets/readme/v001-zh-chapter-dark.webp)
 
 ## 支持的模型与服务
 
-Novel Writer master 不提供模型，也不代管额度。你在设置里填上自己的服务地址、模型名和 API Key。软件支持两种调用协议：
+Novel-Writer-master 不提供模型，也不代管额度。你在设置里填上自己的服务地址、模型名和 API Key。软件支持两种调用协议：
 
 - **OpenAI 兼容协议**：Chat Completions 接口兼容的服务都可以用。
 - **Gemini 原生协议**：Google Gemini。
@@ -156,7 +150,7 @@ API Key：  可以留空；界面要求时填任意占位值
 ### Windows x64
 
 ```text
-ai-novel-writer-setup-<版本号>.exe
+Novel-Writer-master-setup-<版本号>.exe
 ```
 
 1. 运行安装程序。升级时安装程序只更新应用本身，不会删除作品、角色卡或设置。重要作品仍建议先备份。
@@ -170,8 +164,8 @@ ai-novel-writer-setup-<版本号>.exe
 ### macOS（Apple Silicon 与 Intel）
 
 ```text
-ai-novel-writer-mac-arm64-<版本号>-installer.dmg
-ai-novel-writer-mac-x64-<版本号>-installer.dmg
+Novel-Writer-master-mac-arm64-<版本号>-installer.dmg
+Novel-Writer-master-mac-x64-<版本号>-installer.dmg
 ```
 
 1. `arm64` 适用于 Apple Silicon Mac（M1、M2、M3、M4 等）。`x64` 适用于 Intel Mac。
@@ -196,7 +190,7 @@ ai-novel-writer-mac-x64-<版本号>-installer.dmg
 
 ## 常见问题
 
-**Novel Writer master 免费吗？**
+**Novel-Writer-master 免费吗？**
 免费。软件以 GPL-3.0 协议开源。调用云端模型产生的费用由你和模型服务商结算，与本软件无关。用 Ollama 跑本地模型则不需要付费给任何服务商。
 
 **需要什么模型？**
@@ -211,14 +205,14 @@ ai-novel-writer-mac-x64-<版本号>-installer.dmg
 **支持英文写作吗？**
 支持。界面有中文和英文两种，作品的写作语言也可以选中文或英文。
 
-**旧版本的项目怎么升级到 1.4.0？**
-已经装了 1.1.0、1.2.x 或 1.3.x 的用户，可以直接用应用内更新升级（macOS 需要手动下载新安装包）。升级不改动作品数据，旧的外观偏好会自动迁移成浅色或深色。旧版本的项目如果要转成新格式，在书房点「导入」，选择「导入旧项目副本」。导入会生成一份新副本，原项目保持不动。
+**旧版本怎么切换到 0.0.1？**
+旧 1.x 版本号高于新版本号，请手动安装一次 0.0.1，之后按新版本序列更新。作品与设置目录继续沿用；需要转换旧项目时，在书房选择「导入旧项目副本」。导入创建新副本。
 
 **能导入 Skill 吗？比如去 AI 味。**
 可以。在设置的「写作 Skills」页选择本机的 Skill 文件夹或 SKILL.md，或填 GitHub 上的 Skill 地址，检查内容后安装，再绑定到写稿或修稿等阶段。只支持提示词型的 SKILL.md，不会安装或执行脚本。
 
 **助手聊天去哪了？**
-1.4.0 的界面暂时隐藏了助手聊天入口，以后会单独重新开放。写作、审稿、修稿等功能不受影响。
+当前界面暂时隐藏了助手聊天入口，以后会单独重新开放。写作、审稿、修稿等功能不受影响。
 
 **Windows 或 macOS 提示安装包不安全怎么办？**
 Windows 安装包未签名，Mac 安装包只有 ad-hoc 签名、没有经过 Apple 公证，所以系统会提示。确认安装包来自本项目的官方 GitHub Release 后，按上面「下载与安装」的步骤允许打开。

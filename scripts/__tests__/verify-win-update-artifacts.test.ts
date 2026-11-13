@@ -55,7 +55,7 @@ function createFormalWindowsRelease(root: string, options: { sha512?: string; re
     [
       'provider: github',
       'owner: yuchen0x1',
-      'repo: Pagekin',
+      'repo: Novel-Writer-master',
       `releaseType: ${options.releaseType ?? 'release'}`,
       'channel: latest',
       'tagNamePrefix: v',
@@ -107,7 +107,7 @@ describe('Windows update release artifact verification', () => {
       version: '0.2.6',
       provider: 'github',
       owner: 'yuchen0x1',
-      repo: 'Pagekin',
+      repo: 'Novel-Writer-master',
       releaseType: 'release',
     })
   })
@@ -147,11 +147,11 @@ describe('Windows update release artifact verification', () => {
     const windowsPublish = Array.isArray(config.win?.publish) ? config.win.publish[0] : config.win?.publish
 
     expect(windowsTargets).toEqual([{ target: 'nsis', arch: ['x64'] }])
-    expect(config.nsis?.artifactName).toBe('ai-novel-writer-setup-${version}.${ext}')
+    expect(config.nsis?.artifactName).toBe('Novel-Writer-master-setup-${version}.${ext}')
     expect(windowsPublish).toMatchObject({
       provider: 'github',
       owner: 'yuchen0x1',
-      repo: 'Pagekin',
+      repo: 'Novel-Writer-master',
       releaseType: 'release',
       publishAutoUpdate: true,
       tagNamePrefix: 'v',

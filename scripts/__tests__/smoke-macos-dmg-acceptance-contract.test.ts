@@ -536,7 +536,7 @@ describe('macOS DMG acceptance receipt contract', () => {
       expect(recorded.status, recorded.stderr).toBe(0)
     }
 
-    const dmg = `ai-novel-writer-mac-${architecture}-${version}-installer.dmg`
+    const dmg = `Novel-Writer-master-mac-${architecture}-${version}-installer.dmg`
     writeFileSync(path.join(releaseRoot, dmg), 'macOS DMG', 'utf8')
     const dmgSha256 = createHash('sha256').update('macOS DMG').digest('hex')
     const commandOutputSha256 = 'b'.repeat(64)

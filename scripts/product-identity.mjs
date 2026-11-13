@@ -6,8 +6,8 @@ import path from 'node:path'
  * 升级测试会启动旧版本，所以凡是可能碰到旧版本的地方要同时认当前与历史名称（ADR-0022）。
  * PowerShell 脚本里有同样的名单，改这里时一并改。
  */
-export const PRODUCT_NAME = 'Novel Writer master'
-export const PRODUCT_NAMES = [PRODUCT_NAME, '书童', 'AI小说作家']
+export const PRODUCT_NAME = 'Novel-Writer-master'
+export const PRODUCT_NAMES = [PRODUCT_NAME, 'Novel Writer master', '书童', 'AI小说作家']
 
 export const WINDOWS_EXECUTABLE_NAME = `${PRODUCT_NAME}.exe`
 const WINDOWS_EXECUTABLE_NAMES = PRODUCT_NAMES.map(name => `${name}.exe`)
