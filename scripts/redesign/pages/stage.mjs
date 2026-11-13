@@ -358,6 +358,10 @@ export const versionItemText = version => new RegExp(String.raw`^\S+ v${version}
 /** 第 number 章正文打开后，用标题旁的版本切换器换到第 version 稿（草稿、修稿都按 v 号找）。 */
 export async function openChapterVersion(page, number, version) {
   await openChapter(page, number)
+  const assistant = root(page).locator('.stage-assistant')
+  if (await assistant.isVisible() && await assistant.evaluate(element => getComputedStyle(element).position === 'absolute')) {
+    await assistant.getByRole('button', { name: /^(关闭 AI 助手|Close AI assistant)$/ }).click()
+  }
   const switcher = root(page).getByRole('button', { name: /^本章版本：/ })
   if (!versionSwitcherName(version).test(await switcher.getAttribute('aria-label'))) {
     await switcher.click()
