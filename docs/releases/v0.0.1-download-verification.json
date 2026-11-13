@@ -1,0 +1,56 @@
+{
+  "version": "0.0.1",
+  "release": "https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.1",
+  "latest": "v0.0.1",
+  "tagSha": "95af935525a7794fc8c3bd02a0c72531d9dc31cc",
+  "assets": [
+    {
+      "name": "Novel-Writer-master-setup-0.0.1.exe",
+      "size": 188680770,
+      "sha256": "4980d70c9b38d69be13bcf2c1e9c39d265e29efdadfb95a0abfa51b56747b795",
+      "url": "https://github.com/yuchen0x1/Novel-Writer-master/releases/download/v0.0.1/Novel-Writer-master-setup-0.0.1.exe"
+    },
+    {
+      "name": "Novel-Writer-master-setup-0.0.1.exe.blockmap",
+      "size": 197055,
+      "sha256": "1a94c1c5e895ae8d52d35581206813ca25c7efbe267d43862b563e5f25adfcc7",
+      "url": "https://github.com/yuchen0x1/Novel-Writer-master/releases/download/v0.0.1/Novel-Writer-master-setup-0.0.1.exe.blockmap"
+    },
+    {
+      "name": "latest.yml",
+      "size": 367,
+      "sha256": "e78510a18eda29865359a5aa590914febf6f09e923e3b47b399230a25bd8f603",
+      "url": "https://github.com/yuchen0x1/Novel-Writer-master/releases/download/v0.0.1/latest.yml"
+    },
+    {
+      "name": "Novel-Writer-master-mac-arm64-0.0.1-installer.dmg",
+      "size": 227329538,
+      "sha256": "66e573dd59e97c25b0dded9a3eeadcce2d2c47690fb3ba52e712829b454b9219",
+      "url": "https://github.com/yuchen0x1/Novel-Writer-master/releases/download/v0.0.1/Novel-Writer-master-mac-arm64-0.0.1-installer.dmg"
+    },
+    {
+      "name": "Novel-Writer-master-mac-arm64-0.0.1-installer.dmg.sha256",
+      "size": 116,
+      "sha256": "a0445c2fcedf34da7f025ae09c9fdedc82c684e090ae81c868c48f6a222cddc4",
+      "url": "https://github.com/yuchen0x1/Novel-Writer-master/releases/download/v0.0.1/Novel-Writer-master-mac-arm64-0.0.1-installer.dmg.sha256"
+    },
+    {
+      "name": "Novel-Writer-master-mac-x64-0.0.1-installer.dmg",
+      "size": 237595610,
+      "sha256": "ef835309242a163aa1c4918222539fbeba3f9c7c4bd06ac5878ad5c2cf4ff261",
+      "url": "https://github.com/yuchen0x1/Novel-Writer-master/releases/download/v0.0.1/Novel-Writer-master-mac-x64-0.0.1-installer.dmg"
+    },
+    {
+      "name": "Novel-Writer-master-mac-x64-0.0.1-installer.dmg.sha256",
+      "size": 114,
+      "sha256": "dbc234087d0433ccb43592ec93d193476c663b1f3ff2207b51b5f9166f702d5f",
+      "url": "https://github.com/yuchen0x1/Novel-Writer-master/releases/download/v0.0.1/Novel-Writer-master-mac-x64-0.0.1-installer.dmg.sha256"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "size": 764,
+      "sha256": "015199eeacb34e883fdbd339337398157ef1f74bf7b2536aa0e8a157d0a7747e",
+      "url": "https://github.com/yuchen0x1/Novel-Writer-master/releases/download/v0.0.1/SHA256SUMS.txt"
+    }
+  ]
+}

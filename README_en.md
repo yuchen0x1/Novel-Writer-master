@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/yuchen0x1/Novel-Writer-master/releases"><img src="https://img.shields.io/github/v/release/yuchen0x1/Novel-Writer-master?sort=date&amp;label=release&amp;cacheSeconds=300" alt="Release" /></a>
+  <a href="https://github.com/yuchen0x1/Novel-Writer-master/releases"><img src="https://img.shields.io/github/v/release/yuchen0x1/Novel-Writer-master?sort=date&amp;label=release&amp;cacheSeconds=300&amp;color=2b4c8c" alt="Release" /></a>
   <a href="https://github.com/yuchen0x1/Novel-Writer-master/blob/main/LICENSE"><img src="https://badgen.net/badge/license/GPL-3.0/blue" alt="GPL-3.0 License" /></a>
   <a href="https://github.com/yuchen0x1/Novel-Writer-master/stargazers"><img src="https://badgen.net/github/stars/yuchen0x1/Novel-Writer-master" alt="GitHub stars" /></a>
 </p>
