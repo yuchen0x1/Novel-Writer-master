@@ -1091,9 +1091,6 @@ async function verifyMac() {
     macStage('import-verified')
 
     macStage('editor-open')
-    // 窄屏时 AI 助手是可关闭的浮层；编辑旅程先按真实界面操作收起它。
-    const assistantClose = session.page.getByRole('button', { name: '关闭 AI 助手', exact: true })
-    if (await assistantClose.isVisible()) await assistantClose.click()
     const draftItem = stage.chapterButton(session.page, 1)
     try {
       await draftItem.click()
