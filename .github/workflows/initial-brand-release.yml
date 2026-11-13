@@ -52,6 +52,10 @@ jobs:
       - run: pnpm prepare:native-node
       - name: Verify branding, release configuration, and updater
         run: pnpm exec vitest run src/shared/__tests__/brand.test.ts scripts/__tests__/product-identity.test.ts scripts/__tests__/release-version.test.ts scripts/__tests__/release-profile-contract.test.ts scripts/__tests__/verify-win-update-artifacts.test.ts electron/services/__tests__/update-service.test.ts electron/services/__tests__/github-release-update-backend.test.ts
+      - name: Verify chapter access in compact windows
+        run: |
+          pnpm exec playwright install chromium
+          pnpm exec vitest run --config vitest.browser.config.ts src/components/stage/__tests__/spine-compact-window.browser.tsx
       - name: Build Windows installer
         if: matrix.platform == 'windows'
         run: |

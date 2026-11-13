@@ -14,6 +14,8 @@
   flex-direction: column;
   gap: 2px;
   padding: 10px 12px 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .stage-spine-label {
@@ -209,8 +211,8 @@
 }
 
 .stage-chapters {
-  flex: 0 1 auto;
-  min-height: 0;
+  flex: 1 0 88px;
+  min-height: 88px;
   margin: 6px 0 0 21px;
   padding-left: 12px;
   border-left: 1px solid var(--track);

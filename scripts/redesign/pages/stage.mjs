@@ -298,13 +298,14 @@ export async function showLibrary(page) {
 
 /** 书房里的「导入旧项目副本」：空书房是一个文字按钮，书架有书时在「导入」菜单里。 */
 export async function importLegacyCopy(page) {
-  const direct = root(page).getByRole('button', { name: '导入旧项目副本', exact: true })
-  const menu = root(page).getByRole('button', { name: '导入', exact: true })
+  const direct = root(page).getByRole('button', { name: /^(导入旧项目副本|Import an old project copy)$/ })
+  const menu = root(page).getByRole('button', { name: /^(导入|Import)$/ })
   // 书房可先渲染加载态，再切换为空书架；不能在加载完成前用 isVisible 决定入口。
   await root(page).locator('.stage-library-empty, .stage-shelf').first().waitFor({ state: 'visible' })
+  await direct.or(menu).first().waitFor({ state: 'visible' })
   if (await direct.isVisible()) return direct.click()
   await menu.click()
-  await page.getByRole('menuitem', { name: '导入旧项目副本…' }).click()
+  await page.getByRole('menuitem', { name: /^(导入旧项目副本…|Import an old project copy…)$/ }).click()
 }
 
 /** 顶栏作品名按钮（作品菜单）出现，说明这部作品已在外壳里打开。 */

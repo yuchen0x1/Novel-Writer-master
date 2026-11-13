@@ -89,6 +89,12 @@ describe('macOS DMG acceptance receipt contract', () => {
     }))
     expect(store.getState().text('导入旧项目副本', 'Import legacy project copy')).toBe('Import legacy project copy')
     const page = {
+      getByRole: (role: string, options: { name: string; exact: boolean }) => ({ waitFor: async () => {
+        expect(role).toBe('button')
+        expect(options).toEqual({ name: '新建作品', exact: true })
+        expect(store.getState().locale).toBe('zh-CN')
+        calls.push('new-book-ready')
+      } }),
       locator: (selector: string) => ({ waitFor: async () => {
         calls.push(selector)
         if (selector === 'html[lang="zh-CN"]') expect(store.getState().locale).toBe('zh-CN')
@@ -126,6 +132,7 @@ describe('macOS DMG acceptance receipt contract', () => {
       if (macMode) {
         expect(calls.indexOf('config:get')).toBeLessThan(calls.indexOf('reload'))
         expect(calls.indexOf('html[lang="zh-CN"]')).toBeGreaterThan(calls.indexOf('reload'))
+        expect(calls.indexOf('new-book-ready')).toBeGreaterThan(calls.indexOf('reload'))
       }
     }
   })

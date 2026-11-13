@@ -469,6 +469,7 @@ async function launch(roots) {
       macStage('locale-configured')
       await page.reload()
       await page.locator('html[lang="zh-CN"]').waitFor({ state: 'visible', timeout: 30_000 })
+      await page.getByRole('button', { name: '新建作品', exact: true }).waitFor({ state: 'visible', timeout: 30_000 })
     }
     macStage('launch-ready')
     return { app, page }
@@ -1158,6 +1159,12 @@ async function verifyMac() {
       importAndSaveRequests, reopenRequests }
   } catch (error) {
     receipt.failure = { message: String(error), stack: error?.stack }
+    if (session) {
+      try {
+        receipt.uiFailureDiagnostic = await captureNativeImportFailure(session)
+        console.error(`[AI Novel A11] ui-failure=${JSON.stringify(receipt.uiFailureDiagnostic)}`)
+      } catch { /* 诊断失败不能覆盖原始 UI 错误或跳过应用退出。 */ }
+    }
     if (nativePicker && session) receipt.nativeFailureDiagnostic = { stage: receipt.lastStage, rendererErrors,
       ...await captureNativeImportFailure(session) }
     console.error(`[AI Novel A11] failure-stage=${receipt.lastStage}`, error)
