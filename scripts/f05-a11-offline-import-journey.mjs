@@ -469,13 +469,22 @@ async function launch(roots) {
       macStage('locale-configured')
       await page.reload()
       await page.locator('html[lang="zh-CN"]').waitFor({ state: 'visible', timeout: 30_000 })
-      await page.getByRole('button', { name: '新建作品', exact: true }).waitFor({ state: 'visible', timeout: 30_000 })
+      // 重载可能恢复已打开作品；书房与作品流程脊都能证明中文界面已就绪。
+      await page.getByRole('button', { name: '新建作品', exact: true })
+        .or(page.getByRole('navigation', { name: '创作流程', exact: true })).first()
+        .waitFor({ state: 'visible', timeout: 30_000 })
     }
     macStage('launch-ready')
     return { app, page }
   } catch (error) {
     if (macMode) {
       receipt.failure = { message: String(error), stack: error?.stack }
+      if (page) {
+        try {
+          receipt.uiFailureDiagnostic = await captureNativeImportFailure({app, page})
+          console.error(`[AI Novel A11] launch-ui-failure=${JSON.stringify(receipt.uiFailureDiagnostic)}`)
+        } catch { /* 保留启动错误并继续关闭应用。 */ }
+      }
       console.error(`[AI Novel A11] failure-stage=${receipt.lastStage}`, error)
       await closeMacApplication(app)
     } else {
