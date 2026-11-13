@@ -1,6 +1,6 @@
 # 项目文档导航
 
-本目录保存用户说明、领域规则、架构决定和开发证据。桌面版本为 `1.2.0-Preview`，属于公开测试。插件独立发布，不使用桌面版本号。
+本目录保存用户说明、领域规则、架构决定和开发证据。当前桌面版本为 `0.0.1`，是名称与版本序列重置后的首个独立版本。插件独立发布，不使用桌面版本号。
 
 ## 先找到需要的文档
 
@@ -8,7 +8,7 @@
 
 - [English user guide](../README_en.md) covers the same desktop behavior in English.
 
-- [Preview 更新说明](../.release/notes/v1.2.0-Preview.md)列出本次用户可见变化。精确发布资产以对应 Release 为准。
+- [当前更新说明](releases/release-notes.md)列出用户可见变化，[0.0.1 发布验证](releases/v0.0.1-verification.md)记录安装包和公开下载检查。精确发布资产以对应 Release 为准。
 
 - [产品领域词汇](product-domain.md)定义项目事实、草稿、定稿、恢复候选和更新行为。
 
@@ -19,6 +19,8 @@
 - [实施计划](plans/)保存受审范围、依赖和验收条件。冻结文件中的旧状态不代表当前进度。
 
 - [调研与实施证据](research/)保存来源、实验和验证结果。阅读时核对日期、源码提交和验证范围。
+
+- [前端重设计历史资料](design/2026-10-11-frontend-redesign/README.md)保留文字规格；历史截图与视频从冻结的 `v0.0.1` 快照查阅，当前界面图使用 `docs/assets/readme/v001-*`。
 
 - [任务交接](handoffs/)保存指定分支的日期化快照。后续提交可能使快照过时。
 

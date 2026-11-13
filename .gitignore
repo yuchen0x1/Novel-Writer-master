@@ -73,3 +73,17 @@ tailwind.config.js.bak
 
 # 浏览器测试失败时生成的截图，不入库
 __screenshots__/
+
+# Local generated audits and one-off verification scaffolding.
+/.evolution/
+/PROJECT_AUDIT_REPORT.md
+/docs/evolution-*/
+/scripts/evolution/
+/.tmp-*
+/.cache/
+/test-results/
+/playwright-report/
+/coverage/
+__pycache__/
+*.py[cod]
+.pytest_cache/

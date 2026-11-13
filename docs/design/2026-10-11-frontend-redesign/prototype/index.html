@@ -54,7 +54,7 @@ function render(theme) {
   document.getElementById('groups').innerHTML = GROUPS.map(([no, name, items]) => `
     <section class="group"><h2>${no ? `<span class="num">${no}</span>` : ''}${name}</h2><div class="grid">
     ${items.map(([id, title, note]) => `<a class="shot" href="${id}.html?theme=${theme}">
-      <img src="shots/${id}-${theme}.png" alt="${title}" loading="lazy" onerror="this.style.visibility='hidden'">
+      <img src="https://raw.githubusercontent.com/yuchen0x1/Novel-Writer-master/95af935525a7794fc8c3bd02a0c72531d9dc31cc/docs/design/2026-10-11-frontend-redesign/prototype/shots/${id}-${theme}.png" alt="${title}" loading="lazy" onerror="this.style.visibility='hidden'">
       <b>${title}</b><span>${note}</span></a>`).join('')}
     </div></section>`).join('');
 }
