@@ -7,6 +7,11 @@ on:
         description: Full source commit to build and release
         required: true
         type: string
+      qualified_run:
+        description: Optional completed build run to reuse for a publication retry
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -17,6 +22,7 @@ concurrency:
 
 jobs:
   build:
+    if: inputs.qualified_run == ''
     strategy:
       fail-fast: false
       matrix:
@@ -101,7 +107,7 @@ jobs:
           compression-level: 0
           path: |
             release/0.0.1/*.exe
-            release/0.0.1/*.blockmap
+            release/0.0.1/*.exe.blockmap
             release/0.0.1/latest.yml
             release/0.0.1/*.dmg
             release/0.0.1/*.dmg.sha256
@@ -115,18 +121,43 @@ jobs:
 
   publish:
     needs: build
+    if: ${{ always() && (needs.build.result == 'success' || inputs.qualified_run != '') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: read
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ inputs.expected_sha }}
           persist-credentials: false
+      - name: Verify the source and all reused platform jobs
+        if: inputs.qualified_run != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          QUALIFIED_RUN: ${{ inputs.qualified_run }}
+        run: |
+          set -euo pipefail
+          [[ "$QUALIFIED_RUN" =~ ^[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$QUALIFIED_RUN" > qualified-run.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$QUALIFIED_RUN/jobs?per_page=100" > qualified-jobs.json
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          const run = JSON.parse(fs.readFileSync('qualified-run.json'))
+          const {jobs} = JSON.parse(fs.readFileSync('qualified-jobs.json'))
+          if (run.head_sha !== process.env.EXPECTED_SHA || run.status !== 'completed' || run.path !== '.github/workflows/initial-brand-release.yml') throw Error('Unexpected source build run')
+          for (const name of ['build (windows, windows-2022)', 'build (macos-arm64, macos-15)', 'build (macos-x64, macos-15-intel)']) {
+            const matches = jobs.filter(job => job.name === name)
+            if (matches.length !== 1 || matches[0].conclusion !== 'success') throw Error(`Platform did not pass: ${name}`)
+          }
+          NODE
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           pattern: initial-*
           path: downloaded
+          run-id: ${{ inputs.qualified_run || github.run_id }}
+          github-token: ${{ github.token }}
       - name: Publish only after all platform checks pass
         env:
           GH_TOKEN: ${{ github.token }}
@@ -135,9 +166,16 @@ jobs:
         run: |
           set -euo pipefail
           mkdir assets
-          for platform in windows macos-arm64 macos-x64; do
-            cp downloaded/initial-$platform/* assets/
-          done
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          import path from 'node:path'
+          const profile = JSON.parse(fs.readFileSync('.release/release-profile.json'))
+          for (const asset of profile.releaseAssets) {
+            const name = asset.name.replaceAll('{version}', '0.0.1')
+            if (path.basename(name) !== name) throw Error('Invalid asset name')
+            fs.copyFileSync(`downloaded/initial-${asset.platform}/${name}`, `assets/${name}`)
+          }
+          NODE
           test "$(find assets -maxdepth 1 -type f | wc -l)" -eq 7
           cd assets
           sha256sum * > SHA256SUMS.txt
