@@ -9,8 +9,16 @@ export const messages: Record<Locale, Catalog> = {
   'zh-CN': zhCN,
 }
 
-export function resolveLocale(input?: string | null): Locale {
-  return input?.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en-US'
+export function resolveLocale(input?: string | null, locales: readonly string[] = []): Locale {
+  const explicit = input?.toLowerCase()
+  if (explicit?.startsWith('zh')) return 'zh-CN'
+  if (explicit?.startsWith('en')) return 'en-US'
+  for (const value of locales) {
+    const locale = String(value || '').toLowerCase()
+    if (locale.startsWith('zh')) return 'zh-CN'
+    if (locale.startsWith('en')) return 'en-US'
+  }
+  return 'en-US'
 }
 
 export function createTranslator(catalogs: Record<Locale, Catalog>) {

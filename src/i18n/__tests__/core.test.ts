@@ -12,6 +12,11 @@ describe('i18n core', () => {
     expect(resolveLocale(input)).toBe(expected)
   })
 
+  it('uses the browser locale list when no saved locale is available', () => {
+    expect(resolveLocale(undefined, ['fr-FR', 'zh-TW'])).toBe('zh-CN')
+    expect(resolveLocale(undefined, ['fr-FR', 'en-GB'])).toBe('en-US')
+  })
+
   it('translates and interpolates values as plain text', () => {
     expect(translate('en-US', 'error.unknown', { message: '<b>Book</b>' }))
       .toBe('Something went wrong: <b>Book</b>')

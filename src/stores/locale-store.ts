@@ -9,6 +9,7 @@ export interface LocaleDependencies {
   loadConfig: () => Promise<Partial<GlobalConfig>>
   saveLocale: (locale: Locale) => Promise<{ success: boolean; error?: string }>
   systemLocale: () => string | undefined
+  systemLocales?: () => readonly string[]
   setDocumentLanguage: (locale: Locale) => void
   reportError?: (message: string, title: string) => void | Promise<void>
 }
@@ -35,12 +36,12 @@ export function createLocaleState(dependencies: LocaleDependencies): StateCreato
     })
 
     return {
-      locale: resolveLocale(dependencies.systemLocale()),
+      locale: resolveLocale(dependencies.systemLocale(), dependencies.systemLocales?.() ?? []),
       initialized: false,
       ...localeReaders(),
       async init() {
         const config = await dependencies.loadConfig()
-        const locale = config.locale ?? resolveLocale(dependencies.systemLocale())
+        const locale = config.locale ?? resolveLocale(dependencies.systemLocale(), dependencies.systemLocales?.() ?? [])
         dependencies.setDocumentLanguage(locale)
         set({ locale, initialized: true, ...localeReaders() })
       },
@@ -72,6 +73,7 @@ const browserDependencies: LocaleDependencies = {
   loadConfig: () => ipc.invoke('config:get'),
   saveLocale: locale => ipc.invoke('config:set', { locale }),
   systemLocale: () => globalThis.navigator?.language,
+  systemLocales: () => globalThis.navigator?.languages ?? [],
   setDocumentLanguage(locale) {
     if (globalThis.document) globalThis.document.documentElement.lang = locale
   },
