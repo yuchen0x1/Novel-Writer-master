@@ -10,6 +10,8 @@
 
 - [当前更新说明](releases/release-notes.md)列出用户可见变化，[0.0.1 发布验证](releases/v0.0.1-verification.md)记录安装包和公开下载检查。精确发布资产以对应 Release 为准。
 
+- [平台与维护范围](platforms.md)列出桌面及候选平台，[桌面发布维护](RELEASE_MAINTENANCE.md)记录 CI、资格构建和发布流程。
+
 - [产品领域词汇](product-domain.md)定义项目事实、草稿、定稿、恢复候选和更新行为。
 
 - [架构决定记录](adr/)保存难以逆转的设计决定。新决定必须说明取代范围。
