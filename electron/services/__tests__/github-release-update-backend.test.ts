@@ -12,6 +12,8 @@ describe('GitHub latest release update backend', () => {
       status: 200,
       json: async () => ({
         tag_name: 'v0.9.3',
+        draft: false,
+        prerelease: false,
         name: 'AI Novel Writer v0.9.3',
         body: 'Release notes',
         published_at: '2026-09-03T00:00:00.000Z',
@@ -29,7 +31,23 @@ describe('GitHub latest release update backend', () => {
       },
     })
     expect(fetcher).toHaveBeenCalledWith(GITHUB_LATEST_RELEASE_API, expect.objectContaining({
+      redirect: 'error',
+      signal: expect.any(AbortSignal),
       headers: expect.objectContaining({ Accept: 'application/vnd.github+json' }),
     }))
+  })
+
+  it.each([
+    { draft: true },
+    { prerelease: true },
+    { tag_name: 'v0.9.3-beta.1' },
+  ])('rejects an invalid stable release payload (%j)', async override => {
+    const backend = createGitHubReleaseUpdateBackend(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ tag_name: 'v0.9.3', draft: false, prerelease: false, ...override }),
+    }))
+
+    await expect(backend.checkForUpdates()).rejects.toThrow('Invalid GitHub release metadata')
   })
 })

@@ -81,11 +81,12 @@ const EMPTY_RESULT: BookSearchResult = { query: '', totalMatches: 0, hits: [], t
 
 function HighlightedSnippet({ content, terms }: { content: string; terms: string[] }) {
   let cursor = 0
-  const parts = findSearchHighlights(content, terms).flatMap(match => {
+  const parts = []
+  for (const match of findSearchHighlights(content, terms)) {
     const before = content.slice(cursor, match.index)
     cursor = match.index + match.length
-    return [before, <mark key={match.index}>{content.slice(match.index, cursor)}</mark>]
-  })
+    parts.push(before, <mark key={match.index}>{content.slice(match.index, cursor)}</mark>)
+  }
   return <>{parts}{content.slice(cursor)}</>
 }
 

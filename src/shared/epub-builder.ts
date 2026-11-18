@@ -120,6 +120,7 @@ function concat(chunks: readonly Uint8Array[]): Uint8Array {
 export function escapeXmlText(value: string): string {
   return value
     // XML 1.0 rejects control characters and lone surrogates from pasted text.
+    // eslint-disable-next-line no-control-regex -- XML explicitly permits only tab, LF and CR below U+0020.
     .replace(/[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/gu, '')
     .replace(/&/gu, '&amp;')
     .replace(/</gu, '&lt;')

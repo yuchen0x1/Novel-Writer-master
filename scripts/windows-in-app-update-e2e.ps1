@@ -1,4 +1,4 @@
-﻿param(
+param(
   [Parameter(Mandatory = $true)][string]$PlanPath,
   [Parameter(Mandatory = $true)][string]$EvidenceRoot,
   [string]$MonitorControlPath,

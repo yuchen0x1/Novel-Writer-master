@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: 私密安全报告 / Private security report
+    url: https://github.com/yuchen0x1/Novel-Writer-master/security/advisories/new
+    about: 安全漏洞、凭据暴露和更新来源问题请在这里私密报告。
   - name: 使用问题 / General question
     url: https://github.com/yuchen0x1/Novel-Writer-master/discussions
     about: 不确定是否为 Bug 或只需要使用帮助时，请在 Discussions 提问。

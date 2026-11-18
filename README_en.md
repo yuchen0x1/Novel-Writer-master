@@ -33,6 +33,7 @@
 - **Novel-Writer-master 0.0.1**: consistent name and icons, fresh Chinese and English screenshots, and installers and updates from this repository.
 - Versioning restarts at `0.0.1`. Users of the previous `1.x` series should install this release manually once; later updates follow the new version sequence. Existing books and settings keep their storage locations.
 - See the [0.0.1 release notes](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.1) or [full update history](docs/releases/release-notes.md).
+- In the 0.0.2 draft, first launch follows the system language and the macOS update dialog links to the official download page.
 
 ## What it does
 
