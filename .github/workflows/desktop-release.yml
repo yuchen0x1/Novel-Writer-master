@@ -1,0 +1,195 @@
+name: Qualify desktop release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: read
+
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require a new stable tag of a tested default-branch commit
+        id: version
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_TYPE" = tag
+          tag="$GITHUB_REF_NAME"
+          [[ "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          version="${tag#v}"
+          commit="$(git rev-parse HEAD)"
+          git merge-base --is-ancestor "$commit" "refs/remotes/origin/$DEFAULT_BRANCH"
+          test "$(node -p "require('./package.json').version")" = "$version"
+          test -s ".release/notes/$tag.md"
+          gh api "repos/$GITHUB_REPOSITORY/commits/$commit/check-runs?check_name=Desktop%20PR%20CI%20%28Windows%29" \
+            --jq '.check_runs | any(.name == "Desktop PR CI (Windows)" and .conclusion == "success" and .app.slug == "github-actions")' | grep -Fx true
+          gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '.[].tag_name' > existing-releases
+          if grep -Fxq "$tag" existing-releases; then
+            echo "::error::A release for $tag already exists"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: source
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            os: windows-2022
+          - platform: macos-arm64
+            os: macos-15
+          - platform: macos-x64
+            os: macos-15-intel
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    env:
+      RELEASE_VERSION: ${{ needs.source.outputs.version }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
+        with:
+          version: 11.11.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.20.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prepare:native-node
+      - name: Verify production dependencies
+        run: pnpm audit --prod --audit-level high --registry=https://registry.npmjs.org
+      - name: Verify update and ABI contracts
+        run: pnpm exec vitest run src/shared/__tests__/brand.test.ts scripts/__tests__/release-profile-contract.test.ts scripts/__tests__/verify-win-update-artifacts.test.ts electron/services/__tests__/update-service.test.ts electron/services/__tests__/github-release-update-backend.test.ts
+      - name: Package Windows installer
+        if: matrix.platform == 'windows'
+        run: |
+          pnpm rebuild:electron
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pnpm build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pnpm exec electron-builder --win --x64 --publish never
+          exit $LASTEXITCODE
+      - name: Qualify Windows install, launch, uninstall and update artifacts
+        if: matrix.platform == 'windows'
+        run: |
+          pnpm verify:win-package
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pnpm verify:win-update-artifacts
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pnpm smoke:win-app
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pnpm smoke:win-installer
+          exit $LASTEXITCODE
+      - name: Build and mount the matching macOS installer
+        if: matrix.platform != 'windows'
+        shell: bash
+        env:
+          AI_NOVEL_RELEASE_TARGET_ARCH: ${{ matrix.platform == 'macos-arm64' && 'arm64' || 'x64' }}
+        run: |
+          set -euo pipefail
+          pnpm "build:mac:$AI_NOVEL_RELEASE_TARGET_ARCH:artifacts"
+          pnpm smoke:mac-dmg
+          cd "release/$RELEASE_VERSION"
+          name="Novel-Writer-master-mac-$AI_NOVEL_RELEASE_TARGET_ARCH-$RELEASE_VERSION-installer.dmg"
+          shasum -a 256 "$name" > "$name.sha256"
+      - name: Retain platform-qualified installers
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: desktop-${{ matrix.platform }}
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+          path: |
+            release/${{ env.RELEASE_VERSION }}/*.exe
+            release/${{ env.RELEASE_VERSION }}/*.exe.blockmap
+            release/${{ env.RELEASE_VERSION }}/latest.yml
+            release/${{ env.RELEASE_VERSION }}/*.dmg
+            release/${{ env.RELEASE_VERSION }}/*.dmg.sha256
+      - name: Retain platform test receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: desktop-${{ matrix.platform }}-receipts
+          if-no-files-found: ignore
+          retention-days: 14
+          path: release/${{ env.RELEASE_VERSION }}/qualification/
+
+  stage:
+    needs: [source, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      RELEASE_VERSION: ${{ needs.source.outputs.version }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: 'desktop-*'
+          path: downloaded
+      - name: Collect the exact assets declared by the release profile
+        run: |
+          set -euo pipefail
+          mkdir assets
+          node --input-type=module <<'NODE'
+          import { copyFileSync, readFileSync, statSync } from 'node:fs'
+          import { basename } from 'node:path'
+
+          const profile = JSON.parse(readFileSync('.release/release-profile.json'))
+          for (const asset of profile.releaseAssets) {
+            const name = asset.name.replaceAll('{version}', process.env.RELEASE_VERSION)
+            if (basename(name) !== name || !(asset.platform in profile.platforms)) {
+              throw Error(`Invalid asset declaration: ${name}`)
+            }
+            const source = `downloaded/desktop-${asset.platform}/${name}`
+            if (statSync(source).size === 0) throw Error(`Empty asset: ${name}`)
+            copyFileSync(source, `assets/${name}`, 1)
+          }
+          NODE
+          cd assets
+          sha256sum --check ./*.dmg.sha256
+          sha256sum -- * > SHA256SUMS.txt
+      - name: Create the draft and verify uploaded bytes against GitHub digests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          gh release create "$tag" --verify-tag --draft --title "Novel-Writer-master $RELEASE_VERSION" \
+            --notes-file ".release/notes/$tag.md" assets/*
+          gh release view "$tag" --json isDraft --jq .isDraft | grep -Fx true
+          gh release download "$tag" --pattern SHA256SUMS.txt --dir readback
+          cmp assets/SHA256SUMS.txt readback/SHA256SUMS.txt
+          gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+            --jq ".[] | select(.tag_name == \"$tag\" and .draft) | .assets[] | [.name, .digest, .size] | @tsv" \
+            | sort > remote-assets.tsv
+          for file in assets/*; do
+            hash="$(sha256sum "$file" | cut -d ' ' -f1)"
+            printf '%s\tsha256:%s\t%s\n' "${file#assets/}" "$hash" "$(stat -c%s "$file")"
+          done | sort > local-assets.tsv
+          diff -u local-assets.tsv remote-assets.tsv
+          echo "Draft $tag verified against every uploaded asset digest." >> "$GITHUB_STEP_SUMMARY"

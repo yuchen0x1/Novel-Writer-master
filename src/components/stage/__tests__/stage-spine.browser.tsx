@@ -161,13 +161,13 @@ describe('流程脊', () => {
 
   const stageRows = (container: HTMLElement) => [...container.querySelectorAll<HTMLButtonElement>('[data-stage]')]
 
-  it('四个阶段按 设定、架构、蓝图、正文 排列，各自显示状态，当前阶段标为当前页', async () => {
+  it('四个阶段按 设定、架构、蓝图、正文 排列，其后追加审校与定稿导出，各自显示状态，当前阶段标为当前页', async () => {
     const container = await mount({ kind: 'stage', stage: 'manuscript', chapter: 3 })
     const rows = stageRows(container)
-    expect(rows.map(row => row.querySelector('.stage-row-name')?.textContent)).toEqual(['设定', '架构', '蓝图', '正文'])
-    expect(rows.map(row => row.dataset.state)).toEqual(['done', 'done', 'done', 'active'])
-    expect(rows.map(row => row.querySelector('.stage-row-meta')?.textContent)).toEqual(['完成', '4 / 4', '12 章', '2 / 12 定稿'])
-    expect(rows.map(row => row.getAttribute('aria-current'))).toEqual([null, null, null, 'page'])
+    expect(rows.map(row => row.querySelector('.stage-row-name')?.textContent)).toEqual(['设定', '架构', '蓝图', '正文', '审校', '定稿与导出'])
+    expect(rows.map(row => row.dataset.state)).toEqual(['done', 'done', 'done', 'active', 'todo', 'active'])
+    expect(rows.map(row => row.querySelector('.stage-row-meta')?.textContent)).toEqual(['完成', '4 / 4', '12 章', '2 / 12 定稿', '全书问题看板', '2 / 12 定稿'])
+    expect(rows.map(row => row.getAttribute('aria-current'))).toEqual([null, null, null, 'page', null, null])
     expect(container.querySelector('nav')?.getAttribute('aria-label')).toBe('创作流程')
     expect(rows[0].closest('ol')).not.toBeNull()
   })
@@ -215,7 +215,7 @@ describe('流程脊', () => {
   it('不在正文阶段时不展开章节列表', async () => {
     const container = await mount({ kind: 'stage', stage: 'blueprint' })
     expect(container.querySelector('[aria-label="章节"]')).toBeNull()
-    expect(stageRows(container).map(row => row.getAttribute('aria-current'))).toEqual([null, null, 'page', null])
+    expect(stageRows(container).map(row => row.getAttribute('aria-current'))).toEqual([null, null, 'page', null, null, null])
   })
 
   it('Tab 到当前阶段行时焦点环叠在当前行的浮起阴影上', async () => {

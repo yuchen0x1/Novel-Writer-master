@@ -69,6 +69,11 @@ const click = async (name: string | RegExp) => {
   expect(target, String(name)).toBeTruthy()
   await act(async () => target!.click())
 }
+/** 恢复列表默认收起：需要卡片交互的用例先等开关出现再展开。 */
+const expandRecovery = async () => {
+  await vi.waitFor(() => expect(host!.textContent).toContain('可恢复的内容 ·'))
+  await click(/可恢复的内容 ·/)
+}
 const selectedTab = () => host!.querySelector('[role="tab"][aria-selected="true"]')?.textContent
 
 beforeEach(() => {
@@ -90,6 +95,8 @@ beforeEach(() => {
   setActiveProjectSessionContext(session)
   useWorkflowStore.setState({ activeRuns: [], history: [], waitingRuns: {}, globalLogs: [] })
   useLocaleStore.setState({ locale: 'zh-CN' })
+  // 恢复列表的展开偏好按作品存在 localStorage，同一浏览器页面跨用例共享，先清掉避免上一例的开关状态漏进来。
+  localStorage.clear()
   host = document.createElement('div')
   host.className = 'paper-ink stage-shell'
   host.style.cssText = 'width: 640px; height: 800px; display: flex'
@@ -179,6 +186,7 @@ describe('运行侧页', () => {
     expect(host!.querySelectorAll('article')).toHaveLength(1)
 
     await act(async () => useWorkflowStore.setState({ activeRuns: [], history: [{ ...paused, status: 'failed' }] }))
+    await expandRecovery()
     await vi.waitFor(() => expect(button('继续此批次')).toBeTruthy())
     expect(host!.textContent).toContain('批量正文：已保存 1 章，下一章 4')
   })
@@ -266,6 +274,7 @@ describe('运行侧页', () => {
     useWorkflowStore.setState({ startWorkflow })
     const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined)
     await render()
+    await expandRecovery()
     await vi.waitFor(() => expect(button('继续此批次')).toBeTruthy())
     await vi.waitFor(() => expect(host!.textContent).toContain('部分任务暂时无法读取'))
 
@@ -296,6 +305,7 @@ describe('运行侧页', () => {
     })
     const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined)
     await render()
+    await expandRecovery()
     const card = await vi.waitFor(() => {
       const found = [...host!.querySelectorAll('article')].find(article => article.textContent?.includes('第3章审稿候选'))
       expect(found).toBeTruthy()
@@ -469,6 +479,7 @@ describe('运行侧页', () => {
   it('恢复候选「放弃…」的确认条选「保留」或按 Esc 后，焦点回到重新出现的「放弃…」按钮', async () => {
     candidates = [candidate()]
     await render()
+    await expandRecovery()
     const discard = page.getByRole('button', { name: '放弃…' })
     await expect.element(discard).toBeVisible()
     await userEvent.click(discard)

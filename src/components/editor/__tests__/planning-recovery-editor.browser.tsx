@@ -65,6 +65,8 @@ beforeEach(() => {
   useWorkflowStore.setState({ activeRuns: [], history: [], currentRun: null })
   useLLMStore.setState({ defaultModelId: 'model' })
   useLocaleStore.setState({ locale: 'zh-CN', initialized: true })
+  // 运行侧页恢复列表的展开偏好存在 localStorage，跨用例共享页面时先清掉，保证从默认收起开始。
+  localStorage.clear()
   setActiveProjectSessionContext(session)
   invoke = vi.fn(async (channel: string, ...args: unknown[]) => {
     if (channel === 'generation:read-context') return context
@@ -655,7 +657,17 @@ describe('planning recovery editors', () => {
     context = fixture(entry === 'blueprint' ? 'blueprint' : 'outline')
     await act(async () => root.render(entry === 'architecture' ? <StageArchitecture projectKey={session.projectPath} />
       : entry === 'blueprint' ? <StageBlueprint projectKey={session.projectPath} /> : <RunSheet sheet={{ kind: 'run', tab: 'active' }} />))
-    await vi.waitFor(() => expect(button('编辑恢复稿')).toBeDefined())
+    // 运行侧页的恢复列表默认收起：出现开关先展开；架构与蓝图页的「编辑恢复稿」不受折叠影响。
+    const findButton = (label: string) => [...container.querySelectorAll('button')].find(item => item.textContent === label)
+    const recoveryToggle = () => [...container.querySelectorAll('button')].find(item => (item.textContent ?? '').startsWith('可恢复的内容 ·'))
+    await vi.waitFor(() => {
+      if (findButton('编辑恢复稿') || recoveryToggle()) return
+      throw new Error('编辑恢复稿与恢复开关都未出现')
+    })
+    if (!findButton('编辑恢复稿')) {
+      await act(async () => recoveryToggle()!.click())
+      await vi.waitFor(() => expect(button('编辑恢复稿')).toBeDefined())
+    }
     await act(async () => button('编辑恢复稿').click())
     const tab = useEditorStore.getState().tabs[0]
     expect(tab.planningRecovery?.handle).toEqual(handle)

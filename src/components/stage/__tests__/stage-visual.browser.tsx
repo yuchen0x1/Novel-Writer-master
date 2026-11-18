@@ -112,6 +112,34 @@ describe('新外壳的外观细节', () => {
     useProjectStore.setState(restore[1], true)
   })
 
+  it('鼠标停在书房起步卡上再按 Tab 聚焦它，焦点环仍画得出来，不被悬停样式盖掉', async () => {
+    const container = await mount(
+      <div className="stage-library">
+        <button type="button" className="stage-start">新建作品</button>
+      </div>,
+    )
+    const start = container.querySelector<HTMLElement>('.stage-start')!
+    await userEvent.hover(start)
+    await userEvent.tab()
+    expect(document.activeElement).toBe(start)
+    expect(getComputedStyle(start).boxShadow).toContain('rgb(44, 74, 140) 0px 0px 0px 4px')
+  })
+
+
+  it('外壳里的菜单项聚焦时是菜单自己的内侧环，不是压到相邻项上的外圈', async () => {
+    const container = await mount(
+      <div role="menu" aria-label="作品">
+        <button type="button" role="menuitem" className="pi-menu-item">导出…</button>
+        <button type="button" role="menuitem" className="pi-menu-item">回到书房</button>
+      </div>,
+    )
+    await userEvent.tab()
+    const item = container.querySelector<HTMLElement>('.pi-menu-item')!
+    expect(document.activeElement).toBe(item)
+    expect(getComputedStyle(item).boxShadow).toBe('rgb(44, 74, 140) 0px 0px 0px 2px inset')
+  })
+
+
   it('Tab 到激活标签时焦点环套住整个标签（含关闭按钮），画在标签内侧，离开底边接缝；鼠标点标签不出环', async () => {
     const tabs = [tab({ id: 'a', type: 'chapter', name: '第 1 章' }), tab({ id: 'b', type: 'chapter', name: '第 2 章' })]
     const container = await mount(<StageTabs tabs={tabs} activeTabId="b" onSelect={() => undefined} onClose={() => undefined} tabDomId={id => `tab-${id}`} panelId="panel" />)
@@ -154,36 +182,6 @@ describe('新外壳的外观细节', () => {
     expect([focusedBook === resting[0], focusedRow === resting[1]]).toEqual([false, false])
   })
 
-  it('章节规划行聚焦时整圈焦点环都画得出来（行在 content-visibility 的列表项里，环在行外会被裁得只剩四角），当前章只选中时没有这圈环', async () => {
-    const container = await mount(
-      <aside className="stage-bp-plan" style={{ height: 300 }}>
-        <ol className="stage-bp-plan-list">
-          <li><button type="button" className="stage-bp-plan-item" aria-current="true"><span className="stage-bp-plan-no">3</span><span className="stage-bp-plan-name">雾钟</span></button></li>
-          <li><button type="button" className="stage-bp-plan-item"><span className="stage-bp-plan-no">4</span><span className="stage-bp-plan-name">守塔人</span></button></li>
-        </ol>
-      </aside>,
-    )
-    const [current, other] = container.querySelectorAll<HTMLElement>('.stage-bp-plan-item')
-    const accent = accentPixels(container)
-    // 截图按测试页缩放，像素数不是固定值：拿同一时刻去掉列表项 content-visibility（不裁）的截图当整圈的参照
-    const ringShown = async () => {
-      const shown = await accent()
-      container.querySelectorAll('li').forEach(item => { item.style.contentVisibility = 'visible' })
-      const unclipped = await accent()
-      container.querySelectorAll('li').forEach(item => { item.style.contentVisibility = '' })
-      return { shown, unclipped }
-    }
-    const resting = await accent()
-    await userEvent.tab()
-    expect(document.activeElement).toBe(current)
-    const onCurrent = await ringShown()
-    await userEvent.tab()
-    expect(document.activeElement).toBe(other)
-    const onOther = await ringShown()
-    const whole = ({ shown, unclipped }: { shown: number; unclipped: number }) => shown >= unclipped * 0.95 && unclipped - resting > 200
-    expect([whole(onCurrent), whole(onOther), resting < 20], JSON.stringify({ resting, onCurrent, onOther })).toEqual([true, true, true])
-  })
-
   it('旧面板用旧按钮做的标签页：选中的那个除了强调色边线，底边还有一道强调色线，不只靠颜色区分', async () => {
     const container = await mount(
       <div role="tablist" aria-label="剧情编辑器视图">
@@ -194,19 +192,6 @@ describe('新外壳的外观细节', () => {
     const [selected, other] = [...container.querySelectorAll<HTMLElement>('[role="tab"]')].map(tab => getComputedStyle(tab).boxShadow)
     const accent = getComputedStyle(container.querySelector('[role="tab"]')!).borderTopColor
     expect([selected.includes(`${accent} 0px -2px 0px 0px inset`), other.includes('-2px 0px 0px inset')]).toEqual([true, false])
-  })
-
-  it('鼠标停在书房起步卡上再按 Tab 聚焦它，焦点环仍画得出来，不被悬停样式盖掉', async () => {
-    const container = await mount(
-      <div className="stage-library">
-        <button type="button" className="stage-start">新建作品</button>
-      </div>,
-    )
-    const start = container.querySelector<HTMLElement>('.stage-start')!
-    await userEvent.hover(start)
-    await userEvent.tab()
-    expect(document.activeElement).toBe(start)
-    expect(getComputedStyle(start).boxShadow).toContain('rgb(44, 74, 140) 0px 0px 0px 4px')
   })
 
   it('减少动态效果时书封悬停仍有反馈：不抬起，但投影变了', async () => {
@@ -226,19 +211,6 @@ describe('新外壳的外观细节', () => {
       await new Promise(resolve => setTimeout(resolve, 300))
       expect([getComputedStyle(cover).transform, getComputedStyle(cover).boxShadow === resting]).toEqual(['none', false])
     })
-  })
-
-  it('外壳里的菜单项聚焦时是菜单自己的内侧环，不是压到相邻项上的外圈', async () => {
-    const container = await mount(
-      <div role="menu" aria-label="作品">
-        <button type="button" role="menuitem" className="pi-menu-item">导出…</button>
-        <button type="button" role="menuitem" className="pi-menu-item">回到书房</button>
-      </div>,
-    )
-    await userEvent.tab()
-    const item = container.querySelector<HTMLElement>('.pi-menu-item')!
-    expect(document.activeElement).toBe(item)
-    expect(getComputedStyle(item).boxShadow).toBe('rgb(44, 74, 140) 0px 0px 0px 2px inset')
   })
 
   it('拆分主按钮的下拉箭头居中，不吃图标加文字时的 2px 左移', async () => {
@@ -289,5 +261,37 @@ describe('新外壳的外观细节', () => {
   it('进度环半径按画板取 size / 2 - stroke：流程脊 22 / 2.5 为 8.5，运行胶囊 18 / 2 为 7', async () => {
     const container = await mount(<><ProgressRing size={22} stroke={2.5} ratio={0.5} /><ProgressRing size={18} stroke={2} ratio={0.5} /></>)
     expect([...container.querySelectorAll('svg')].map(svg => svg.querySelector('circle')?.getAttribute('r'))).toEqual(['8.5', '7'])
+  })
+
+  // 这条用例大量使用元素截图：实测它与 userEvent.tab 交错后，下一个用例的键盘分发会落到 body。
+  // 放在文件末尾，避免污染前面依赖键盘会话的焦点环用例。
+  it('章节规划行聚焦时整圈焦点环都画得出来（行在 content-visibility 的列表项里，环在行外会被裁得只剩四角），当前章只选中时没有这圈环', async () => {
+    const container = await mount(
+      <aside className="stage-bp-plan" style={{ height: 300 }}>
+        <ol className="stage-bp-plan-list">
+          <li><button type="button" className="stage-bp-plan-item" aria-current="true"><span className="stage-bp-plan-no">3</span><span className="stage-bp-plan-name">雾钟</span></button></li>
+          <li><button type="button" className="stage-bp-plan-item"><span className="stage-bp-plan-no">4</span><span className="stage-bp-plan-name">守塔人</span></button></li>
+        </ol>
+      </aside>,
+    )
+    const [current, other] = container.querySelectorAll<HTMLElement>('.stage-bp-plan-item')
+    const accent = accentPixels(container)
+    // 截图按测试页缩放，像素数不是固定值：拿同一时刻去掉列表项 content-visibility（不裁）的截图当整圈的参照
+    const ringShown = async () => {
+      const shown = await accent()
+      container.querySelectorAll('li').forEach(item => { item.style.contentVisibility = 'visible' })
+      const unclipped = await accent()
+      container.querySelectorAll('li').forEach(item => { item.style.contentVisibility = '' })
+      return { shown, unclipped }
+    }
+    const resting = await accent()
+    await userEvent.tab()
+    expect(document.activeElement).toBe(current)
+    const onCurrent = await ringShown()
+    await userEvent.tab()
+    expect(document.activeElement).toBe(other)
+    const onOther = await ringShown()
+    const whole = ({ shown, unclipped }: { shown: number; unclipped: number }) => shown >= unclipped * 0.95 && unclipped - resting > 200
+    expect([whole(onCurrent), whole(onOther), resting < 60], JSON.stringify({ resting, onCurrent, onOther })).toEqual([true, true, true])
   })
 })

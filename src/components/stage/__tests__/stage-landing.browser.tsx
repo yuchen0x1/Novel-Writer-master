@@ -223,6 +223,9 @@ describe('打开作品时流程脊等各稿的审稿与修稿记录', () => {
             ? { draftId, facts: { ...first.facts, latestReview: { createdAt: '2026-10-13 20:00:01', cycleStatus: null } } }
             : first)
         }
+        case 'db:draft-get-full':
+          // 落点打开落点章的标签要读这份稿的正文；夹具给固定正文即可。
+          return drafts.some(draft => draft.id === id) ? { ...(drafts.find(draft => draft.id === id) as { id: number }), content: '这一夜的潮声。' } : null
         default: throw new Error(`unexpected IPC ${channel}`)
       }
     })
@@ -258,7 +261,7 @@ describe('打开作品时流程脊等各稿的审稿与修稿记录', () => {
     release(0)
     await flush()
     expect(refreshed).toBe(true)
-    expect(spine()).toEqual(['setup', 'architecture', 'blueprint', 'manuscript', '1:final', '2:draft', '3:reviewed', '4:draft'])
+    expect(spine()).toEqual(['setup', 'architecture', 'blueprint', 'manuscript', 'review', 'finalize', '1:final', '2:draft', '3:reviewed', '4:draft'])
   })
 
   it('落点那一章就是有审稿的章：单章视图对同一稿的读取还没回来，流程脊出现时这一章也已是读到的阶段', async () => {
@@ -276,10 +279,10 @@ describe('打开作品时流程脊等各稿的审稿与修稿记录', () => {
 
     release(0)
     await flush()
-    expect(spine()).toEqual(['setup', 'architecture', 'blueprint', 'manuscript', '1:final', '2:final', '3:reviewed', '4:todo'])
+    expect(spine()).toEqual(['setup', 'architecture', 'blueprint', 'manuscript', 'review', 'finalize', '1:final', '2:final', '3:reviewed', '4:todo'])
 
     release(1)
     await flush()
-    expect(spine()).toEqual(['setup', 'architecture', 'blueprint', 'manuscript', '1:final', '2:final', '3:reviewed', '4:todo'])
+    expect(spine()).toEqual(['setup', 'architecture', 'blueprint', 'manuscript', 'review', 'finalize', '1:final', '2:final', '3:reviewed', '4:todo'])
   })
 })

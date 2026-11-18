@@ -24,7 +24,7 @@
   --color-border: var(--rule-strong);
   --color-accent: var(--stage-legacy-accent);
   --color-accent-ink: var(--accent-ink);
-  --color-accent-rgb: 139, 124, 255;
+  --color-accent-rgb: 169, 190, 240;
   --color-success: var(--ok);
   --color-success-text: var(--ok);
   --color-success-foreground: var(--paper);
@@ -50,10 +50,10 @@
   --shadow-popover: var(--shadow-pop);
 }
 
-.stage-shell[data-theme='light'] :where(.stage-content, .stage-library, .stage-sheet-slot, .stage-assistant, .stage-set-legacy, .stage-fallback) {
+.stage-shell[data-theme='light'] :where(.stage-content, .stage-library, .stage-sheet-slot, .stage-assistant, .stage-set-legacy, .stage-fallback), .pi-overlay-host[data-theme='light'] {
   --color-accent-rgb: 44, 74, 140;
 }
 
-.stage-shell[data-theme='dark'] :where(.stage-content, .stage-library, .stage-sheet-slot, .stage-assistant, .stage-set-legacy, .stage-fallback) {
-  --color-accent-rgb: 139, 124, 255;
+.stage-shell[data-theme='dark'] :where(.stage-content, .stage-library, .stage-sheet-slot, .stage-assistant, .stage-set-legacy, .stage-fallback), .pi-overlay-host[data-theme='dark'] {
+  --color-accent-rgb: 169, 190, 240;
 }

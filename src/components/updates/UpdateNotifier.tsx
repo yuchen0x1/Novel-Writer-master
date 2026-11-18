@@ -53,17 +53,20 @@ export function UpdateNotifier() {
       onOpenChange={next => { if (!next) remindLater() }}
       keepOnOutsideClick={updating}
       title={text(`发现新版本 v${version ?? ''}`, `New version v${version ?? ''} is available`)}
-      description={text(
-        '更新会重启应用；创作任务运行中时会先被拦下，等任务结束再装。',
-        'Updating restarts the app; running creative tasks are protected until they finish.',
-      )}
+      description={presentation.canOpenRelease
+        ? text('打开官方下载页，选择适用于本机的 macOS 安装包。', 'Open the official download page and choose the macOS installer for your Mac.')
+        : text(
+          '下载完成后可重启安装。正在运行的创作任务结束后才能安装。',
+          'Restart to install once the download and any active writing tasks finish.',
+        )}
       footer={
         <>
           <Button variant="text" size="sm" disabled={updating} onClick={remindLater}>
             {text('稍后更新', 'Later')}
           </Button>
           <Button variant="primary" size="sm" disabled={updating || (!presentation.canDownload && !presentation.canOpenRelease)} onClick={() => void updateNow()}>
-            {updating ? text('正在准备…', 'Preparing…') : text('立即更新', 'Update now')}
+            {updating ? text('正在准备…', 'Preparing…')
+              : presentation.canOpenRelease ? text('打开下载页', 'Open download page') : text('立即更新', 'Update now')}
           </Button>
         </>
       }

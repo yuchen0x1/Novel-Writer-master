@@ -16,6 +16,8 @@ export function createGitHubReleaseUpdateBackend(fetcher: ReleaseFetcher = fetch
   return {
     async checkForUpdates() {
       const response = await fetcher(GITHUB_LATEST_RELEASE_API, {
+        redirect: 'error',
+        signal: AbortSignal.timeout(15_000),
         headers: {
           Accept: 'application/vnd.github+json',
           'User-Agent': 'AI-Novel-Writer',
@@ -32,7 +34,11 @@ export function createGitHubReleaseUpdateBackend(fetcher: ReleaseFetcher = fetch
       }
       if (!value || typeof value !== 'object') throw new Error('Invalid GitHub release metadata')
       const release = value as Record<string, unknown>
-      if (typeof release.tag_name !== 'string') throw new Error('Invalid GitHub release metadata')
+      if (typeof release.tag_name !== 'string'
+        || !/^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(release.tag_name)
+        || release.draft !== false || release.prerelease !== false) {
+        throw new Error('Invalid GitHub release metadata')
+      }
 
       return {
         updateInfo: {

@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, ChevronDown, CircleDashed, LoaderCircle, Maximize2, Minimize2, Minus, PanelRightClose, PanelRightOpen, RotateCcw, Search, Settings, Square, X } from 'lucide-react'
+import { AlertTriangle, Check, ChevronDown, CircleDashed, LoaderCircle, Maximize2, Minimize2, Minus, RotateCcw, Search, Settings, Square, X } from 'lucide-react'
 import { ipc } from '../../services/ipc-client'
 import { APP_BRAND } from '../../shared/brand'
 import { useEditorStore } from '../../stores/editor-store'
@@ -24,8 +24,6 @@ interface StageTopBarProps {
   focusTitle: { chapter?: number; title: string }
   workMenu: readonly MenuGroupSpec[]
   onToggleFocus: () => void
-  assistantOpen?: boolean
-  onToggleAssistant?: () => void
 }
 
 function WindowControls() {
@@ -45,7 +43,7 @@ function WindowControls() {
   )
 }
 
-export default function StageTopBar({ crumbs, library, focus, focusTitle, workMenu, onToggleFocus, assistantOpen = false, onToggleAssistant }: StageTopBarProps) {
+export default function StageTopBar({ crumbs, library, focus, focusTitle, workMenu, onToggleFocus }: StageTopBarProps) {
   const text = useLocaleStore(s => s.text)
   const locale = useLocaleStore(s => s.locale)
   const projectName = useProjectStore(s => s.currentProject?.name)
@@ -110,18 +108,7 @@ export default function StageTopBar({ crumbs, library, focus, focusTitle, workMe
         </button>
       </div>
       <RunCapsule />
-      {!library && (
-        <Button
-          variant="icon"
-          size="sm"
-          aria-label={text(assistantOpen ? '关闭 AI 助手' : '打开 AI 助手', assistantOpen ? 'Close AI assistant' : 'Open AI assistant')}
-          title={text(assistantOpen ? '关闭 AI 助手' : '打开 AI 助手', assistantOpen ? 'Close AI assistant' : 'Open AI assistant')}
-          aria-pressed={assistantOpen}
-          onClick={onToggleAssistant}
-        >
-          {assistantOpen ? <PanelRightClose size={16} aria-hidden="true" /> : <PanelRightOpen size={16} aria-hidden="true" />}
-        </Button>
-      )}
+      {/* 助手聊天入口暂时收起（README「助手聊天去哪了？」）：开关与面板保留在代码里，等单独重新开放。 */}
       {library && (
         <Button variant="icon" size="sm" aria-label={text('设置', 'Settings')} onClick={() => navigate({ kind: 'settings', section: 'llm' })}>
           <Settings size={16} aria-hidden="true" />

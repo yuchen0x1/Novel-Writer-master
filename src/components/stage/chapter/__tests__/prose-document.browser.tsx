@@ -48,6 +48,8 @@ beforeEach(() => {
   useWorkflowStore.setState({ activeRuns: [], history: [], waitingRuns: {}, globalLogs: [] })
   useEditorStore.setState({ tabs: [], activeTabId: null })
   useLocaleStore.setState({ locale: 'zh-CN' })
+  // 恢复列表的展开偏好按作品存在 localStorage，跨用例共享页面时先清掉，保证从默认收起开始。
+  localStorage.clear()
   host = document.createElement('div')
   host.className = 'paper-ink stage-shell'
   host.style.cssText = 'width: 1280px; height: 800px; display: flex'
@@ -72,6 +74,10 @@ describe('恢复候选与只读修稿', () => {
   it('运行侧页「继续编辑」打开的恢复候选在新外壳里可编辑，保存只写回这份候选，不碰正式草稿', async () => {
     await act(async () => useStageStore.setState({ sheet: { kind: 'run', tab: 'active' } }))
     await act(async () => root!.render(<StageWorkspace library={false} focus={false} />))
+    // 恢复列表默认收起：先等开关出现并展开（开关文本含提示副文案，按前缀找），再等候选卡片上的「继续编辑」。
+    await vi.waitFor(() => expect(host!.textContent).toContain('可恢复的内容 ·'))
+    await act(async () => [...host!.querySelectorAll('button')]
+      .find(candidate => (candidate.textContent ?? '').startsWith('可恢复的内容 ·'))!.click())
     await vi.waitFor(() => expect(button('继续编辑')).toBeTruthy())
     await act(async () => button('继续编辑')!.click())
     await vi.waitFor(() => expect(host!.querySelector('.cm-content')?.getAttribute('contenteditable')).toBe('true'))

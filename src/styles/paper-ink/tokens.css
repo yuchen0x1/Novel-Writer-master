@@ -177,29 +177,30 @@
   --surface-2: #141821;
   --paper: #1A1F2B;
 
-  --ink: #E8ECF4;
+  --ink: #E6E4DF;
   --ink-2: #A1AABC;
-  --ink-3: #737E91;
+  --ink-3: #8B8A93;
   --ink-4: #4D5668;
   --rule: rgba(191, 204, 228, .1);
   --rule-strong: rgba(191, 204, 228, .2);
   --track: rgba(191, 204, 228, .14);
 
-  --accent: #8B7CFF;
-  --accent-hover: #A79BFF;
+  /* 黛蓝（design-system.md）：深色下提亮为 #A9BEF0，对纸面保持 4.5:1 以上的文字对比。 */
+  --accent: #A9BEF0;
+  --accent-hover: #C1D2F4;
   --accent-ink: #0B0D12;
-  --accent-soft: rgba(139, 124, 255, .15);
-  --accent-line: rgba(139, 124, 255, .5);
-  --accent-track: rgba(139, 124, 255, .26);
+  --accent-soft: rgba(169, 190, 240, .15);
+  --accent-line: rgba(169, 190, 240, .5);
+  --accent-track: rgba(169, 190, 240, .26);
 
   --ok: #42C995;
   --ok-soft: rgba(66, 201, 149, .14);
   --warn: #F0B65A;
   --warn-soft: rgba(240, 182, 90, .14);
-  --danger: #F07178;
+  --danger: #F08A7E;
   --danger-ink: #0B0D12;
-  --danger-soft: rgba(240, 113, 120, .14);
-  --danger-line: rgba(240, 113, 120, .58);
+  --danger-soft: rgba(240, 138, 126, .14);
+  --danger-line: rgba(240, 138, 126, .58);
 
   --shadow-button: 0 1px 2px rgba(0, 0, 0, .4);
   --shadow-panel: 0 0 0 1px rgba(255, 255, 255, .06), 0 12px 32px -16px rgba(0, 0, 0, .7);
