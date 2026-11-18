@@ -58,7 +58,8 @@ export default function StageShell({ theme }: { theme: Theme }) {
   })
   const [root, setRoot] = useState<HTMLDivElement | null>(null)
   const [clearOpen, setClearOpen] = useState(false)
-  const [assistantOpen, setAssistantOpen] = useState(true)
+  // 助手聊天入口暂时收起（README「助手聊天去哪了？」）：面板与状态机保留，等单独重新开放时再接回顶栏开关。
+  const [assistantOpen, setAssistantOpen] = useState(false)
   // 每次启动应用的一次性入场：印章盖下、晕开、显出书房。会话内只放一次，切作品不再打扰。
   const [intro, setIntro] = useState(() => {
     try { return sessionStorage.getItem('pagekin:intro') !== 'done' } catch { return true }
@@ -98,7 +99,6 @@ export default function StageShell({ theme }: { theme: Theme }) {
   }, [library])
 
   const toggleFocus = useCallback(() => useStageStore.setState(state => ({ focus: !state.focus, palette: null })), [])
-  const toggleAssistant = useCallback(() => setAssistantOpen(open => !open), [])
 
   const workMenu = useMemo<MenuGroupSpec[]>(() => [
     { id: 'work', items: [
@@ -181,8 +181,6 @@ export default function StageShell({ theme }: { theme: Theme }) {
         focusTitle={focusTitle}
         workMenu={workMenu}
         onToggleFocus={toggleFocus}
-        assistantOpen={assistantOpen && !library && !focus}
-        onToggleAssistant={toggleAssistant}
       />
       <div className="stage-frame">
         {!focus && (

@@ -1220,7 +1220,7 @@ describe('新外壳里的导入对话框', () => {
 
   const INK = {
     light: { layer: 'rgb(255, 254, 251)', accent: 'rgb(44, 74, 140)' },
-    dark: { layer: 'rgb(29, 29, 34)', accent: 'rgb(169, 190, 240)' },
+    dark: { layer: 'rgb(26, 31, 43)', accent: 'rgb(169, 190, 240)' },
   }
 
   it.each(['light', 'dark'] as const)('选中项有对勾和强调色边线，边线对底色不低于 3:1，文字不低于 4.5:1（%s）', async (theme) => {

@@ -107,7 +107,8 @@ export default function StageSpine({ stages, chapters, location: activeLocation,
           <span className="stage-row-name">{text(...STAGE_NAMES[status.stage])}</span>
           <span className="stage-row-meta">{stageMeta(status, text)}</span>
         </>, { 'data-state': status.progress.state, 'data-stage': status.stage }))}
-        {row('review', activeExtension === 'review', () => onResource('review-center'), <>
+        {/* 记录没读完时派生阶段先空着，追加的审校与定稿导出也一并等齐，避免流程脊只剩两条尾巴。 */}
+        {stages.length > 0 && row('review', activeExtension === 'review', () => onResource('review-center'), <>
           <StageMark progress={reviewState} />
           <span className="stage-row-name">{text(...FLOW_EXTENSION_NAMES.review)}</span>
           <span className="stage-row-meta">
@@ -118,7 +119,7 @@ export default function StageSpine({ stages, chapters, location: activeLocation,
                 : text(`已审 ${review.reviewed}/${review.total} 章`, `Reviewed ${review.reviewed}/${review.total}`)}
           </span>
         </>, { 'data-state': reviewState.state, 'data-stage': 'review' })}
-        {row('finalize', false, onExport, <>
+        {stages.length > 0 && row('finalize', false, onExport, <>
           <StageMark progress={finalizeState} />
           <span className="stage-row-name">{text(...FLOW_EXTENSION_NAMES.finalize)}</span>
           <span className="stage-row-meta">

@@ -28,7 +28,7 @@ const ACCENT = { light: 'rgb(44, 74, 140)', dark: 'rgb(169, 190, 240)' }
 const DANGER = { light: 'rgb(180, 35, 24)', dark: 'rgb(240, 138, 126)' }
 const PRESS = {
   light: { primary: 'color(srgb 0.115922 0.196314 0.37851)', dangerSolid: 'color(srgb 0.545804 0.12502 0.0961569)', sink: 'rgba(23, 23, 26, 0.2)' },
-  dark: { primary: 'color(srgb 0.567373 0.636549 0.80251)', dangerSolid: 'color(srgb 0.766275 0.446275 0.410196)', sink: 'rgba(0, 0, 0, 0.45)' },
+  dark: { primary: 'color(srgb 0.563608 0.634039 0.801882)', dangerSolid: 'color(srgb 0.761569 0.443137 0.409412)', sink: 'rgba(0, 0, 0, 0.45)' },
 }
 
 let root: Root | undefined

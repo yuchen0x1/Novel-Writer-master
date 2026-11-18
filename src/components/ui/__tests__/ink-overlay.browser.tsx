@@ -25,7 +25,7 @@ import { withReducedMotion } from './reduced-motion'
 ;(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
 const SHOTS = '../../../../.runtime/rdv-shots'
-const DARK = { layer: 'rgb(29, 29, 34)', ink: 'rgb(230, 228, 223)', danger: 'rgb(240, 138, 126)', accent: 'rgb(169, 190, 240)' }
+const DARK = { layer: 'rgb(26, 31, 43)', ink: 'rgb(230, 228, 223)', danger: 'rgb(240, 138, 126)', accent: 'rgb(169, 190, 240)' }
 const LIGHT = { ink: 'rgb(23, 23, 26)', accent: 'rgb(44, 74, 140)' }
 
 const wait = (ms: number) => act(async () => { await new Promise(resolve => setTimeout(resolve, ms)) })
