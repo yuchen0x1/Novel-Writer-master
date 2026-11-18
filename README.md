@@ -30,9 +30,24 @@
 
 ## 最新更新
 
+<!-- github-release:start -->
+
+**[v0.0.1](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.1)** · 2026-11-13
+
+v0.0.1 是 Novel-Writer-master 的首个独立版本。产品、窗口、安装程序、快捷方式与品牌资产统一到当前名称，版本序列从 0.0.1 重新开始；这不是旧 1.x 系列的延续，也不包含 v1.9.0 的增量功能。既有写作能力继续保留。
+
+[全部发行记录](https://github.com/yuchen0x1/Novel-Writer-master/releases)
+
+<!-- github-release:end -->
+
+### 开发中
+
 - **未发布 · 2026-11-17**：界面支持按系统语言自动选择中文/English，也可在设置中手动切换并保存；作品正文与写作语言设置保持原样。
-- **Novel-Writer-master 0.0.1**：新名称、新图标、重新拍摄的中英文界面，以及指向当前仓库的安装包和更新源。
-- 版本从 `0.0.1` 重新开始。旧 `1.x` 用户请手动安装一次；后续使用新的版本序列更新。作品与设置目录继续沿用。
+
+
+### 从旧品牌迁移
+
+- **Novel-Writer-master 0.0.1** 开始使用新的版本序列。旧 `1.x` 用户请手动安装一次；后续使用新的版本序列更新。作品与设置目录继续沿用。
 - 查看 [0.0.1 发布说明](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.1) 或[完整更新记录](docs/releases/release-notes.md)。
 
 ## 它能做什么
