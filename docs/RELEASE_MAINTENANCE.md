@@ -37,4 +37,5 @@
 | 桌面构建和草稿 | [资格工作流](https://github.com/yuchen0x1/Novel-Writer-master/actions/workflows/desktop-release.yml) |
 | 公开下载校验 | [每周校验](https://github.com/yuchen0x1/Novel-Writer-master/actions/workflows/verify-public-desktop-release.yml) |
 | 依赖审计 | [依赖安全](https://github.com/yuchen0x1/Novel-Writer-master/actions/workflows/dependency-security.yml) |
+| 当前版本的安装、回退与原生更新实证 | [0.0.3 证据](releases/v0.0.3-verification.md) |
 | 原始安装资格和实际范围 | [0.0.1 证据](releases/v0.0.1-verification.md) |
