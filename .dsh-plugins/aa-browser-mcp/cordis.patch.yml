@@ -1,0 +1,11 @@
+- insert:
+    - id: aa-browser-mcp
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: aa-browser
+        transport: stdio
+        command: 'C:\Program Files\nodejs\node.exe'
+        args:
+          - 'C:\Users\lenmo\AppData\Local\Programs\Aa Browser\resources\app.asar.unpacked\out\bridge\mcp.cjs'
+        startupTimeoutMs: 30000
+        failOnStartupError: true

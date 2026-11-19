@@ -1,0 +1,1 @@
+{"meta":{"title":"Aa Browser MCP","description":"通过本地 MCP 桥接连接已安装的 Aa Browser。使用时保持浏览器运行，可调用 browser_tabs 查看标签页。桥接路径在浏览器升级后保持稳定，配置不包含凭据。"}}
