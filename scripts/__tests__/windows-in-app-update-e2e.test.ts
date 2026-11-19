@@ -393,7 +393,22 @@ describe('Windows official in-app update E2E contract', () => {
     })).rejects.toThrow('SHA-256 digest does not match')
   })
 
-  it('pre-arms a one-time legacy bridge only for sources older than v0.7.0', () => {
+  it('requires native updates for reset releases rather than substituting a legacy bridge', () => {
+    for (const tag of ['v0.0.1', 'v0.0.2', 'v0.0.3']) {
+      expect(createLegacyUpdateBridgePlan({
+        from: { tag }, expected: { tag: 'v0.0.4' },
+      }, { localAppData: undefined })).toBeNull()
+    }
+  })
+
+  windowsPowerShellIt('uses the same historical bridge range in the real PowerShell runner', () => {
+    const actual = JSON.parse(runWindowsE2ePowerShellFunctions(['Test-E2eLegacyBridgeSourceTag'],
+      "@('v0.0.1','v0.0.2','v0.0.3','v0.5.0','v0.6.9','v0.7.0') | ForEach-Object { Test-E2eLegacyBridgeSourceTag -SourceTag $_ } | ConvertTo-Json -Compress",
+    ))
+    expect(actual).toEqual([false, false, false, true, true, false])
+  })
+
+  it('pre-arms a one-time legacy bridge only for historical v0.5/v0.6 sources', () => {
     const historicalPlan = {
       from: { tag: 'v0.6.0' },
       expected: {

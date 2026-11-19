@@ -99,7 +99,10 @@ export function createLegacyUpdateBridgePlan(plan, { localAppData = process.env.
   const expected = assertRecord(record.expected, 'release plan expected')
   const sourceTag = normalizeFinalReleaseTag(source.tag, 'release plan from tag')
   normalizeFinalReleaseTag(expected.tag, 'release plan expected tag')
-  if (compareFinalVersions(sourceTag, LEGACY_UPDATE_BRIDGE_FIRST_NATIVE_SILENT_SOURCE_TAG) >= 0) return null
+  // Only the historical 0.5/0.6 series needs this bridge. The reset 0.0.x
+  // releases already use quitAndInstall(true, true) and must prove native updates.
+  if (compareFinalVersions(sourceTag, 'v0.5.0') < 0
+    || compareFinalVersions(sourceTag, LEGACY_UPDATE_BRIDGE_FIRST_NATIVE_SILENT_SOURCE_TAG) >= 0) return null
 
   assert(
     typeof localAppData === 'string' && /^[A-Za-z]:[\\/]/.test(localAppData),

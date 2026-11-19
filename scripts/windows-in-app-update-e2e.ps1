@@ -288,7 +288,9 @@ function Test-E2eLegacyBridgeSourceTag {
   if ($SourceTag -notmatch '^v\d+\.\d+\.\d+$') {
     throw "Legacy bridge source tag is not a final semantic version: $SourceTag"
   }
-  return ([version]$SourceTag.Substring(1)) -lt ([version]'0.7.0')
+  # The reset 0.0.x releases retained the native silent updater implementation.
+  $version = [version]$SourceTag.Substring(1)
+  return $version -ge ([version]'0.5.0') -and $version -lt ([version]'0.7.0')
 }
 
 function Get-E2eExpectedPendingInstallerPath {
