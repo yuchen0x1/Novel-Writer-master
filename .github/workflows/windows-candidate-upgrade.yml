@@ -29,6 +29,10 @@ concurrency:
 jobs:
   isolated-installer-journey:
     if: ${{ github.repository == 'yuchen0x1/Novel-Writer-master' }}
+    # The read-only token could not see draft metadata in run 44530227949.
+    # This dispatch-only trusted-main job reads the draft; the script never edits it.
+    permissions:
+      contents: write
     runs-on: windows-2022
     timeout-minutes: 35
     steps:
