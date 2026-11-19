@@ -10,7 +10,7 @@ import { chromium } from 'playwright'
 const scriptPath = fileURLToPath(import.meta.url)
 
 const checkUpdateNames = /^(检查更新|Check for updates)$/
-const downloadUpdateNames = /^(下载更新|Download update)$/
+export const downloadUpdateNames = /^(下载更新|Download update|立即更新|Update now)$/
 const restartUpdateNames = /^(立即重启更新|Restart and update now)$/
 
 function assert(condition, message) {

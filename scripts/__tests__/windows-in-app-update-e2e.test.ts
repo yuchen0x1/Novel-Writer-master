@@ -18,6 +18,7 @@ import {
   normalizeFinalReleaseTag,
   parseWindowsInAppUpdateE2eCli,
 } from '../windows-in-app-update-e2e.mjs'
+import { downloadUpdateNames } from '../windows-in-app-update-e2e-driver.mjs'
 
 const temporaryRoots: string[] = []
 const windowsIt = process.platform === 'win32' ? it : it.skip
@@ -444,6 +445,15 @@ describe('Windows official in-app update E2E contract', () => {
     expect(() => parseWindowsInAppUpdateE2eCli([
       'prepare', '--from-tag', 'v0.5.2', '--expected-tag', 'v0.6.0', '--repository', 'other/repo',
     ])).toThrow('Usage:')
+  })
+
+  it('recognizes both notifier and update-card download actions without accepting postpone or install', () => {
+    for (const label of ['下载更新', 'Download update', '立即更新', 'Update now']) {
+      expect(downloadUpdateNames.test(label)).toBe(true)
+    }
+    for (const label of ['稍后更新', 'Update later', '立即重启更新', 'Restart and update now']) {
+      expect(downloadUpdateNames.test(label)).toBe(false)
+    }
   })
 
   it('keeps the dispatch-only workflow and real UI/update evidence requirements explicit', () => {
