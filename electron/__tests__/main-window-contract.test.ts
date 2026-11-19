@@ -22,6 +22,7 @@ describe('Electron main window chrome contract', () => {
     expect(main).not.toContain("appendSwitch('in-process-gpu')")
     expect(main).toContain('nodeIntegration: false')
     expect(main).toContain('contextIsolation: true')
+    expect(main).toContain('sandbox: true')
   })
 
   it('registers window control IPC for frameless minimize maximize and close buttons', () => {

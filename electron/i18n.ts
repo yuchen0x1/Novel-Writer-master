@@ -7,7 +7,12 @@ export function resolveStoredOrSystemLocale(
   storedLocale: Locale | undefined,
   systemLocale: string | undefined,
 ): Locale {
-  return storedLocale ?? resolveLocale(systemLocale)
+  // 磁盘上的值不可信：只认本应用支持的语言，其余按系统语言归一化，
+  // 免得主进程的文案查询拿到一个不存在的目录。
+  const stored = typeof storedLocale === 'string' ? storedLocale.toLowerCase() : ''
+  if (stored.startsWith('zh')) return 'zh-CN'
+  if (stored.startsWith('en')) return 'en-US'
+  return resolveLocale(systemLocale)
 }
 
 export function getMainLocale(systemLocale: string | undefined): Locale {

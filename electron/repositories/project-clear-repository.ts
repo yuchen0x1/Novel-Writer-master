@@ -100,6 +100,10 @@ export class ProjectClearRepository {
             const tx = db.transaction(() => {
                 if (options.generatedText) {
                     db.prepare('DELETE FROM finalized_draft_import_operations').run()
+                    // 这两张表用 draft_id 记账却没有外键，drafts 删掉后它们会指向不存在的行：
+                    // 删除收据会在「未完成的删除」里一直挂着，恢复候选还能被点开继续一个已经没有来源的草稿。
+                    db.prepare('DELETE FROM chapter_deletion_operations').run()
+                    db.prepare('DELETE FROM recovery_candidates').run()
                     db.prepare('DELETE FROM post_process_steps').run()
                     db.prepare('DELETE FROM post_process_runs').run()
                     db.prepare('DELETE FROM reviews').run()
@@ -141,6 +145,9 @@ export class ProjectClearRepository {
                             premise = '',
                             worldbuilding = '',
                             synopsis = '',
+                            core_outline = '',
+                            world_setting = '',
+                            protagonist_profile = '',
                             character_states = '',
                             updated_at = datetime('now')
                         WHERE id = 'main'

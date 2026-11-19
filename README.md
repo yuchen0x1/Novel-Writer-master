@@ -32,18 +32,13 @@
 
 <!-- github-release:start -->
 
-**[v0.0.1](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.1)** · 2026-11-13
+**[v0.0.2](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.2)** · 2026-11-19
 
-v0.0.1 是 Novel-Writer-master 的首个独立版本。产品、窗口、安装程序、快捷方式与品牌资产统一到当前名称，版本序列从 0.0.1 重新开始；这不是旧 1.x 系列的延续，也不包含 v1.9.0 的增量功能。既有写作能力继续保留。
+v0.0.2 已正式发布。首次启动按系统语言选择中文或 English，可在设置中手动切换；macOS 更新提醒会打开官方下载页。Windows x64、macOS Apple Silicon 和 macOS Intel 安装包及更新资产均来自同一正式 Release。查看[更新记录](docs/releases/release-notes.md)。
 
 [全部发行记录](https://github.com/yuchen0x1/Novel-Writer-master/releases)
 
 <!-- github-release:end -->
-
-### 0.0.2 草稿
-
-- 首次启动按系统语言选择中文或 English，可在设置中手动切换。macOS 更新提醒会打开官方下载页。查看[更新记录](docs/releases/release-notes.md)。
-
 
 ### 从旧品牌迁移
 

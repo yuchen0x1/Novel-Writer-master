@@ -329,11 +329,24 @@ describe('portable project archive', () => {
 
     const source = path.join(root, 'source.txt'), link = path.join(root, 'source-link.txt')
     fs.writeFileSync(source, payload)
-    fs.symlinkSync(source, link, 'file')
-    const definition = entry('a.txt', payload)
-    await expect(writePortableProjectArchive({
-      manifest: manifest([definition]), sources: [{ entry: definition, sourcePath: link }], targetPath: path.join(root, 'link.zip'),
-    })).rejects.toMatchObject({ code: 'PORTABLE_ARCHIVE_SOURCE_UNSAFE' })
+    const probe = fs.mkdtempSync(path.join(os.tmpdir(), 'portable-file-symlink-probe-'))
+    let canCreateFileSymlink = true
+    try {
+      const target = path.join(probe, 'target.txt')
+      fs.writeFileSync(target, 'probe')
+      fs.symlinkSync(target, path.join(probe, 'link.txt'), 'file')
+    } catch {
+      canCreateFileSymlink = false
+    } finally {
+      fs.rmSync(probe, { recursive: true, force: true })
+    }
+    if (canCreateFileSymlink) {
+      fs.symlinkSync(source, link, 'file')
+      const definition = entry('a.txt', payload)
+      await expect(writePortableProjectArchive({
+        manifest: manifest([definition]), sources: [{ entry: definition, sourcePath: link }], targetPath: path.join(root, 'link.zip'),
+      })).rejects.toMatchObject({ code: 'PORTABLE_ARCHIVE_SOURCE_UNSAFE' })
+    }
   })
 
   it('模块创建不可预测attempt root，绝不把parent内预存同名前缀内容当attempt', async () => {

@@ -253,6 +253,19 @@ describe('WebDavBackupService', () => {
     expect(dav.requests[0]!.authorization).toBe(`Basic ${Buffer.from('writer:loopback-secret').toString('base64')}`)
   })
 
+  it('refuses a plain web server that answers 200 without a DAV multistatus body', async () => {
+    // 只看 response.ok 的话，任何一个普通网页都会被当成「已连接」，
+    // 用户据此保存凭据，之后每次备份都在同一处失败。
+    const service = new WebDavBackupService({
+      fetchImpl: async () => new Response('<html><body>hello</body></html>', {
+        status: 200, headers: { 'content-type': 'text/html' },
+      }),
+    })
+
+    await expect(service.checkConnection({ endpoint: 'https://example.invalid/dav/', username: 'u', secret: 's' }))
+      .rejects.toThrow('WEBDAV_DAV_RESPONSE_INVALID')
+  })
+
   it('keeps hostile WebDAV hrefs encoded as URI paths, not XML or HTML markup', async () => {
     const dav = new DavFixture(); await dav.listen()
     dav.collections.add('/dav/<img src=x onerror=alert(1)>/')
@@ -316,6 +329,10 @@ describe('WebDavBackupService', () => {
     expect(byId(GEN_B)).toMatchObject({ hasSibling: true, siblingGenerationIds: [GEN_A] })
     expect(byId(GEN_C)).toMatchObject({ hasSibling: false, siblingGenerationIds: [] })
     expect(byId(GEN_D)).toMatchObject({ hasSibling: false, siblingGenerationIds: [] })
+    // 上传返回给界面的那一份也要如实报告分支同级：GEN_A 上传时还没有同级，
+    // GEN_B 上传时 GEN_A 已存在，二者共享父代。
+    expect(first).toMatchObject({ hasSibling: false, siblingGenerationIds: [] })
+    expect(second).toMatchObject({ hasSibling: true, siblingGenerationIds: [GEN_A] })
     expect(first.parentGenerationIds).toEqual([PARENT, PARENT_B])
     expect(second.parentGenerationIds).toEqual([PARENT_B, PARENT])
     expect(byId(GEN_A).parentGenerationIds).toEqual([PARENT, PARENT_B])

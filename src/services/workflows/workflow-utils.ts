@@ -133,16 +133,27 @@ function parseScope(scope: string): { sourceType: string; sourceId: string } {
   return { sourceType: 'unknown', sourceId: scope }
 }
 
-/** 读取后处理状态 (向后兼容 UI) */
-export async function readPostProcessStatus(
+/**
+ * 后处理状态读取结果。
+ *
+ * 「没有记录」（旧版定稿项目）与「读不出来」（数据库忙、会话失效）必须分开：
+ * 前者按设计兼容放行，后者一旦被当成前者，守卫就会在上下文不完整时开写。
+ */
+export type PostProcessStatusRead =
+  | { state: 'absent' }
+  | { state: 'ok'; status: PostProcessStatus }
+  | { state: 'error'; error: unknown }
+
+/** 读取后处理状态，并把「无记录」与「读取失败」区分开；需要据此做判断的调用方必须用这个。 */
+export async function readPostProcessStatusStrict(
   projectPath: string,
   scope: string,
   projectSession?: ProjectSessionContext,
-): Promise<PostProcessStatus | null> {
+): Promise<PostProcessStatusRead> {
   try {
     const { sourceType, sourceId } = parseScope(scope)
     const run = await invokeForProjectSession(projectSession, 'db:post-process-get-latest-run', sourceType, sourceId, projectPath)
-    if (!run) return null
+    if (!run) return { state: 'absent' }
 
     const steps = await invokeForProjectSession(projectSession, 'db:post-process-get-steps', run.id, projectPath)
 
@@ -167,10 +178,20 @@ export async function readPostProcessStatus(
       }
     }
 
-    return status
-  } catch {
-    return null
+    return { state: 'ok', status }
+  } catch (error) {
+    return { state: 'error', error }
   }
+}
+
+/** 读取后处理状态 (向后兼容 UI)：界面只需要「有就显示、没有就不显示」，读取失败等同没记录。 */
+export async function readPostProcessStatus(
+  projectPath: string,
+  scope: string,
+  projectSession?: ProjectSessionContext,
+): Promise<PostProcessStatus | null> {
+  const result = await readPostProcessStatusStrict(projectPath, scope, projectSession)
+  return result.state === 'ok' ? result.status : null
 }
 
 /** 快捷检查：所有关键步骤是否通过 */

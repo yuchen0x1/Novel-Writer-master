@@ -80,6 +80,10 @@ jobs:
         if: ${{ matrix.shard == 1 }}
         run: pnpm run check:i18n
 
+      - name: Check release documentation
+        if: ${{ matrix.shard == 1 }}
+        run: pnpm run check:release-docs
+
       - name: Prepare and verify Node native modules
         run: pnpm run prepare:native-node
 

@@ -9,6 +9,16 @@ describe('model profile drafts', () => {
     expect(draft).toMatchObject({ provider:'openai', baseUrl:'https://api.openai.com', modelName:'', maxTokens:65536 })
     expect(draft.capabilities).toBeUndefined()
   })
+  it('never stores a zero output limit for a new embedding draft', () => {
+    // SiliconFlow 的 BAAI/bge-m3 预设把 maxOutputTokens 写成 0（向量模型不产出 token）。
+    // 直接 ?? 只兜 undefined，会把 0 原样存下来，后续预算校验会认为这份配置不可用。
+    const draft = createModelProfileDraft({ id: 'new-embedding', purposes: ['embedding'] })
+
+    expect(draft.provider).toBe('siliconflow')
+    expect(draft.modelName).toBe('BAAI/bge-m3')
+    expect(draft.maxTokens).toBeGreaterThan(0)
+    expect(draft.maxTokens).toBe(4096)
+  })
   it.each([16384,32768,65536])('leaves an existing explicit %i output limit unchanged', maxTokens => {
     const profile={...createModelProfileDraft({id:'old-generation',purposes:['generation']}),maxTokens,
       capabilities:{contextWindowTokens:262144,maxOutputTokens:maxTokens,reasoning:false,structuredOutput:true,usage:true}}

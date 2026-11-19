@@ -1,0 +1,35 @@
+{
+  "repository": "yuchen0x1/Novel-Writer-master",
+  "observedDate": "2026-11-19",
+  "note": "Pre-cleanup inventory transcribed after cleanup from the git branch / git ls-remote observations recorded earlier in this session. No claim is made that this JSON file existed before deletion.",
+  "preCleanupLocalBranches": [
+    { "name": "main", "sha": "b48d0442659f6e3081744aada222b8b490f98c7b" },
+    { "name": "codex/desktop-release-maintenance", "sha": "65276fcb1b5cbbfbb571ab0551e7ff74453e1ae4" }
+  ],
+  "preCleanupRemoteBranches": [
+    { "name": "main", "sha": "b48d0442659f6e3081744aada222b8b490f98c7b" },
+    { "name": "codex/desktop-release-maintenance", "sha": "65276fcb1b5cbbfbb571ab0551e7ff74453e1ae4" },
+    { "name": "dependabot/github_actions/actions/checkout-7.0.1", "sha": "aec66454572e86c526ff745fbef6b6983f9bc562", "pr": 3, "category": "C" },
+    { "name": "dependabot/github_actions/actions/upload-artifact-7.0.2", "sha": "8583f205ee5ade52745d312183fbc188ffda68db", "pr": 4, "category": "C" },
+    { "name": "dependabot/github_actions/actions/setup-node-7.1.0", "sha": "17d6e20a12f3a985662fcaa6e89b5bdad962e735", "pr": 5, "category": "C" },
+    { "name": "dependabot/npm_and_yarn/plugins/dsh-ai-novel-writer/deepseek-ai/cordis-4.1.0", "sha": "57d3b2fc379c11256f162ba2317188436f2ea2c7", "pr": 6, "category": "C" },
+    { "name": "dependabot/npm_and_yarn/plugins/dsh-ai-novel-writer/types/node-26.6.6", "sha": "d10d86aae8b75149f4e04c645fa05ebae31ff469", "pr": 7, "category": "C" },
+    { "name": "dependabot/npm_and_yarn/plugins/dsh-ai-novel-writer/tsdown-0.23.7", "sha": "01a66ec477ea19205da9d45875b4c07ea626695e", "pr": 8, "category": "C" },
+    { "name": "dependabot/npm_and_yarn/vitejs/plugin-react-6.3.0", "sha": "8a765375c7dddd1b420417cc38550c8b9a824822", "pr": 9, "category": "B" },
+    { "name": "dependabot/npm_and_yarn/lucide-react-1.73.0", "sha": "d2c2525d6f7d1d51a3ea69205684faaaacee853b", "pr": 10, "category": "B" },
+    { "name": "dependabot/npm_and_yarn/radix-ui/react-dialog-1.3.1", "sha": "f40d0ea53355778a0836d2754f0cca3dfeeda1f8", "pr": 11, "category": "B" },
+    { "name": "dependabot/npm_and_yarn/radix-ui/react-tabs-1.2.1", "sha": "97866ba02b17cea7fe8e7af74fd27f315aa0e8ec", "pr": 12, "category": "B" },
+    { "name": "dependabot/npm_and_yarn/playwright-1.65.1", "sha": "a9d76206ad899663fd0920707f843874c1d5576e", "pr": 13, "category": "B" }
+  ],
+  "deleted": {
+    "branch": "codex/desktop-release-maintenance",
+    "sha": "65276fcb1b5cbbfbb571ab0551e7ff74453e1ae4",
+    "local": true,
+    "remote": true,
+    "mergedPr": 2,
+    "mergeCommit": "b48d0442659f6e3081744aada222b8b490f98c7b",
+    "ancestorVerification": "Tip is the direct second parent of main; no commits ahead of main."
+  },
+  "postCleanupCounts": { "local": 1, "remote": 12 },
+  "newGovernanceBranch": "chore/branch-governance-audit"
+}

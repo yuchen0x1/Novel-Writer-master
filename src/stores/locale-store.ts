@@ -23,6 +23,13 @@ export interface LocaleState {
   text: (zhCNText: string, enUSText: string, params?: MessageParams) => string
 }
 
+/** 只有本应用真正支持的语言标记才直接沿用，其余按系统语言归一化。 */
+function supportedStoredLocale(stored: unknown): string | undefined {
+  if (typeof stored !== 'string') return undefined
+  const value = stored.toLowerCase()
+  return value.startsWith('zh') || value.startsWith('en') ? stored : undefined
+}
+
 export function createLocaleState(dependencies: LocaleDependencies): StateCreator<LocaleState> {
   return (set, get) => {
     // Components commonly select only `t` or `text`. Refreshing these reader
@@ -41,7 +48,12 @@ export function createLocaleState(dependencies: LocaleDependencies): StateCreato
       ...localeReaders(),
       async init() {
         const config = await dependencies.loadConfig()
-        const locale = config.locale ?? resolveLocale(dependencies.systemLocale(), dependencies.systemLocales?.() ?? [])
+        // 持久化值来自磁盘：旧版本或被手工编辑过的 config.json 可能带着本应用不支持的
+        // 语言标记。不支持的标记按系统语言归一化，而不是直接丢给 t()/text() 去查目录。
+        const locale = resolveLocale(
+          supportedStoredLocale(config.locale) ?? dependencies.systemLocale(),
+          dependencies.systemLocales?.() ?? [],
+        )
         dependencies.setDocumentLanguage(locale)
         set({ locale, initialized: true, ...localeReaders() })
       },

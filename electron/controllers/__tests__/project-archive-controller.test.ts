@@ -242,6 +242,26 @@ describe('project archive choosers issue sender-bound grants instead of raw path
     }
   })
 
+  it('never truncates a suggested restore name into a lone surrogate', async () => {
+    const root = tempRoot('b01-controller-surrogate-')
+    const sender = event()
+    // 80 个 BMP 字符之后放 emoji：按 UTF-16 长度截断会正好切断代理对，
+    // 生成一个孤立代理字符，Windows 上创建目录会失败。
+    const suggested = `${'一'.repeat(79)}😀${'二'.repeat(10)}`
+    mocks.showOpenDialog.mockResolvedValueOnce({ canceled: false, filePaths: [root] })
+
+    const grant = await handler('dialog:select-project-restore-target')(sender, suggested) as ExternalFileGrant
+
+    expect(grant.displayName).toBeDefined()
+    expect(grant.displayName).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/u)
+    expect(grant.displayName).not.toMatch(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u)
+    expect(Array.from(grant.displayName).length).toBeLessThanOrEqual(80)
+
+    mocks.showOpenDialog.mockResolvedValueOnce({ canceled: false, filePaths: [root] })
+    const malformed = await handler('dialog:select-project-restore-target')(sender, 'bad\uD800name') as ExternalFileGrant
+    expect(malformed.displayName).toBe('bad-name')
+  })
+
   it('returns null and issues nothing when an archive picker is cancelled', async () => {
     mocks.showSaveDialog.mockResolvedValueOnce({ canceled: true })
     mocks.showOpenDialog.mockResolvedValue({ canceled: true, filePaths: [] })
@@ -645,6 +665,23 @@ describe('project:archive-restore', () => {
     await expect(handler('project:archive-restore')(event(), request)).resolves.toEqual(GRANT_REFUSAL)
 
     expect(mocks.restorePortableProject).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns the Windows path preflight error code through the restore IPC result', async () => {
+    const root = tempRoot('b01-restore-path-error-')
+    const request = {
+      archiveGrantId: archiveFileGrant(path.join(root, 'a.ainovel')),
+      targetGrantId: newTargetGrant(path.join(root, 'copy')),
+    }
+    mocks.restorePortableProject.mockRejectedValueOnce(Object.assign(
+      new Error('PROJECT_STORAGE_PATH_UNSUPPORTED'), { code: 'PROJECT_STORAGE_PATH_UNSUPPORTED' },
+    ))
+
+    await expect(handler('project:archive-restore')(event(), request)).resolves.toEqual({
+      success: false,
+      error: 'PROJECT_STORAGE_PATH_UNSUPPORTED',
+      errorCode: 'PROJECT_STORAGE_PATH_UNSUPPORTED',
+    })
   })
 
   it('keeps restored data and returns a warning when recent registration fails', async () => {

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { createHash } from 'node:crypto'
@@ -10,6 +11,19 @@ import { isVerifiedDirectPersistedDraftEvidence, projectRecoveryCandidateSupplem
   recordPersistedDraftObservation, safeReceiptDiagnostic } from '../quality-modernization-receipt.mjs'
 
 const sha = value => createHash('sha256').update(value).digest('hex')
+const supportsFileSymlinks = (() => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'receipt-symlink-probe-'))
+  try {
+    const target = path.join(root, 'target.txt')
+    fs.writeFileSync(target, 'probe')
+    fs.symlinkSync(target, path.join(root, 'link.txt'), 'file')
+    return true
+  } catch {
+    return false
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})()
 fs.mkdirSync(path.join(process.cwd(), '.runtime/.cache/novel-quality-modernization'), { recursive: true })
 
 test('real receipts preserve stable targeted-review failure codes without exposing free text', () => {
@@ -303,7 +317,7 @@ test('direct persisted reader binds the owned physical project manifest', () => 
       fs.rmSync(value.manifestPath)
       fs.symlinkSync(outside, value.manifestPath, 'file')
     },
-  ]
+  ].filter((_, index) => index !== 4 || supportsFileSymlinks)
   for (const mutate of mutations) {
     const value = directEvidence()
     try {

@@ -64,7 +64,9 @@ describe('project clear repositories', () => {
     const db = new Database(':memory:')
     try {
       initializeLegacyBaselineSchema(db)
-      db.prepare("INSERT INTO project_core(id,premise,characters_arch,plot_tree_snapshot) VALUES('main','清空前提',?,'plot-tree-before')").run(architecture)
+      db.prepare(`INSERT INTO project_core(
+         id,premise,characters_arch,plot_tree_snapshot,core_outline,world_setting,protagonist_profile
+       ) VALUES('main','清空前提',?,'plot-tree-before','核心大纲','世界设定','主角档案')`).run(architecture)
       if (card) db.exec("INSERT INTO characters(name,notes) VALUES('旧角色','保留原文')")
       db.exec('DELETE FROM character_roster_meta')
       initializeCharacterRosterMetadata(db)
@@ -82,6 +84,8 @@ describe('project clear repositories', () => {
       expect(db.prepare('SELECT characters_arch FROM project_core').pluck().get()).toBe(after.renderedMarkdown)
       expect(after.renderedMarkdown).not.toContain('旧')
       expect(db.prepare('SELECT plot_tree_snapshot FROM project_core').pluck().get()).toBe('plot-tree-before')
+      expect(db.prepare('SELECT core_outline,world_setting,protagonist_profile FROM project_core').get())
+        .toEqual({ core_outline: '', world_setting: '', protagonist_profile: '' })
       expect(db.prepare('SELECT COUNT(*) FROM characters WHERE retired=0').pluck().get()).toBe(0)
       expect(aliasRows()).toEqual(aliases)
       expect(db.prepare('SELECT COUNT(*) FROM character_aliases WHERE valid_through IS NULL').pluck().get()).toBe(0)

@@ -25,6 +25,7 @@ import { extractPortableProjectArchive, writePortableProjectArchive } from '../p
 import type { PortableProjectManifest } from '../portable-project-format'
 import { exportPortableProject, type ExportPortableProjectInput } from '../project-archive-service'
 import { restorePortableProject } from '../project-restore-service'
+import { PROJECT_STORAGE_PATH_UNSUPPORTED } from '../project-storage-preflight'
 import { parsePortableTransferAuthority } from '../portable-transfer-authority'
 import { createPortableProjectAssetProvider } from '../portable-project-assets'
 import { activateCanonicalProjectData, deactivateProjectData } from '../project-data-locator'
@@ -49,6 +50,19 @@ import type { ModelProfile } from '../../../src/shared/ipc-channels'
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3') as typeof import('better-sqlite3')
 const roots: string[] = []
+const supportsFileSymlinks = (() => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'restore-symlink-probe-'))
+  try {
+    const target = path.join(root, 'target.txt')
+    fs.writeFileSync(target, 'probe')
+    fs.symlinkSync(target, path.join(root, 'link.txt'), 'file')
+    return true
+  } catch {
+    return false
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})()
 const sha256 = (value: Buffer | string) => createHash('sha256').update(value).digest('hex')
 const restoreJournalPath = (target: string) => {
   const resolved = path.resolve(target).replace(/^\\\\\?\\/u, '')
@@ -703,15 +717,17 @@ describe('portable project restore service', { timeout: 20_000 }, () => {
       .rejects.toThrow('PORTABLE_RESTORE_UNSAFE_TARGET')
     expect(fs.readFileSync(damagedJournal, 'utf8')).toBe('{')
 
-    const linked = await exportedFixture()
-    const outside = path.join(linked.base, 'outside-journal.json')
-    fs.writeFileSync(outside, '{}')
-    const linkedJournal = restoreJournalPath(linked.targetRoot)
-    fs.symlinkSync(outside, linkedJournal, 'file')
-    await expect(restorePortableProject({ archivePath: linked.archive, targetProjectRoot: linked.targetRoot }))
-      .rejects.toThrow('PORTABLE_RESTORE_UNSAFE_TARGET')
-    expect(fs.readFileSync(outside, 'utf8')).toBe('{}')
-    expect(fs.lstatSync(linkedJournal).isSymbolicLink()).toBe(true)
+    if (supportsFileSymlinks) {
+      const linked = await exportedFixture()
+      const outside = path.join(linked.base, 'outside-journal.json')
+      fs.writeFileSync(outside, '{}')
+      const linkedJournal = restoreJournalPath(linked.targetRoot)
+      fs.symlinkSync(outside, linkedJournal, 'file')
+      await expect(restorePortableProject({ archivePath: linked.archive, targetProjectRoot: linked.targetRoot }))
+        .rejects.toThrow('PORTABLE_RESTORE_UNSAFE_TARGET')
+      expect(fs.readFileSync(outside, 'utf8')).toBe('{}')
+      expect(fs.lstatSync(linkedJournal).isSymbolicLink()).toBe(true)
+    }
   })
 
   it('rejects a linked target root and preserves the linked directory', async () => {
@@ -773,5 +789,40 @@ describe('portable project restore service', { timeout: 20_000 }, () => {
       } },
     })).rejects.toThrow('PORTABLE_RESTORE_INVALID')
     expect(fs.readFileSync(path.join(staging, 'keep.txt'), 'utf8')).toBe('not-owned')
+  })
+
+  // 恢复以前不做 Windows 路径预检：装完了用户才发现项目打不开，等于把失败伪装成成功。
+  const windowsIt = process.platform === 'win32' ? it : it.skip
+
+  windowsIt('rejects an over-deep final target before extracting anything', async () => {
+    const f = await exportedFixture()
+    const deepParent = path.join(f.base, ...Array.from({ length: 6 }, () => 'd'.repeat(20)))
+    fs.mkdirSync(deepParent, { recursive: true })
+    const deepTarget = path.join(deepParent, 'restored')
+
+    await expect(restorePortableProject({ archivePath: f.archive, targetProjectRoot: deepTarget }))
+      .rejects.toMatchObject({ code: PROJECT_STORAGE_PATH_UNSUPPORTED })
+    expect(fs.existsSync(deepTarget)).toBe(false)
+  })
+
+  windowsIt('keeps a target path usable when the reservation marker cannot be linked', async () => {
+    const f = await exportedFixture()
+
+    // 模拟「目录建好了、预约标记没写上」：journal 在 link 之前消失，linkSync 抛 ENOENT。
+    await expect(restorePortableProject({
+      archivePath: f.archive,
+      targetProjectRoot: f.targetRoot,
+      __testHooks: {
+        beforeTargetReservation: (journalPath) => { fs.rmSync(journalPath, { force: true }) },
+      },
+    })).rejects.toThrow('PORTABLE_RESTORE_UNSAFE_TARGET')
+
+    // 修复前目录与 journal 都留着，但目录里没有标记，之后每次重试都在 reservationOwned 处失败。
+    expect(fs.existsSync(f.targetRoot)).toBe(false)
+    expect(fs.readdirSync(f.base).filter(name => name.startsWith('.portable-project-restore-'))).toEqual([])
+
+    // 同一目标必须还能正常恢复，证明路径没有被楔死。
+    const receipt = await restorePortableProject({ archivePath: f.archive, targetProjectRoot: f.targetRoot })
+    expect(receipt.targetProjectRoot).toBe(fs.realpathSync.native(f.targetRoot))
   })
 })

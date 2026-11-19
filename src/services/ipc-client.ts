@@ -89,10 +89,10 @@ export const ipc = {
     channel: C,
     ...args: AllInvokeChannels[C]['args']
   ): Promise<AllInvokeChannels[C]['return']> => {
-    console.log('[ipc-client.invoke] 调用通道:', channel, '参数数量:', args.length)
-    const result = await invokeWithSession(channel, args)
-    console.log('[ipc-client.invoke] 调用完成:', channel)
-    return result
+    // 只记通道名，且只在开发构建里打开：这是每次调用都走的路径，
+    // 生产环境逐条打印控制台会把日志淹掉，还带上无谓开销。
+    if (import.meta.env?.DEV) console.debug('[ipc-client] invoke', channel, args.length)
+    return await invokeWithSession(channel, args)
   },
 
   /** 工作流/工具在启动处冻结会话后，必须使用此入口而不是重新读取 currentProject。 */

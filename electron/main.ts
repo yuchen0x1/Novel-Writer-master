@@ -171,6 +171,7 @@ function createWindow() {
       // 安全性设置
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: true,
     },
   })
   // A diagnostic-only window has no editor and no business close responder.
@@ -208,6 +209,7 @@ function createReleaseHomepageSmokeWindow(): BrowserWindow {
       preload: path.join(__dirname, 'preload.mjs'),
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: true,
     },
   })
 }

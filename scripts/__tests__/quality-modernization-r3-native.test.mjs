@@ -1,6 +1,7 @@
 import { afterEach, test, vi } from 'vitest'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { Buffer } from 'node:buffer'
@@ -19,6 +20,24 @@ import { removeTemporaryTree } from '../../test/helpers/remove-temporary-tree.mj
 const phase = 'r3-native-revision-diagnostic'
 const protocol = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs/research/novel-quality-modernization/protocol.json')))
 
+/**
+ * Windows 普通用户默认不能创建文件符号链接（需要管理员或开发者模式）。
+ * 依赖它的断言在那种机器上只能跳过，否则本地红灯是环境限制而非产品回归。
+ * 目录 junction 不受此限制，所以只有 'file' 类型需要这道探针。
+ */
+const canCreateFileSymlinks = (() => {
+  const probe = fs.mkdtempSync(path.join(os.tmpdir(), 'novel-symlink-probe-'))
+  try {
+    const target = path.join(probe, 'target.txt')
+    fs.writeFileSync(target, 'probe')
+    fs.symlinkSync(target, path.join(probe, 'link.txt'), 'file')
+    return true
+  } catch {
+    return false
+  } finally {
+    fs.rmSync(probe, { recursive: true, force: true })
+  }
+})()
 test('native bridge checks the configured official path for GLM and retains the DeepSeek path', () => {
   const fixture = fs.readFileSync(path.join(ROOT, 'scripts/fixtures/quality-modernization-production.fixture.mjs'), 'utf8')
   const start = fixture.indexOf("preflight(new URL(String(url)).host ===")
@@ -842,8 +861,10 @@ test('saved first-review continuation preserves old files, counts the exact hist
     const displacedManifest = write(path.join(directory, 'displaced-manifest.json'), controlManifest)
     assert.throws(() => continueControl({ savedReviewContinuationPath: displacedManifest }), /MANIFEST_PATH/)
     const aliasManifest = path.join(directory, 'alias-manifest.json')
-    fs.symlinkSync(controlManifestPath, aliasManifest, 'file')
-    assert.throws(() => continueControl({ savedReviewContinuationPath: aliasManifest }), /MANIFEST_PATH/)
+    if (canCreateFileSymlinks) {
+      fs.symlinkSync(controlManifestPath, aliasManifest, 'file')
+      assert.throws(() => continueControl({ savedReviewContinuationPath: aliasManifest }), /MANIFEST_PATH/)
+    }
     for (const file of [closedPath, controlClosurePath, failedPreparePath, reportPath, controlManifest.references.continuationProtocol.path]) {
       const bytes = fs.readFileSync(file)
       try { fs.writeFileSync(file, Buffer.concat([bytes, Buffer.from(' ')])); assert.throws(() => reviewControl(), /CONTINUATION_.*DRIFT/) }
@@ -875,7 +896,7 @@ test('saved first-review continuation preserves old files, counts the exact hist
     assert.throws(() => runner.updateLedger(ledgerPath, { type: 'reserve', attemptId: 'candidate:fifth', binding: controlBinding }, controlLedgerOptions), /SAVED_NATIVE_ATTEMPT_UNAVAILABLE/)
     assert.equal(fs.readFileSync(ledgerPath, 'utf8').slice(0, closedRaw.length), closedRaw)
   } finally { removeTemporaryTree(directory, path.join(ROOT, '.runtime/.cache')) }
-})
+}, 15_000)
 
 afterEach(() => {
   vi.doUnmock('../quality-modernization-driver.mjs')

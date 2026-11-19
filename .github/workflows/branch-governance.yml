@@ -1,0 +1,53 @@
+name: Branch governance audit
+
+on:
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: read
+  statuses: read
+
+concurrency:
+  group: branch-governance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Audit branch health
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out complete branch history
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22.23.1
+
+      - name: Generate branch report
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          BRANCH_GOVERNANCE_BASE: origin/main
+        run: node scripts/branch-governance-report.mjs --output "$RUNNER_TEMP/branch-governance-report.md" --json "$RUNNER_TEMP/branch-governance-evidence.json"
+
+      - name: Add report to workflow summary
+        run: cat "$RUNNER_TEMP/branch-governance-report.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve report artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: branch-governance-report-${{ github.run_number }}
+          path: |
+            ${{ runner.temp }}/branch-governance-report.md
+            ${{ runner.temp }}/branch-governance-evidence.json
+          if-no-files-found: error
+          retention-days: 90

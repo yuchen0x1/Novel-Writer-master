@@ -70,6 +70,12 @@ export function createModelProfileDraft({
 
   const modelName = isEmbedding ? (preset.embeddingModels[0] ?? '') : ''
   const capabilities = isEmbedding ? preset.embeddingModelCapabilities?.[modelName] : undefined
+  // 向量模型预设里的 maxOutputTokens 常写成 0（表示不产出 token）。直接 ?? 只兜住
+  // undefined，会把 0 原样存下来，之后的预算校验认为这份配置不可用。0 也要回退到默认值。
+  const declaredOutputTokens = capabilities?.maxOutputTokens
+  const maxTokens = isEmbedding
+    ? (typeof declaredOutputTokens === 'number' && declaredOutputTokens > 0 ? declaredOutputTokens : 4096)
+    : DEFAULT_GENERATION_OUTPUT_TOKENS
 
   return {
     id,
@@ -80,7 +86,7 @@ export function createModelProfileDraft({
     apiKey: '',
     baseUrl: preset.baseUrl,
     temperature: 0.7,
-    maxTokens: isEmbedding ? capabilities?.maxOutputTokens ?? 4096 : DEFAULT_GENERATION_OUTPUT_TOKENS,
+    maxTokens,
     capabilities: capabilities ? { ...capabilities } : undefined,
     purposes: [...purposes],
     ...(isEmbedding ? { embeddingOptions: { ...DEFAULT_EMBEDDING_OPTIONS } } : {}),

@@ -4,6 +4,8 @@ import { createHash, randomUUID } from 'node:crypto'
 import { Readable } from 'node:stream'
 import * as yauzl from 'yauzl'
 
+import { CANONICAL_PROJECT_DATABASE, CANONICAL_PROJECT_DIRECTORY } from '../../src/shared/project-format'
+import { assertNativeStoragePathsSupported } from './project-storage-preflight'
 import {
   DEFAULT_PORTABLE_ARCHIVE_LIMITS,
   parsePortableProjectManifest,
@@ -433,12 +435,30 @@ function assertAttemptDirectory(attempt: StagingAttempt, directory: string): voi
   }
 }
 
+/** mkdtemp 前缀；恢复流程要按它预先验证临时目录的路径长度。 */
+export const PORTABLE_ARCHIVE_STAGING_PREFIX = '.portable-project-attempt-'
+/** mkdtemp 追加的随机字符数。 */
+const STAGING_RANDOM_SUFFIX_LENGTH = 6
+
+/**
+ * 解包临时目录的完整路径。
+ *
+ * 临时目录名比最终项目目录名长得多，因此在 Windows 上「最终路径长度合法」不足以说明
+ * 解包能完成；调用方需要按这个名字再做一次长度预检。
+ */
+export function portableArchiveStagingRoot(stagingParentPath: string): string {
+  return path.join(
+    path.resolve(stagingParentPath),
+    `${PORTABLE_ARCHIVE_STAGING_PREFIX}${'x'.repeat(STAGING_RANDOM_SUFFIX_LENGTH)}`,
+  )
+}
+
 function prepareStaging(stagingParentPath: string): StagingAttempt {
   const parent = path.resolve(stagingParentPath)
   safeDirectory(parent)
   // Security depends on this parent being application-owned and private. Random naming prevents
   // pre-existing user content from ever becoming this attempt; it is not a defence from a same-privilege hostile process.
-  const root = fs.mkdtempSync(path.join(parent, '.portable-project-attempt-'))
+  const root = fs.mkdtempSync(path.join(parent, PORTABLE_ARCHIVE_STAGING_PREFIX))
   fs.chmodSync(root, 0o700)
   const identity = fs.lstatSync(root, { bigint: true })
   const attempt: StagingAttempt = {
@@ -698,6 +718,13 @@ export async function extractPortableProjectArchive(input: ExtractPortableProjec
     }
 
     staging = prepareStaging(input.stagingParentPath)
+    // 临时目录名比最终项目目录长三十多个字符，所以「最终路径合法」不足以说明解包能完成。
+    // 这里按归档里真实存在的条目名做长度预检：既能提前给出可执行建议，又不会拿最坏情况
+    // 模型（avatars/lancedb 的定长叶子）误杀本来能完成的恢复。
+    assertNativeStoragePathsSupported(staging.root, [
+      ...manifest.entries.map(entry => path.win32.join(...entry.path.split('/'))),
+      path.win32.join(CANONICAL_PROJECT_DIRECTORY, `${CANONICAL_PROJECT_DATABASE}-wal`),
+    ])
     for (const [index, item] of payloads.entries()) {
       const expectedEntry = manifest.entries[index]!
       const target = targetFor(staging, item.name, input.__testHooks?.afterDirectoryCreated)

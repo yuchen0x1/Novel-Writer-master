@@ -11,6 +11,7 @@ import {
 } from '../../src/shared/project-format'
 import { assertPortableSourceSchema, portablePathKey } from './portable-project-format'
 import { extractPortableProjectArchive } from './portable-project-archive'
+import { assertProjectStoragePathSupported } from './project-storage-preflight'
 import { PORTABLE_RUNTIME_HISTORY_MAX_BYTES, parsePortableRuntimeFreeze, readPortableRuntimeFreeze } from './portable-runtime-freeze'
 import { verifyProjectSqlite } from './sqlite-project-migration'
 import {
@@ -62,6 +63,8 @@ export interface RestorePortableProjectInput {
   __testHooks?: {
     afterStagingCaptured?(stagingPath: string): void
     beforeInstall?(stagingProjectRoot: string, targetProjectRoot: string): void
+    /** 目标目录已建好、还没写预约标记时调用；用来验证「预约只建成一半」的撤销路径。 */
+    beforeTargetReservation?(journalPath: string, targetProjectRoot: string): void
     afterTargetReserved?(journalPath: string, targetProjectRoot: string): void
     afterInstallCommitted?(targetProjectRoot: string): void
   }
@@ -414,6 +417,26 @@ function releaseInstallJournal(journal: ReadInstallJournal, targetRoot: string, 
   activeInstallJournals.delete(normalized(journal.path))
 }
 
+/**
+ * 撤销一次「只建成一半」的预约：删掉这次调用自己创建的空目标目录和 journal。
+ *
+ * 只在 reservation 还没建立（刚 mkdir 完、link 失败）时使用：此时目标目录里除了我们
+ * 刚创建的空壳什么都没有，把它留下只会让后续每次重试都命中不安全判定。
+ * 目录非空、或内容不属于本次调用，一律不动并保留原错误，交给人判断。
+ */
+function abandonReservation(journal: ReadInstallJournal, targetRoot: string): void {
+  try {
+    const root = fs.lstatSync(targetRoot, { bigint: true })
+    if (!root.isDirectory() || root.isSymbolicLink()
+      || normalized(fs.realpathSync.native(targetRoot)) !== normalized(targetRoot)) return
+    if (fs.readdirSync(targetRoot).length !== 0) return
+    fs.rmdirSync(targetRoot)
+    releaseInstallJournal(journal, targetRoot, false)
+  } catch {
+    // 清理是尽力而为：原始失败更重要，保留 journal 让人能看出来发生了什么。
+  }
+}
+
 function reservationOwned(journal: ReadInstallJournal, targetRoot: string): fs.BigIntStats {
   const root = fs.lstatSync(targetRoot, { bigint: true })
   if (!root.isDirectory() || root.isSymbolicLink()
@@ -708,6 +731,18 @@ function removeEmptyOwnedDirectories(attempt: OwnedAttempt, except: ReadonlySet<
   }
 }
 
+/**
+ * 在写任何东西之前先确认最终项目目录在 Windows 上放得下。
+ *
+ * 恢复出来的项目如果路径比应用自身允许的上限更深，安装会「成功」，但用户随后打开项目
+ * 才被拒绝，等于把一次失败伪装成成功。这里用与打开项目完全相同的判据提前失败，
+ * 并给出「把项目文件夹移到更靠近磁盘根目录」这类可执行建议。
+ * 解包临时目录更长，那一侧的校验在归档模块里按真实条目名做（见 extractPortableProjectArchive）。
+ */
+function assertRestoreTargetPathsSupported(targetRoot: string): void {
+  assertProjectStoragePathSupported(targetRoot)
+}
+
 export async function restorePortableProject(input: RestorePortableProjectInput): Promise<RestorePortableProjectReceipt> {
   cancelled(input.signal)
   const targetRoot = path.resolve(input.targetProjectRoot)
@@ -716,6 +751,7 @@ export async function restorePortableProject(input: RestorePortableProjectInput)
     fail('PORTABLE_RESTORE_UNSAFE_TARGET')
   }
   physicalDirectory(targetParent)
+  assertRestoreTargetPathsSupported(targetRoot)
   const archiveSha256 = await hashPhysicalFile(input.archivePath)
   const extracted = await extractPortableProjectArchive({ archivePath: input.archivePath, stagingParentPath: targetParent })
   if (await hashPhysicalFile(input.archivePath) !== archiveSha256) fail('PORTABLE_RESTORE_INVALID')
@@ -885,7 +921,12 @@ export async function restorePortableProject(input: RestorePortableProjectInput)
         }
         throw error
       }
+      input.__testHooks?.beforeTargetReservation?.(journal.path, targetRoot)
       try { fs.linkSync(journal.path, path.join(targetRoot, INSTALL_MARKER_NAME)) } catch {
+        // 目录建好了、预约标记没写上：这次预约不成立。若就这么失败收场，journal 会留下
+        // 而目标目录里没有标记，之后每次重试都在 reservationOwned 那里判定「不安全」，
+        // 目标路径被永久楔死，只能让用户手工进父目录删隐藏文件才能恢复。
+        abandonReservation(journal, targetRoot)
         fail('PORTABLE_RESTORE_UNSAFE_TARGET')
       }
       reservationOwned(journal, targetRoot)

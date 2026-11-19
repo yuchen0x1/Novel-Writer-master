@@ -34,6 +34,7 @@ const ARCHIVE_EXTENSION = 'ainovel'
 /** 选择器签发的一次性授权；恢复需要连续选择两次，故留出足够的选择时间。 */
 const ARCHIVE_GRANT_TTL_MS = 10 * 60 * 1_000
 const PORTABLE_ERROR_CODES = new Set<PortableProjectOperationErrorCode>([
+  'PROJECT_STORAGE_PATH_UNSUPPORTED',
   'PORTABLE_ARCHIVE_INVALID',
   'PORTABLE_ARCHIVE_LIMIT_EXCEEDED',
   'PORTABLE_ARCHIVE_SOURCE_CHANGED',
@@ -87,11 +88,14 @@ function readRestoredProjectName(projectRoot: string): string {
 
 function safeSuggestedName(value: unknown, fallback: string): string {
   if (typeof value !== 'string') return fallback
-  const safe = Array.from(value.trim(), character => (
-    character.charCodeAt(0) < 32 || '<>:"/\\|?*'.includes(character) ? '-' : character
-  )).join('')
-    .replace(/[. ]+$/g, '')
-    .slice(0, 80)
+  // 先按码点切成数组（代理对作为一个元素），再截断，最后才 join：
+  // 若先 join 再 slice(0, 80)，长度落在代理对中间就会留下孤立代理字符，生成非法文件名。
+  const characters = Array.from(value.trim(), character => {
+    const codePoint = character.codePointAt(0)!
+    const loneSurrogate = codePoint >= 0xD800 && codePoint <= 0xDFFF
+    return loneSurrogate || codePoint < 32 || '<>:"/\\|?*'.includes(character) ? '-' : character
+  })
+  const safe = characters.slice(0, 80).join('').replace(/[. ]+$/g, '')
   return safe || fallback
 }
 

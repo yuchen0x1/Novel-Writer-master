@@ -25,6 +25,7 @@
     "prepare:native-node": "node scripts/prepare-native-for-node.mjs",
     "typecheck": "tsc --noEmit",
     "check:i18n": "node scripts/check-i18n-coverage.mjs",
+    "check:release-docs": "node scripts/check-release-docs.mjs",
     "test": "vitest run",
     "test:browser": "vitest run --config vitest.browser.config.ts",
     "verify:drive": "node scripts/redesign/drive.mjs",

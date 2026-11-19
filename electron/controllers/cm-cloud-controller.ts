@@ -90,9 +90,9 @@ export function registerCmCloudController(
     }
   })
 
-  deps.ipc.handle('cm-cloud:login', async () => {
+  deps.ipc.handle('cm-cloud:login', async (_event, rawSession) => {
     try {
-      return { success: true as const, ...(await deps.service.login()) }
+      return { success: true as const, ...(await deps.service.login(session(rawSession))) }
     } catch (error) {
       return failure(error)
     }

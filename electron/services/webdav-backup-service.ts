@@ -300,8 +300,17 @@ export class WebDavBackupService {
     const response = await this.request(account, endpoint, {
       method: 'PROPFIND', headers: { Depth: '0', Accept: 'application/xml' },
     }, signal)
-    if (response.status !== 207 && !response.ok) responseFailure(response)
-    await this.readBytes(response, this.maxXmlBytes, signal)
+    if (response.status !== 207) {
+      if (response.ok) fail('WEBDAV_DAV_RESPONSE_INVALID')
+      responseFailure(response)
+    }
+    const bytes = await this.readBytes(response, this.maxXmlBytes, signal)
+    // 「连上了」要证明这真是 WebDAV：只回 200 的普通网页也满足 response.ok，
+    // 若照旧认可，用户会看到「已连接」并据此保存凭据，随后每次备份都在同一处失败。
+    let xmlText: string
+    try { xmlText = new TextDecoder('utf-8', { fatal: true }).decode(bytes) }
+    catch { return fail('WEBDAV_DAV_RESPONSE_INVALID') }
+    if (!/<\/?(?:[A-Za-z_][\w.-]*:)?multistatus\b/iu.test(xmlText)) fail('WEBDAV_DAV_RESPONSE_INVALID')
     return { connected: true }
   }
 
@@ -342,7 +351,32 @@ export class WebDavBackupService {
     const completionBytes = Buffer.from(JSON.stringify(completion), 'utf8')
     if (completionBytes.length > this.maxJsonBytes) fail('WEBDAV_INPUT_INVALID')
     await this.putBytes(input.account, locations.completion, completionBytes, input.signal)
-    return this.publicGeneration(manifest, [])
+    // 分支同级只有列过整本书的清单才知道。上传成功后重新列一次，让界面拿到真实的
+    // hasSibling；列不出来（网络抖动）不该把一次成功的备份报成失败，退回「未知即无」。
+    const siblings = await this.siblingGenerationIds(input, manifest)
+    return this.publicGeneration(manifest, siblings)
+  }
+
+  /** 与 manifest 共享任一父代的其它代际；失败时返回空数组（调用方已提交上传，不应因此失败）。 */
+  private async siblingGenerationIds(
+    input: AppendWebDavGenerationInput,
+    manifest: GenerationManifest,
+  ): Promise<string[]> {
+    if (manifest.parentGenerationIds.length === 0) return []
+    try {
+      const listed = await this.listGenerations({
+        account: input.account,
+        cloudBookId: input.cloudBookId,
+        signal: input.signal,
+      })
+      const parentSet = JSON.stringify([...manifest.parentGenerationIds].sort())
+      return listed
+        .filter(candidate => candidate.generationId !== manifest.generationId
+          && JSON.stringify([...candidate.parentGenerationIds].sort()) === parentSet)
+        .map(candidate => candidate.generationId)
+    } catch {
+      return []
+    }
   }
 
   async listGenerations(input: ListWebDavGenerationsInput): Promise<WebDavGeneration[]> {

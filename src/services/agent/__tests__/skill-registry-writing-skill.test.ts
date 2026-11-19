@@ -151,6 +151,19 @@ describe('writing skill registry identity and tool exposure', () => {
     expect(prompt).not.toMatch(/[\u3400-\u9fff]/u)
   })
 
+  it('keeps the skill body intact when the arguments look like replacement patterns', async () => {
+    const { substituteSkillArguments } = await import('../skill-registry')
+    const literalArgs = "regex $& and $' and $$ and $1 stay literal"
+
+    const filled = substituteSkillArguments('Apply: ${args}\nDir: ${SKILL_DIR}', literalArgs, '/tmp/skill')
+
+    // String.replace 会把 $&、$'、$$ 当成替换模式：旧实现下这些字符会被解释成
+    // 「匹配到的原文」或「匹配之后的文本」，等于改写了 skill 正文。
+    expect(filled).toContain(literalArgs)
+    expect(filled).toContain('Dir: /tmp/skill')
+    expect(filled).not.toContain('${args}')
+  })
+
 })
 
 

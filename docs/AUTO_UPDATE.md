@@ -4,9 +4,13 @@
 
 <https://github.com/yuchen0x1/Novel-Writer-master/releases>
 
-## 0.0.1 新版本序列
+## 0.0.2 当前稳定版本
 
-产品名称统一为 `Novel-Writer-master`，版本号从 `0.0.1` 重新开始。旧 `1.x` 客户端不会被强制自动降级，需要手动安装一次 `0.0.1`，后续继续使用当前仓库的更新源。
+产品名称统一为 `Novel-Writer-master`，当前稳定版本为 `0.0.2`。首次启动按系统语言选择中文或 English；Windows x64、macOS ARM64 和 macOS Intel 安装包均已发布到同一个正式 GitHub Release。
+
+macOS 应用内更新提醒会打开官方下载页；Windows 正式安装版按本文的 `latest.yml` 流程检查、下载和重启安装。旧 `1.x` 客户端仍需手动安装一次 `0.0.1`，后续继续使用当前仓库的更新源。
+
+## 0.0.1 迁移背景
 
 首个版本通过 `.github/workflows/initial-brand-release.yml` 从同一冻结提交构建 Windows x64、macOS ARM64 和 macOS Intel 安装包。各平台完成原生依赖、构建和实际安装包运行检查后才会发布。此初始版本验证全新安装；原有工作流的 v0.2.5/v1.1.0 迁移验证不作为本次重新初始化的已通过项目。
 
@@ -56,6 +60,7 @@ Beta / Dev 渠道目前没有客户端配置和发布清单，不能把带 `-bet
 - 发布工作流使用 GitHub Actions 内置 `github.token`，仓库不需要把 Token 写进源码或 `electron-builder.json5`。
 - Windows 安装包尚未配置代码签名证书。发布页面和 README 必须保留未知发布者提示；不能把未签名安装包描述成已验证的 Windows 签名产物。
 - 现用 electron-builder 26.x / electron-updater 6.x，客户端校验的是 Builder 清单中的 SHA-512。GitHub 资产的 SHA-256 是发布后门禁和审计校验；两者职责不同。升级到支持 Ed25519 更新清单的 Builder 版本前，不应声称客户端已经完成更新清单数字签名验证。
+- `scripts/verify-github-update-release.mjs` 需要本地对应的 Windows 安装包、`latest.yml` 和 blockmap；它适用于发布者在本地或带有资格产物的受控环境中做远端回读。公开 Release 的定期 CI 校验由 [`scripts/verify-public-desktop-release.mjs`](../scripts/verify-public-desktop-release.mjs) 完成，不能把两者混称为同一个门禁。
 
 ## 正式发布流程
 

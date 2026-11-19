@@ -103,6 +103,20 @@ export function assertProjectStoragePathSupported(
   assertDerivedStoragePathsSupported(projectRoot, PROJECT_KNOWLEDGE_STORAGE_RELATIVE_PATHS, 'knowledge-base', options)
 }
 
+/**
+ * 按调用方给出的实际相对路径校验长度。
+ *
+ * 用于临时目录：解包/迁移的中间目录名比最终目录长，最坏情况模型会把本来能完成的
+ * 操作误判为超长，所以只有在已知真实相对路径时才用它。
+ */
+export function assertNativeStoragePathsSupported(
+  storageRoot: string,
+  relativePaths: readonly string[],
+  options: ProjectStoragePreflightOptions = {},
+): void {
+  assertDerivedStoragePathsSupported(storageRoot, relativePaths, 'project', options)
+}
+
 /** Temporary and isolated roots can exceed the final layout length on Windows. */
 export function assertProjectMigrationPathsSupported(projectRoot: string, options: ProjectStoragePreflightOptions = {}): void {
   const migrationRoot = path.win32.join('.ai-novel-migration', `${'0'.repeat(36)}.vector-snapshot`)

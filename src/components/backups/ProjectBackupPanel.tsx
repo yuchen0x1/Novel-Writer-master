@@ -304,7 +304,7 @@ function ProjectBackupPanelSession({
   })
 
   const loginCmCloud = () => run(async () => {
-    const result = await ipc.invoke('cm-cloud:login')
+    const result = await ipc.invoke('cm-cloud:login', projectSession)
     if (!result.success) throw new Error(result.errorCode)
     setNotice({ kind: 'info', text: result.state === 'authorized'
       ? text('中国移动云盘授权已生效。', 'China Mobile Cloud authorization is active.')

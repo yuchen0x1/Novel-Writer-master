@@ -78,6 +78,21 @@ export interface LoadedSkill {
 
 // ===== Skill Registry =====
 
+/**
+ * 把调用参数与 Skill 目录填进 Skill 正文。
+ *
+ * 一律用替换函数而不是替换字符串：参数来自模型/作者，里面的 $&、$`、$'、$$、$1
+ * 会被 String.replace 当成替换模式解释，等于改写 Skill 正文（内容重复或错位）。
+ */
+export function substituteSkillArguments(content: string, userArgs: string, baseDir: string): string {
+  let result = content
+  if (userArgs) {
+    result = result.replace(/\$\{args\}/g, () => userArgs)
+    result = result.replace(/\$1/g, () => userArgs)
+  }
+  return result.replace(/\$\{SKILL_DIR\}/g, () => baseDir)
+}
+
 function isMissingProjectSkillDirectory(error: unknown): boolean {
   const code = error && typeof error === 'object' && 'code' in error
     ? error.code
@@ -323,12 +338,11 @@ class SkillRegistryImpl {
           const userArgs = (toolArgs.args as string) ?? ''
           // 变量替换
           const writingLanguage = context?.writingLanguage ?? 'zh-CN'
-          let content = skill.localizedContent?.[writingLanguage] ?? skill.content
-          if (userArgs) {
-            content = content.replace(/\$\{args\}/g, userArgs)
-            content = content.replace(/\$1/g, userArgs)
-          }
-          content = content.replace(/\$\{SKILL_DIR\}/g, skill.baseDir)
+          const content = substituteSkillArguments(
+            skill.localizedContent?.[writingLanguage] ?? skill.content,
+            userArgs,
+            skill.baseDir,
+          )
 
           return {
             success: true,

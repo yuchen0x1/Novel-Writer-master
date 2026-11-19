@@ -56,7 +56,7 @@ export interface CmCloudChannels {
     return: { success: true; status: CmCloudStatusView } | CmCloudFailure
   }
   'cm-cloud:login': {
-    args: []
+    args: [projectSession: CmCloudProjectSessionContext]
     return: {
       success: true
       state: 'authorized' | 'pending'

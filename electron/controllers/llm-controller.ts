@@ -9,6 +9,7 @@ import {
 } from '../utils/config-utils'
 import { protectModelApiKey, unprotectModelApiKey, ModelCredentialProtectionUnavailableError } from '../utils/model-credential-security'
 import type { GlobalConfig, LLMFinishReason, LLMRequest, LLMResponse, ModelDiscoveryRequest, ModelProfile, TokenUsage } from '../../src/shared/ipc-channels'
+import { REDACTED_MODEL_API_KEY } from '../../src/shared/ipc-channels'
 import { knownAppErrorMessage } from '../../src/i18n/app-errors'
 import { isProjectSessionContext } from '../../src/shared/project-session-context'
 import { isReasoningMapping, reasoningAdapterFitsProtocol } from '../../src/shared/reasoning-types'
@@ -48,6 +49,19 @@ function loadModelConfigs(): ModelProfile[] {
     ...m,
     apiKey: unprotectModelApiKey(m.apiKey),
   }))
+}
+
+function loadModelConfigsForRenderer(): ModelProfile[] {
+  return loadModelConfigs().map(model => ({
+    ...model,
+    apiKey: model.apiKey ? REDACTED_MODEL_API_KEY : '',
+  }))
+}
+
+function resolveRendererModel(model: ModelProfile): ModelProfile {
+  if (model.apiKey !== REDACTED_MODEL_API_KEY) return model
+  const saved = getModelConfig(model.id)
+  return saved ? { ...model, apiKey: saved.apiKey } : model
 }
 
 function loadModelConfigsForUpdate(): ModelProfile[] {
@@ -327,12 +341,15 @@ export function registerLLMController() {
     return { success: false }
   })
 
-  ipcMain.handle('llm:list-models', async () => loadModelConfigs())
+  ipcMain.handle('llm:list-models', async () => loadModelConfigsForRenderer())
 
   ipcMain.handle('llm:discover-models', async (_event, request: ModelDiscoveryRequest) => {
     try {
       applyProxyConfig()
-      return await modelDiscovery.discoverModels(request)
+      const resolvedRequest = request.apiKey === REDACTED_MODEL_API_KEY && request.modelId
+        ? { ...request, apiKey: getModelConfig(request.modelId)?.apiKey ?? '' }
+        : request
+      return await modelDiscovery.discoverModels(resolvedRequest)
     } catch {
       return { success: false, errorCode: 'invalid_response' as const }
     }
@@ -346,8 +363,14 @@ export function registerLLMController() {
       }
       const models = loadModelConfigsForUpdate()
       const idx = models.findIndex((m) => m.id === model.id)
-      if (idx >= 0) models[idx] = model
-      else models.push(model)
+      // 渲染进程只看到打码后的 Key。保存既有模型时沿用磁盘上的真 Key；
+      // 但 id 还不存在（另存为新模型/复制配置）时不能把占位符当成真的 Key 落盘，
+      // 否则这份配置此后一直显示「已保存 Key」，实际请求必然 401。
+      const modelToSave = model.apiKey === REDACTED_MODEL_API_KEY
+        ? { ...model, apiKey: idx >= 0 ? models[idx].apiKey : '' }
+        : model
+      if (idx >= 0) models[idx] = modelToSave
+      else models.push(modelToSave)
       saveModelConfigs(models)
       return { success: true }
     } catch (error) {
@@ -444,7 +467,8 @@ export function registerLLMController() {
     creativeStrategy: LLMRequest['creativeStrategy'] = 'auto',
   ) => {
     // 网络卡住时 undici 默认要等 300 秒才报 fetch failed；连接测试自己的截止时间会真正取消请求。
-    const timeoutMs = connectionTestTimeoutMs(model)
+    const resolvedModel = resolveRendererModel(model)
+    const timeoutMs = connectionTestTimeoutMs(resolvedModel)
     const deadline = new AbortController()
     const timer = setTimeout(() => deadline.abort(), timeoutMs)
     const timedOut = () => ({ success: false, error: mainT(app.getLocale(), 'error.connectionTestTimeout', { seconds: timeoutMs / 1000 }) })
@@ -452,20 +476,20 @@ export function registerLLMController() {
       applyProxyConfig()
 
       const messages = [{ role: 'user', content: 'Say "hello" and nothing else.' }]
-      const provider = LLMFactory.getProvider(model)
+      const provider = LLMFactory.getProvider(resolvedModel)
 
       let result = { success: true, error: undefined as undefined | string }
-      if (model.purposes?.includes('embedding')) {
+      if (resolvedModel.purposes?.includes('embedding')) {
         const { generateEmbeddings } = await import('../embedding')
         // Responses is a generation protocol; embedding models still use the
         // OpenAI-compatible embeddings endpoint when a legacy profile carries it.
-        await generateEmbeddings(['hello'], model.protocol === 'gemini' ? 'gemini' : 'openai', model, undefined, undefined, deadline.signal)
+        await generateEmbeddings(['hello'], resolvedModel.protocol === 'gemini' ? 'gemini' : 'openai', resolvedModel, undefined, undefined, deadline.signal)
       } else {
         const res = await provider.generate(
-          model,
+          resolvedModel,
           messages,
           {
-            ...resolveGenerationParameters(model, {
+            ...resolveGenerationParameters(resolvedModel, {
               // 推理模型可能先消耗 reasoning tokens；预算过小会把可用连接误判为截断失败。
               maxTokens: CONNECTION_TEST_MAX_TOKENS,
               reasoningStage: 'general',

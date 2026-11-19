@@ -8,12 +8,26 @@ import { probeProjectSqlite, backupProjectSqlite, verifyProjectSqlite } from '..
 import { exportVectorStoreForMigration, importVectorStoreForMigration, verifyVectorStoreForMigration, type VectorMigrationSnapshot } from '../vector-migration-snapshot'
 import { createCanonicalProjectManifest } from '../../../src/shared/project-format'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { randomUUID, createHash } from 'node:crypto'
 import { afterEach, describe, expect, it } from 'vitest'
 import { authorizeSyntheticProjectMigration, isAdmittedProjectMigration, migrateProjectFormat, type ProjectMigrationDependencies, type ProjectSqliteEvidence } from '../project-format-migration'
 
 const roots: string[] = []
+const supportsFileSymlinks = (() => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'migration-symlink-probe-'))
+  try {
+    const target = path.join(root, 'target.txt')
+    fs.writeFileSync(target, 'probe')
+    fs.symlinkSync(target, path.join(root, 'link.txt'), 'file')
+    return true
+  } catch {
+    return false
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})()
 function installKnownDonorAvatarColumn(db: import('better-sqlite3').Database): void {
   const row = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='characters'").get() as { sql: string }
   const marker = "      cs_location TEXT DEFAULT '',"
@@ -214,7 +228,7 @@ describe('fixture-only project physical cutover', () => {
     expect(await migrateProjectFormat(options)).toMatchObject({ code: 'PROJECT_MIGRATION_REQUIRED_ASSET_LINK' })
     expect(fs.readFileSync(path.join(outside, 'sentinel'), 'utf8')).toBe('untouched')
   })
-  it('never follows a linked legacy avatar into the scoped snapshot', async () => {
+  it.skipIf(!supportsFileSymlinks)('never follows a linked legacy avatar into the scoped snapshot', async () => {
     const options = fixture(), outside = path.join(options.fixtureRoot, 'outside-avatar')
     put(outside, 'private image bytes')
     fs.mkdirSync(path.join(options.legacy, 'avatars'))

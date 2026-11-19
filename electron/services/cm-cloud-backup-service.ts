@@ -213,9 +213,17 @@ export class CmCloudBackupService {
     return this.status(request.projectSession)
   }
 
-  async login(): Promise<{ state: 'authorized' | 'pending'; authPageUrl?: string }> {
+  /**
+   * 登录必须落在备份实际读取的那个 profile 上。
+   *
+   * configure 允许作者指定 profile，而 status/agentInfo/upload/confirm/execute
+   * 一律用 profileOf(config)；如果这里硬编码 'default'，作者一旦把 profile 设成别的值，
+   * 令牌就会写进一个没有任何命令读取的身份，登录看起来成功、备份永远 AUTH_REQUIRED。
+   */
+  async login(projectSession: CmCloudProjectSessionContext): Promise<{ state: 'authorized' | 'pending'; authPageUrl?: string }> {
+    const active = this.assertSession(projectSession)
     const cli = this.requireCli()
-    const profile = 'default'
+    const profile = profileOf(this.configStore.get(active.projectId))
     let result
     try {
       result = await cli.login(profile)

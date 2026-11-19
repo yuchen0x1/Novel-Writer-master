@@ -38,18 +38,22 @@ export const DraftSnapshotRepository = {
   record(params: { draftId: number; chapterNumber: number; source: DraftSnapshotSource; content: string; wordCount: number }, db = database()): void {
     if (params.content.length === 0) return
     const contentHash = createHash('sha256').update(params.content, 'utf8').digest('hex')
-    const latest = db.prepare('SELECT content_hash FROM draft_snapshots WHERE draft_id = ? ORDER BY snapshot_id DESC LIMIT 1')
-      .get(params.draftId) as { content_hash: string } | undefined
-    if (latest?.content_hash === contentHash) return
-    db.prepare(`
-      INSERT INTO draft_snapshots (draft_id, chapter_number, source, word_count, content_hash, content)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(params.draftId, params.chapterNumber, params.source, params.wordCount, contentHash, params.content)
-    db.prepare(`
-      DELETE FROM draft_snapshots WHERE draft_id = ? AND snapshot_id NOT IN (
-        SELECT snapshot_id FROM draft_snapshots WHERE draft_id = ? ORDER BY snapshot_id DESC LIMIT ?
-      )
-    `).run(params.draftId, params.draftId, DRAFT_SNAPSHOT_KEEP)
+    // 插入与裁剪放在同一个事务里：两条语句分开执行时，中途失败会留下超过 KEEP 的残留快照，
+    // 而且下一次 record 的「与上一份相同就跳过」判断会看到错误的最新摘要。
+    db.transaction(() => {
+      const latest = db.prepare('SELECT content_hash FROM draft_snapshots WHERE draft_id = ? ORDER BY snapshot_id DESC LIMIT 1')
+        .get(params.draftId) as { content_hash: string } | undefined
+      if (latest?.content_hash === contentHash) return
+      db.prepare(`
+        INSERT INTO draft_snapshots (draft_id, chapter_number, source, word_count, content_hash, content)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(params.draftId, params.chapterNumber, params.source, params.wordCount, contentHash, params.content)
+      db.prepare(`
+        DELETE FROM draft_snapshots WHERE draft_id = ? AND snapshot_id NOT IN (
+          SELECT snapshot_id FROM draft_snapshots WHERE draft_id = ? ORDER BY snapshot_id DESC LIMIT ?
+        )
+      `).run(params.draftId, params.draftId, DRAFT_SNAPSHOT_KEEP)
+    })()
   },
 
   listByDraft(draftId: number, limit: number): DraftSnapshotMeta[] {

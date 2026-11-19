@@ -18,6 +18,7 @@ import {
 
 type ProbeStep =
   | { kind: 'single' }
+  | { kind: 'retry' }
   | { kind: 'bounded'; contaminateOptions?: boolean }
   | { kind: 'exhaust'; commit: () => void }
 
@@ -40,6 +41,12 @@ class CompletionProbeCommand extends BaseWorkflowCommand<string> {
           { responseFormat: { type: 'json_object' } },
           params.context,
         )
+      }
+      if (step.kind === 'retry') {
+        const completion = await this.callLLMResultWithTransientRetry(
+          'retry prompt', 'system', params.callbacks, undefined, params.context,
+        )
+        return completion.content
       }
       if (step.kind === 'bounded') {
         const options = step.contaminateOptions
@@ -207,6 +214,29 @@ describe('BaseWorkflowCommand completion boundary', () => {
 
     expect(completeWithLease).toHaveBeenCalledOnce()
     expect(completeWithLease.mock.calls[0]?.[0].plan.maxOutputTokens).toBe(2048)
+  })
+
+  it('does not append a failed network attempt before retrying the successful response', async () => {
+    const completeWithLease = vi.fn<GenerationRuntimeEnvironment['completeWithLease']>()
+      .mockRejectedValueOnce(new Error('ECONNRESET'))
+      .mockResolvedValue({ content: '最终完整响应', finishReason: 'stop' })
+    const environment: GenerationRuntimeEnvironment = {
+      snapshotDefaultModelId: () => 'model-a',
+      beginModelExecution: vi.fn().mockResolvedValue(leaseReceipt()),
+      completeWithLease,
+      closeModelExecution: vi.fn().mockResolvedValue(undefined),
+    }
+    const appendText = vi.fn()
+
+    await expect(new CompletionProbeCommand(dependenciesFor(environment)).execute({
+      step: { kind: 'retry' } satisfies ProbeStep,
+      context,
+      callbacks: { ...callbacks, appendText },
+    })).resolves.toBe('最终完整响应')
+
+    expect(completeWithLease).toHaveBeenCalledTimes(2)
+    expect(appendText).toHaveBeenCalledOnce()
+    expect(appendText).toHaveBeenCalledWith('最终完整响应')
   })
 
   it('keeps a protocol-error candidate visible while rejecting it as a completed workflow result', async () => {

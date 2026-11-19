@@ -467,8 +467,16 @@ describe('Windows official in-app update E2E contract', () => {
     expect(workflow).not.toContain('path: ${{ env.AI_NOVEL_UPDATE_E2E_EVIDENCE_ROOT }}')
     expect(workflow).toContain('node scripts/windows-in-app-update-e2e.mjs run')
     expect(workflow).toContain('yuchen0x1/Novel-Writer-master')
-    expect(workflow).toContain('v0.5.2')
-    expect(workflow).toContain('v0.6.0')
+    // 默认 tag 跟当前发布版本走：版本序列每重置一次，写死字面量就会把 CI 变成红灯。
+    // expected_tag 必须正好是 package.json 当前版本，from_tag 必须是另一个已定型的版本，
+    // 否则这条 dispatch 演练会在「升级源 == 目标」时自证成功而什么都没验证。
+    const currentTag = normalizeFinalReleaseTag(
+      (JSON.parse(readFileSync(resolve(process.cwd(), 'package.json'), 'utf8')) as { version: string }).version,
+      'package version',
+    )
+    const declaredDefaults = [...workflow.matchAll(/^\s+default: (v\d+\.\d+\.\d+)$/gm)].map(match => match[1]!)
+    expect(declaredDefaults).toEqual([expect.any(String), currentTag])
+    expect(normalizeFinalReleaseTag(declaredDefaults[0]!, 'from_tag')).not.toBe(currentTag)
 
     expect(powershell).toContain('smoke-win-installer.ps1')
     expect(powershell).toContain('monitor-win-release-gate.ps1')

@@ -158,6 +158,57 @@ describe('chapter workflow guard locale', () => {
       message: expect.stringContaining('No chapter blueprints have been generated'),
     })
   })
+
+  /** 第 2 章之前的公共前置：蓝图与角色卡都存在。 */
+  function primeChapterTwoPrerequisites() {
+    vi.mocked(ipc.invokeWithProjectSession).mockImplementation((async (
+      _session: ProjectSessionContext,
+      channel: string,
+    ) => {
+      if (channel === 'db:blueprint-get-all') return [{ chapterNumber: 1 }, { chapterNumber: 2 }]
+      if (channel === 'db:character-get-all') return [{ id: 1, name: '林晓薇' }]
+      if (channel === 'db:draft-get-finalized') return { id: 7, chapterNumber: 1 }
+      if (channel === 'db:post-process-get-latest-run') {
+        return { id: 'run-1', sourceLabel: '第一章定稿', createdAt: '', updatedAt: '', allCriticalPassed: true }
+      }
+      if (channel === 'db:post-process-get-steps') return []
+      throw new Error(`Unexpected channel: ${channel}`)
+    }) as never)
+  }
+
+  it('allows chapter 2 when the previous chapter post-processing passed', async () => {
+    useLocaleStore.setState({ locale: 'en-US' })
+    primeChapterTwoPrerequisites()
+
+    await expect(guardChapterWriting(2, projectPath, projectSession)).resolves.toMatchObject({ ok: true })
+  })
+
+  it('blocks chapter 2 when the previous status cannot be read', async () => {
+    useLocaleStore.setState({ locale: 'en-US' })
+    primeChapterTwoPrerequisites()
+    const base = vi.mocked(ipc.invokeWithProjectSession).getMockImplementation()!
+    vi.mocked(ipc.invokeWithProjectSession).mockImplementation((async (...args: unknown[]) => {
+      if (args[1] === 'db:post-process-get-latest-run') throw new Error('database is locked')
+      return (base as (...inner: unknown[]) => unknown)(...args)
+    }) as never)
+
+    const result = await guardChapterWriting(2, projectPath, projectSession)
+
+    // 读不出来 ≠ 没有记录：放行会让新一章在上一章连续性数据缺失时开写。
+    expect(result).toMatchObject({ ok: false, message: expect.stringContaining('Could not read Chapter 1') })
+  })
+
+  it('still allows a legacy project whose previous chapter has no post-processing record', async () => {
+    useLocaleStore.setState({ locale: 'en-US' })
+    primeChapterTwoPrerequisites()
+    const base = vi.mocked(ipc.invokeWithProjectSession).getMockImplementation()!
+    vi.mocked(ipc.invokeWithProjectSession).mockImplementation((async (...args: unknown[]) => {
+      if (args[1] === 'db:post-process-get-latest-run') return null
+      return (base as (...inner: unknown[]) => unknown)(...args)
+    }) as never)
+
+    await expect(guardChapterWriting(2, projectPath, projectSession)).resolves.toMatchObject({ ok: true })
+  })
 })
 
 describe('character regeneration guard locale', () => {

@@ -23,7 +23,9 @@ export function resolveLocale(input?: string | null, locales: readonly string[] 
 
 export function createTranslator(catalogs: Record<Locale, Catalog>) {
   return (locale: Locale, key: string, params: MessageParams = {}): string => {
-    const template = catalogs[locale][key] ?? catalogs['en-US'][key] ?? key
+    // 持久化的 locale 可能来自旧版本或被手工改过（例如 'fr-FR'）。取目录时容错，
+    // 否则 catalogs[locale] 为 undefined，首屏翻译会直接抛 TypeError 白屏。
+    const template = catalogs[locale]?.[key] ?? catalogs['en-US'][key] ?? key
     return template.replace(/\{(\w+)\}/g, (_, name: string) => String(params[name] ?? `{${name}}`))
   }
 }

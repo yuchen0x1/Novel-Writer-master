@@ -16,6 +16,22 @@ describe('locale store', () => {
     expect(state.getState()).toMatchObject({ locale: 'zh-CN', initialized: true })
   })
 
+  it('normalizes an unsupported persisted locale instead of trusting the stored string', async () => {
+    const state = createStore(createLocaleState({
+      // 旧版本或被手工编辑过的 config.json 可能带着本应用不支持的语言标记。
+      loadConfig: async () => ({ locale: 'fr-FR' as never }),
+      saveLocale: vi.fn(async () => ({ success: true })),
+      systemLocale: () => 'zh-CN',
+      setDocumentLanguage: vi.fn(),
+    }))
+
+    await state.getState().init()
+
+    expect(state.getState().locale).toBe('zh-CN')
+    // 归一化之后翻译必须还能出真实文案，而不是抛 undefined 目录的 TypeError。
+    expect(state.getState().t('app.windowTitle')).not.toBe('app.windowTitle')
+  })
+
   it('uses the operating-system locale without persisting it on first launch', async () => {
     const saveLocale = vi.fn(async () => ({ success: true }))
     const state = createStore(createLocaleState({

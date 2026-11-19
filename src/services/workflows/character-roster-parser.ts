@@ -124,48 +124,67 @@ function matchingClose(open: string): string {
   return open === '{' ? '}' : ']'
 }
 
+/**
+ * 收集文本里的「顶层」平衡 JSON 片段。
+ *
+ * 只收不被更外层未闭合括号包住的片段。模型输出被截断时（`{"characters":[{"name":"甲"},`），
+ * 内层角色对象本身仍是合法 JSON，但它嵌在一个残缺的大结构里；把它单独取出来就会把
+ * 「解析失败」洗成「一份完整的一人名单」，让本模块的失败即安全判定失效。
+ * 顶层扫描从机制上排掉这种片段，调用方于是在无候选时回落到 fail-closed 分支。
+ * 同时这是一次线性扫描，不再对每个 '{'/'[' 起点重扫全文。
+ */
 function extractBalancedJsonCandidates(text: string): string[] {
   const candidates: string[] = []
+  const stack: string[] = []
+  let start = -1
+  let inString = false
+  let escaped = false
 
-  for (let start = 0; start < text.length; start++) {
-    const first = text[start]
-    if (first !== '{' && first !== '[') continue
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i]!
 
-    const stack: string[] = []
-    let inString = false
-    let escaped = false
-
-    for (let i = start; i < text.length; i++) {
-      const char = text[i]
-
-      if (inString) {
-        if (escaped) {
-          escaped = false
-        } else if (char === '\\') {
-          escaped = true
-        } else if (char === '"') {
-          inString = false
-        }
-        continue
-      }
-
-      if (char === '"') {
-        inString = true
-        continue
-      }
-
+    // 容器之外的一切都当散文：只在容器内部才把引号当字符串边界，
+    // 否则前言里落单的一个引号会把后面整段内容吞掉。
+    if (stack.length === 0) {
+      inString = false
+      escaped = false
       if (char === '{' || char === '[') {
+        start = i
         stack.push(matchingClose(char))
+      }
+      continue
+    }
+
+    if (inString) {
+      if (escaped) escaped = false
+      else if (char === '\\') escaped = true
+      else if (char === '"') inString = false
+      continue
+    }
+
+    if (char === '"') {
+      inString = true
+      continue
+    }
+
+    if (char === '{' || char === '[') {
+      stack.push(matchingClose(char))
+      continue
+    }
+
+    if (char === '}' || char === ']') {
+      const expected = stack.pop()
+      if (char !== expected) {
+        // 括号配不上：这个候选作废，从当前位置之后重新找，别把后半段并进同一片段。
+        stack.length = 0
+        start = -1
+        inString = false
+        escaped = false
         continue
       }
-
-      if ((char === '}' || char === ']') && stack.length > 0) {
-        const expected = stack.pop()
-        if (char !== expected) break
-        if (stack.length === 0) {
-          candidates.push(text.slice(start, i + 1))
-          break
-        }
+      if (stack.length === 0) {
+        candidates.push(text.slice(start, i + 1))
+        start = -1
       }
     }
   }

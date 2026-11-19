@@ -333,6 +333,7 @@ export interface PortableProjectRestoreReceipt {
 }
 
 export type PortableProjectOperationErrorCode =
+  | 'PROJECT_STORAGE_PATH_UNSUPPORTED'
   | 'PORTABLE_ARCHIVE_INVALID'
   | 'PORTABLE_ARCHIVE_LIMIT_EXCEEDED'
   | 'PORTABLE_ARCHIVE_SOURCE_CHANGED'
@@ -578,11 +579,13 @@ export type ModelDiscoveryResult =
   | { success: true; models: DiscoveredModel[] }
   | { success: false; errorCode: ModelDiscoveryErrorCode }
 
-/** Unsaved endpoint fields required to request a provider's model list; purposes decide which models fit. */
-export type ModelDiscoveryRequest = Pick<
+export interface ModelDiscoveryRequest extends Pick<
   ModelProfile,
   'provider' | 'protocol' | 'baseUrl' | 'apiKey' | 'purposes'
->
+> {
+  /** Existing saved profile whose secret may be resolved only in the main process. */
+  modelId?: string
+}
 
 export interface LLMChannels {
   'llm:begin-execution-lease': {
@@ -861,6 +864,9 @@ export interface TokenUsage {
 
 /** LLM wire protocols supported by the generation settings and provider layer. */
 export type ModelProtocol = 'openai' | 'openai-responses' | 'gemini'
+
+/** Renderer-visible placeholder for a credential retained by the main process. */
+export const REDACTED_MODEL_API_KEY = '••••••••'
 
 export interface ModelProfile {
   id: string

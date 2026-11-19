@@ -2,6 +2,7 @@ import { useState, useEffect, useId, useLayoutEffect, useRef } from 'react'
 import { Save, Settings2, Zap, Eye, EyeOff, ChevronDown, RotateCcw } from 'lucide-react'
 import { useLLMStore } from '../../stores/llm-store'
 import type { DiscoveredModel, ModelDiscoveryErrorCode, ModelProfile, ModelProtocol } from '../../shared/ipc-channels'
+import { REDACTED_MODEL_API_KEY } from '../../shared/ipc-channels'
 import { LOW_VRAM_EMBEDDING_OPTIONS, normalizeEmbeddingOptions } from '../../shared/embedding-options'
 import type { ModelCapabilities, ProviderPreset } from '../../shared/provider-presets'
 import { hasRequiredApiKey, isLocalModelEndpoint, parseHttpEndpoint, resolveModelProfileBudgetCapabilities } from '../../shared/provider-presets'
@@ -64,6 +65,7 @@ export function ModelForm({
 
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<{ success: boolean, error?: string } | null>(null)
+  const testResultTimer = useRef<number | undefined>(undefined)
   const testFailure = testResult && !testResult.success ? displayedErrorMessage(locale, testResult.error) : ''
   const testConnection = useLLMStore(s => s.testConnection)
   const discoverModels = useLLMStore(s => s.discoverModels)
@@ -91,6 +93,7 @@ export function ModelForm({
   useEffect(() => () => {
     discoveryRevision.current += 1
     window.clearTimeout(autoDiscoveryTimer.current)
+    window.clearTimeout(testResultTimer.current)
   }, [])
 
   const canDiscover = (config: Pick<ModelProfile, 'provider' | 'baseUrl' | 'apiKey'>) =>
@@ -202,7 +205,12 @@ export function ModelForm({
     const result = await testConnection(model)
     setTestResult(result)
     setTesting(false)
-    setTimeout(() => setTestResult(null), 3000)
+    // 记下这次结果对应的定时器：3 秒内再点一次测试时，旧定时器会把新结果提前清掉。
+    window.clearTimeout(testResultTimer.current)
+    testResultTimer.current = window.setTimeout(() => {
+      testResultTimer.current = undefined
+      setTestResult(null)
+    }, 3000)
   }
 
   const handleDiscoverModels = async () => {
@@ -223,6 +231,7 @@ export function ModelForm({
     setDiscovery(current => ({ status: 'loading', previous: shownModels(current) }))
     try {
       const result = await discoverModels({
+        ...(requestConfig.apiKey === REDACTED_MODEL_API_KEY ? { modelId: requestConfig.id } : {}),
         provider: requestConfig.provider,
         protocol: requestConfig.protocol,
         baseUrl: requestConfig.baseUrl,
@@ -333,9 +342,11 @@ export function ModelForm({
         <div className="relative">
           <Input
             type={showKey ? 'text' : 'password'}
-            value={model.apiKey}
+            value={model.apiKey === REDACTED_MODEL_API_KEY ? '' : model.apiKey}
             onChange={(e) => up('apiKey', e.target.value)}
-            placeholder={isLocalModelEndpoint(model) ? text('本地部署可留空', 'Optional for local deployment') : 'sk-...'}
+            placeholder={model.apiKey === REDACTED_MODEL_API_KEY
+              ? text('已保存 API Key；留空则保留', 'Saved API Key; leave blank to keep it')
+              : (isLocalModelEndpoint(model) ? text('本地部署可留空', 'Optional for local deployment') : 'sk-...')}
             className="pr-9"
           />
           <button

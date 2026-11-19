@@ -21,7 +21,7 @@ import { localize } from '../i18n/core'
 import { ARCH_STEP_NAMES } from './architecture-step-selection'
 import type { Locale } from '../i18n/types'
 
-import { readPostProcessStatus, getChapterFinalizeScope, getFailedStepLabels } from './workflows/workflow-utils'
+import { readPostProcessStatusStrict, getChapterFinalizeScope, getFailedStepLabels } from './workflows/workflow-utils'
 
 export interface GuardResult {
   ok: boolean
@@ -233,7 +233,20 @@ export async function guardChapterWriting(
 
     // 不变量 2 的反向约束：前一章定稿后处理必须全部通过
     const prevScope = getChapterFinalizeScope(prevChapter)
-    const prevStatus = await readPostProcessStatus(projectPath, prevScope, projectSession)
+    const prevStatusRead = await readPostProcessStatusStrict(projectPath, prevScope, projectSession)
+    if (prevStatusRead.state === 'error') {
+      // 读不出状态不等于「没有状态」：数据库忙或会话失效时放行，会让新一章在
+      // 上一章连续性数据缺失的情况下开写，正是本守卫要拦的情况。
+      return {
+        ok: false,
+        message: localize(
+          shown(),
+          `无法读取第 ${prevChapter} 章的定稿后处理状态，已暂停本章写作。\n\n请稍后重试；若持续出现，请重新打开作品后再试。`,
+          `Could not read Chapter ${prevChapter} finalization post-processing status, so drafting is paused.\n\nRetry shortly; if it keeps happening, reopen the book and try again.`,
+        ),
+      }
+    }
+    const prevStatus = prevStatusRead.state === 'ok' ? prevStatusRead.status : null
     if (prevStatus && !prevStatus.allCriticalPassed) {
       const failedLabels = getFailedStepLabels(prevStatus)
       return {
