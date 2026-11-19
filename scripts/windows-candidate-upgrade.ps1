@@ -124,6 +124,13 @@ try {
   const productVersion = process.env.JOURNEY_PRODUCT_VERSION;
   assert([expectedVersion, `${expectedVersion}.0`].includes(productVersion), `Unexpected executable product version ${productVersion}`);
   result.application = { ...actual, productVersion };
+  await page.locator('[data-shell-presentation="stage"]').waitFor({ state: 'visible', timeout: 30000 });
+  const migrationNotice = page.locator('.startup-migration-notice');
+  result.migrationNoticeDismissed = await migrationNotice.isVisible();
+  if (result.migrationNoticeDismissed) {
+    await migrationNotice.getByRole('button', { name: /^(知道了|Dismiss)$/ }).click();
+    await migrationNotice.waitFor({ state: 'hidden' });
+  }
   Object.assign(result, await verifyOrdinaryStartup(page));
   await app.close(); app = null;
   const receipt = json(path.join(canonical, '.migration/receipt.json'));
