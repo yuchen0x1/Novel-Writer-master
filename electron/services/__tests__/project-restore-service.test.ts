@@ -750,7 +750,8 @@ describe('portable project restore service', { timeout: 20_000 }, () => {
     })).rejects.toThrow('crash-before-commit')
     expect(fs.existsSync(f.targetRoot)).toBe(false)
 
-    const committed = path.join(f.base, 'committed-before-crash')
+    // Keep the success-path fixture within Windows storage preflight limits on hosted runners.
+    const committed = path.join(f.base, 'ok')
     await expect(restorePortableProject({
       archivePath: f.archive,
       targetProjectRoot: committed,

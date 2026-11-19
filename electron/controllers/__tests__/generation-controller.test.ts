@@ -734,7 +734,8 @@ describe('chapter outline command through registered main IPC and formal CAS', (
     expect(recovered.plotOutlineRecovery).toMatchObject({ draft: synopsis, writeState: { kind: 'blocked', reason: 'author-saved' }, saved: { operationId: 'author-recovery-1' } })
     expect(await commit({ sender }, { ...payload, authorRecovery: { ...payload.authorRecovery, leaseEpoch: session.leaseId } }, session.projectPath, session))
       .toMatchObject({ success: true, receipt: { idempotent: true } })
-    const archivePath = path.join(root, 'outline-author.zip'), restoredRoot = path.join(root, 'restored-author')
+    // Hosted-runner checkout paths leave little room under Windows storage preflight limits.
+    const archivePath = path.join(root, 'outline-author.zip'), restoredRoot = path.join(root, 'r')
     await exportPortableProject({ sourceProjectRoot: session.projectPath, projectSession: session, targetArchivePath: archivePath,
       attemptParentPath: root, assertCurrentContext: context => { expect(context).toEqual(session) },
       assets: { snapshot: () => ({ files: [], verifyUnchanged: () => {} }) } })
