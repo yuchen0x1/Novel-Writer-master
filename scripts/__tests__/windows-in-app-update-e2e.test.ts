@@ -467,6 +467,9 @@ describe('Windows official in-app update E2E contract', () => {
     expect(workflow).not.toContain('path: ${{ env.AI_NOVEL_UPDATE_E2E_EVIDENCE_ROOT }}')
     expect(workflow).toContain('node scripts/windows-in-app-update-e2e.mjs run')
     expect(workflow).toContain('yuchen0x1/Novel-Writer-master')
+    expect(powershell).toContain("$plan.officialRepository.owner -eq 'yuchen0x1'")
+    expect(powershell).toContain("$plan.officialRepository.repo -eq 'Novel-Writer-master'")
+    expect(powershell).not.toContain("$plan.officialRepository.repo -eq 'AI-Novel-Writer'")
     // 默认 tag 跟当前发布版本走：版本序列每重置一次，写死字面量就会把 CI 变成红灯。
     // expected_tag 必须正好是 package.json 当前版本，from_tag 必须是另一个已定型的版本，
     // 否则这条 dispatch 演练会在「升级源 == 目标」时自证成功而什么都没验证。
