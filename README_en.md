@@ -30,9 +30,10 @@
 
 ## Latest update
 
-- **Novel-Writer-master 0.0.2** (2026-11-19) is the current stable release. First launch follows the system language (Chinese or English), Settings can change it, and the macOS update dialog opens the official download page.
+- **Novel-Writer-master 0.0.3** (2026-11-19) is the current stable release. It fixes project restore, cloud backup login and character roster parsing, and hardens archives and backups under Windows path constraints.
+- First launch follows the system language (Chinese or English), Settings can change it, and the macOS update dialog opens the official download page.
 - Windows x64, macOS Apple Silicon, and macOS Intel installers and update assets are published together from the official GitHub Release.
-- See the [0.0.2 release notes](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.2) or [full update history](docs/releases/release-notes.md).
+- See the [0.0.3 release notes](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.3) or [full update history](docs/releases/release-notes.md).
 
 ### Migrating from the previous brand
 

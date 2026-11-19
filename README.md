@@ -32,9 +32,9 @@
 
 <!-- github-release:start -->
 
-**[v0.0.2](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.2)** · 2026-11-19
+**[v0.0.3](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.3)** · 2026-11-19
 
-v0.0.2 已正式发布。首次启动按系统语言选择中文或 English，可在设置中手动切换；macOS 更新提醒会打开官方下载页。Windows x64、macOS Apple Silicon 和 macOS Intel 安装包及更新资产均来自同一正式 Release。查看[更新记录](docs/releases/release-notes.md)。
+v0.0.3 已正式发布。此版本修复作品恢复、云备份登录与角色名单解析等问题，提升 Windows 路径约束下的归档与备份稳健性。首次启动按系统语言选择中文或 English，可在设置中手动切换；macOS 更新提醒会打开官方下载页。Windows x64、macOS Apple Silicon 和 macOS Intel 安装包及更新资产均来自同一正式 Release。查看[更新记录](docs/releases/release-notes.md)。
 
 [全部发行记录](https://github.com/yuchen0x1/Novel-Writer-master/releases)
 

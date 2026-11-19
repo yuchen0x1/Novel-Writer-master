@@ -4,9 +4,9 @@
 
 <https://github.com/yuchen0x1/Novel-Writer-master/releases>
 
-## 0.0.2 当前稳定版本
+## 0.0.3 当前稳定版本
 
-产品名称统一为 `Novel-Writer-master`，当前稳定版本为 `0.0.2`。首次启动按系统语言选择中文或 English；Windows x64、macOS ARM64 和 macOS Intel 安装包均已发布到同一个正式 GitHub Release。
+产品名称统一为 `Novel-Writer-master`，当前稳定版本为 `0.0.3`。此版本修复作品恢复、云备份登录与角色名单解析等问题，提升 Windows 路径约束下的归档与备份稳健性。首次启动按系统语言选择中文或 English；Windows x64、macOS ARM64 和 macOS Intel 安装包均已发布到同一个正式 GitHub Release。
 
 macOS 应用内更新提醒会打开官方下载页；Windows 正式安装版按本文的 `latest.yml` 流程检查、下载和重启安装。旧 `1.x` 客户端仍需手动安装一次 `0.0.1`，后续继续使用当前仓库的更新源。
 
