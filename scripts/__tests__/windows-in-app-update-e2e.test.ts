@@ -454,6 +454,7 @@ describe('Windows official in-app update E2E contract', () => {
     const driver = readFileSync(resolve(process.cwd(), 'scripts/windows-in-app-update-e2e-driver.mjs'), 'utf8')
 
     expect(workflow).toContain('workflow_dispatch:')
+    expect(workflow).toContain('node node_modules/electron/install.js')
     expect(workflow).not.toMatch(/^\s*(push|pull_request|schedule):/m)
     expect(workflow).toMatch(/^permissions:\r?\n {2}contents: read\r?\n\r?\n/m)
     const updateStep = workflow.slice(
