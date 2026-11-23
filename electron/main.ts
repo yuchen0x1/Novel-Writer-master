@@ -40,6 +40,7 @@ import { runGlobalDataMigration, activateGlobalData } from './services/global-da
 import { ensureVelaHome, GLOBAL_CONFIG_PATH, tryReadJsonFile } from './utils/config-utils'
 import type { StartupBlockedCode, StartupMigrationNotice } from '../src/shared/startup-contract'
 import { APP_BRAND } from '../src/shared/brand'
+import { cleanupStaleProjectSqliteSnapshots } from './services/sqlite-snapshot-cleanup'
 
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import path from 'node:path'
@@ -337,6 +338,10 @@ app.whenReady().then(async () => {
 })
 
 function prepareGlobalRuntime(): boolean {
+  const cleanedSnapshots = cleanupStaleProjectSqliteSnapshots()
+  if (cleanedSnapshots > 0) {
+    console.info(`[Novel-Writer-master] 已清理 ${cleanedSnapshots} 个过期 SQLite 读取快照。`)
+  }
   const migrated = runGlobalDataMigration({
     ...resolveGlobalDataRoots(app.getPath('userData'), () => app.getPath('appData')),
     exclusiveAccess: ownsInstanceLock,
