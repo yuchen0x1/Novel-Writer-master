@@ -1,6 +1,5 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import os from 'node:os'
 import { createHash } from 'node:crypto'
 import { createRequire } from 'node:module'
 import type BetterSqlite3 from 'better-sqlite3'
@@ -13,6 +12,7 @@ import { M03_REVIEW_CYCLE_TABLES } from '../migrations/m03-review-cycle'
 import { initializeLegacyBaselineSchema } from '../migrations/baseline-schema'
 import { ensureBaselineBlueprintTables } from '../migrations/baseline-blueprint-schema'
 import { initializeCharacterRosterMetadata } from '../repositories/character-roster-schema'
+import { SQLITE_SNAPSHOT_OWNER, sqliteSnapshotRoot } from './sqlite-snapshot-cleanup'
 
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3') as typeof import('better-sqlite3')
@@ -78,7 +78,7 @@ function physicalSnapshot(source: string) {
   const identity = sourceIdentity(source)
   // Installed apps may have a read-only working directory. Every external
   // snapshot owns its scratch directory and removes it after all handles close.
-  const base = path.join(fs.realpathSync(process.env.LOCALAPPDATA || os.tmpdir()), 'VibeCodingScratch', 'ai-novel-writer')
+  const base = sqliteSnapshotRoot()
   safeDirectory(base, true)
   fs.mkdirSync(base, { recursive: true })
   const root = fs.mkdtempSync(path.join(base, 'sqlite-read-')), file = path.join(root, 'snapshot.db')
@@ -87,7 +87,7 @@ function physicalSnapshot(source: string) {
   }
   try {
     fs.writeFileSync(path.join(root, '.vibe-owner.json'), JSON.stringify({
-      owner: 'AI-Novel-Writer SQLite snapshot', sourceProject: path.resolve('.'), createdAt: new Date().toISOString(), ttlHours: 24,
+      owner: SQLITE_SNAPSHOT_OWNER, sourceProject: path.dirname(path.resolve(source)), createdAt: new Date().toISOString(), ttlHours: 24,
       reason: 'Private physical SQLite read snapshot; rebuilt from source, never a recovery authority.',
       cleanupCommand: `Remove-Item -LiteralPath '${root.replaceAll("'", "''")}' -Recurse -Force`,
     }), { flag: 'wx' })
