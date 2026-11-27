@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import { getProjectDb } from '../database'
+import { CURRENT_DRAFT_STATUS_SQL } from '../../src/shared/draft-status'
 import {
   WRITING_STATS_DAY_WINDOW,
   type WritingStatsChapter,
@@ -134,7 +135,13 @@ export function writingStatsOverview(db: Database.Database | null = getProjectDb
       d.word_count AS wordCount, d.updated_at AS updatedAt
     FROM drafts d
     LEFT JOIN blueprints b ON b.chapter_number = d.chapter_number
-    WHERE d.version = (SELECT MAX(d2.version) FROM drafts d2 WHERE d2.chapter_number = d.chapter_number)
+    WHERE d.status IN (${CURRENT_DRAFT_STATUS_SQL})
+      AND NOT EXISTS (
+        SELECT 1 FROM drafts d2
+        WHERE d2.chapter_number = d.chapter_number
+          AND d2.status IN (${CURRENT_DRAFT_STATUS_SQL})
+          AND (d2.version > d.version OR d2.version = d.version AND d2.id > d.id)
+      )
     ORDER BY d.chapter_number
   `).all() as ChapterRow[]
 

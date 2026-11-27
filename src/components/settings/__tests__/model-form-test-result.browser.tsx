@@ -31,9 +31,9 @@ const model: ModelProfile = {
   purposes: ['generation'],
 }
 
-async function renderFailedTest(locale: Locale, error: string) {
+async function renderForm(locale: Locale, testConnection: ReturnType<typeof useLLMStore.getState>['testConnection']) {
   useLocaleStore.setState({ locale })
-  useLLMStore.setState({ testConnection: vi.fn(async () => ({ success: false, error })) })
+  useLLMStore.setState({ testConnection })
   container = document.createElement('div')
   document.body.append(container)
   root = createRoot(container)
@@ -48,6 +48,10 @@ async function renderFailedTest(locale: Locale, error: string) {
       presets={BUILTIN_PRESETS}
     />,
   ))
+}
+
+async function renderFailedTest(locale: Locale, error: string) {
+  await renderForm(locale, vi.fn(async () => ({ success: false, error })))
   await act(async () => page.getByRole('button', { name: locale === 'en-US' ? 'Test connection' : '测试连接' }).click())
 }
 
@@ -76,5 +80,21 @@ describe('model connection test result (#484)', () => {
 
     await expect.element(page.getByText('Connection failed', { exact: true })).toBeVisible()
     expect(container?.textContent).not.toMatch(/\p{Script=Han}/u)
+  })
+
+  it('shows a rejected transport error and permits retrying the connection test', async () => {
+    const testConnection = vi.fn()
+      .mockRejectedValueOnce(new Error('Connection transport interrupted'))
+      .mockResolvedValueOnce({ success: true })
+    await renderForm('en-US', testConnection)
+
+    await act(async () => page.getByRole('button', { name: 'Test connection', exact: true }).click())
+
+    await expect.element(page.getByText('Connection failed: Connection transport interrupted', { exact: true })).toBeVisible()
+    await expect.element(page.getByRole('button', { name: 'Test connection', exact: true })).toBeEnabled()
+
+    await act(async () => page.getByRole('button', { name: 'Test connection', exact: true }).click())
+    await expect.element(page.getByText('Connection succeeded', { exact: true })).toBeVisible()
+    expect(testConnection).toHaveBeenCalledTimes(2)
   })
 })

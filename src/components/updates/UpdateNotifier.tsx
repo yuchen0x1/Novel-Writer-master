@@ -4,6 +4,7 @@ import { useLocaleStore } from '../../stores/locale-store'
 import { InkDialog } from '../stage/InkDialog'
 import { Button } from '../ui/Button'
 import { plainReleaseNotes } from './release-notes'
+import { getUpdateErrorMessage } from './update-card-copy'
 import { useUpdateState } from './use-update-state'
 
 /** 本次会话里点过「稍后更新」的版本：每小时自动检查还会继续跑，但同一个版本不再反复弹窗。 */
@@ -20,7 +21,7 @@ export function UpdateNotifier() {
   const [dismissedVersion, setDismissedVersion] = useState<string>()
   const [updating, setUpdating] = useState(false)
   const version = state.availableVersion
-  const open = presentation.kind === 'available'
+  const open = (presentation.kind === 'available' || presentation.kind === 'manual-error')
     && version !== undefined
     && !state.isReminderDeferred
     && dismissedVersion !== version
@@ -36,10 +37,13 @@ export function UpdateNotifier() {
     if (!version || updating) return
     setUpdating(true)
     try {
-      if (presentation.canDownload) await model.downloadUpdate()
-      else if (presentation.canOpenRelease) await model.openRelease()
-      dismissedVersions.add(version)
-      setDismissedVersion(version)
+      const succeeded = presentation.canDownload
+        ? await model.downloadUpdate()
+        : presentation.canOpenRelease && await model.openRelease()
+      if (succeeded) {
+        dismissedVersions.add(version)
+        setDismissedVersion(version)
+      }
     } finally {
       setUpdating(false)
     }
@@ -77,6 +81,7 @@ export function UpdateNotifier() {
           'This release has no notes; see the official website for details.',
         )}
       </div>
+      {model.manualActionError && <p className="stage-dialog-error" role="alert">{getUpdateErrorMessage(model.manualActionError, text)}</p>}
     </InkDialog>
   )
 }

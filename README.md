@@ -32,9 +32,9 @@
 
 <!-- github-release:start -->
 
-**[v0.0.3](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.3)** · 2026-11-19
+**[v2.0.0](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v2.0.0)** · 2026-11-27
 
-v0.0.3 已正式发布。此版本修复作品恢复、云备份登录与角色名单解析等问题，提升 Windows 路径约束下的归档与备份稳健性。首次启动按系统语言选择中文或 English，可在设置中手动切换；macOS 更新提醒会打开官方下载页。Windows x64、macOS Apple Silicon 和 macOS Intel 安装包及更新资产均来自同一正式 Release。查看[更新记录](docs/releases/release-notes.md)。
+v2.0.0 修复项目配置保存、稿件导入与定稿、云备份和 WebDAV、自动更新、提示词编辑及 MCP 传输等问题，并加固 PDF 导出和模型凭据处理。此版本号高于旧 `1.x` 和中间 `0.0.x` 系列，正式安装版可以收到更新提示。查看[更新记录](docs/releases/release-notes.md)。
 
 [全部发行记录](https://github.com/yuchen0x1/Novel-Writer-master/releases)
 
@@ -42,7 +42,7 @@ v0.0.3 已正式发布。此版本修复作品恢复、云备份登录与角色�
 
 ### 从旧品牌迁移
 
-- **Novel-Writer-master 0.0.1** 开始使用新的版本序列。旧 `1.x` 用户请手动安装一次；后续使用新的版本序列更新。作品与设置目录继续沿用。
+- **版本序列兼容**：`2.0.0` 高于旧 `1.x` 和中间 `0.0.x` 系列，正式安装版可以通过现有更新源收到提示。作品与设置目录继续沿用。
 - 查看 [0.0.1 发布说明](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.1) 或[完整更新记录](docs/releases/release-notes.md)。
 
 ## 它能做什么
@@ -217,7 +217,7 @@ Novel-Writer-master-mac-x64-<版本号>-installer.dmg
 支持。界面有中文和英文两种，作品的写作语言也可以选中文或英文。
 
 **旧版本怎么切换到 0.0.1？**
-旧 1.x 版本号高于新版本号，请手动安装一次 0.0.1，之后按新版本序列更新。作品与设置目录继续沿用；需要转换旧项目时，在书房选择「导入旧项目副本」。导入创建新副本。
+本次以 `2.0.0` 衔接旧 `1.x` 与中间 `0.0.x` 版本序列。使用官方安装包的旧版本可以通过现有更新源发现更新；GitHub 已将旧 `yuchen0x1/Pagekin` 更新地址重定向到当前仓库。作品与设置目录继续沿用；需要转换旧项目时，在书房选择「导入旧项目副本」。导入创建新副本。
 
 **能导入 Skill 吗？比如去 AI 味。**
 可以。在设置的「写作 Skills」页选择本机的 Skill 文件夹或 SKILL.md，或填 GitHub 上的 Skill 地址，检查内容后安装，再绑定到写稿或修稿等阶段。只支持提示词型的 SKILL.md，不会安装或执行脚本。

@@ -6,12 +6,12 @@ on:
       from_tag:
         description: Official installed source release; final semantic version only (for example v0.0.2)
         required: true
-        default: v0.0.2
+        default: v0.0.3
         type: string
       expected_tag:
-        description: Current official latest release; final semantic version only (for example v0.0.3)
+        description: Current official latest release; final semantic version only (for example v2.0.0)
         required: true
-        default: v0.0.3
+        default: v2.0.0
         type: string
 
 permissions:

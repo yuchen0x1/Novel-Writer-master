@@ -6,17 +6,16 @@ on:
       from_tag:
         description: Published stable source installer tag
         required: true
-        default: v0.0.2
+        default: v0.0.3
         type: string
       candidate_tag:
         description: Stable candidate tag (draft Release is allowed)
         required: true
-        default: v0.0.3
+        default: v2.0.0
         type: string
       candidate_sha:
         description: Exact full commit SHA expected behind the candidate tag
         required: true
-        default: c92d8da7c0d4c35280540734c8f69de7e61cf2d6
         type: string
 
 permissions:

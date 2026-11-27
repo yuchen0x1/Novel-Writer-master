@@ -256,6 +256,7 @@ const ERROR_KEYS = {
   MCP_CONNECT_FAILED: 'error.mcpConnectFailed',
   MCP_REQUEST_TIMEOUT: 'error.mcpRequestTimeout',
   MCP_SERVER_NOT_CONNECTED: 'error.mcpServerNotConnected',
+  MCP_TOOL_EXECUTION_FAILED: 'error.mcpToolExecutionFailed',
   // 导入运行与导入回执（#474 B1）：导入对话框、导入运行卡片与可继续的导入列表里作者能照着处理的原因。
   // 主进程在导入通道的 IPC 边界按导入运行的语言把这些码写成说明，原码放在 errorCode。
   IMPORT_RUN_EXECUTION_STALE: 'error.importRunExecutionStale',

@@ -218,6 +218,52 @@ describe('UpdateService', () => {
     expect(updater.checkCalls).toBe(2)
   })
 
+  it('enforces the hourly limit for simultaneous automatic checks after the first succeeds', async () => {
+    const pendingCheck = deferred<UpdateCheckResult | null>()
+    const checkForUpdates = vi.fn(() => pendingCheck.promise)
+    const service = new UpdateService({
+      updater: { checkForUpdates, downloadUpdate: async () => [], quitAndInstall: () => undefined },
+      currentVersion: '0.2.5',
+      isPackaged: true,
+      preferences: createPreferencesStore(),
+      now: () => new Date('2026-07-25T09:00:00+08:00'),
+    })
+
+    const first = service.checkAutomatically()
+    const concurrent = service.checkAutomatically()
+    await vi.waitFor(() => expect(checkForUpdates).toHaveBeenCalledOnce())
+    pendingCheck.resolve({ updateInfo: { version: '0.2.6' } })
+
+    await expect(first).resolves.toMatchObject({ success: true, checked: true })
+    await expect(concurrent).resolves.toMatchObject({ success: true, checked: false, updateAvailable: true })
+    expect(checkForUpdates).toHaveBeenCalledOnce()
+  })
+
+  it('allows a queued automatic check to retry after the preceding check failed', async () => {
+    const pendingCheck = deferred<UpdateCheckResult | null>()
+    const checkForUpdates = vi.fn()
+      .mockImplementationOnce(async () => {
+        await pendingCheck.promise
+        throw new Error('offline')
+      })
+      .mockResolvedValueOnce({ updateInfo: { version: '0.2.6' } })
+    const service = new UpdateService({
+      updater: { checkForUpdates, downloadUpdate: async () => [], quitAndInstall: () => undefined },
+      currentVersion: '0.2.5',
+      isPackaged: true,
+      preferences: createPreferencesStore(),
+      now: () => new Date('2026-07-25T09:00:00+08:00'),
+    })
+
+    const first = service.checkAutomatically()
+    const concurrent = service.checkAutomatically()
+    pendingCheck.resolve(null)
+
+    await expect(first).resolves.toMatchObject({ success: false, checked: true })
+    await expect(concurrent).resolves.toMatchObject({ success: true, checked: true, updateAvailable: true })
+    expect(checkForUpdates).toHaveBeenCalledTimes(2)
+  })
+
   it('serializes automatic and manual checks without joining the manual check', async () => {
     const automaticCheck = deferred<UpdateCheckResult | null>()
     const manualCheck = deferred<UpdateCheckResult | null>()
@@ -881,6 +927,23 @@ describe('UpdateService', () => {
       lastAutomaticCheckDate: '2026-07-25',
       lastAutomaticCheckAt: new Date('2026-07-25T09:00:00+08:00').toISOString(),
     })
+  })
+
+  it('recovers automatic checks when a clock correction leaves the previous stamp in the future', async () => {
+    const updater = new FakeUpdater({ updateInfo: { version: '0.2.6' } })
+    const preferences = createPreferencesStore({ lastAutomaticCheckAt: '2027-07-25T09:00:00+08:00' })
+    const service = new UpdateService({
+      updater,
+      currentVersion: '0.2.5',
+      isPackaged: true,
+      preferences,
+      now: () => new Date('2026-07-25T09:00:00+08:00'),
+    })
+
+    await expect(service.checkAutomatically()).resolves.toMatchObject({ success: true, checked: true, updateAvailable: true })
+    await expect(service.checkAutomatically()).resolves.toMatchObject({ success: true, checked: false })
+    expect(updater.checkCalls).toBe(1)
+    expect(preferences.read().lastAutomaticCheckAt).toBe('2026-07-25T01:00:00.000Z')
   })
 
   it('reports a download-specific safe error for a manual download failure', async () => {

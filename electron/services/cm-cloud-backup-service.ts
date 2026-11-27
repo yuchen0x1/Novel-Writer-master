@@ -293,7 +293,7 @@ export class CmCloudBackupService {
       })
       const uploadStatus = envelopeStatus(upload.envelope)
       if (uploadStatus !== 'CONFIRMATION_REQUIRED') {
-        if (uploadStatus === 'SUCCESS') return await this.finishSuccess(active.projectId, request.projectSession, upload.envelope, dedicatedRoot.namePath)
+        if (uploadStatus === 'SUCCESS') return this.finishSuccess(active.projectId, upload.envelope, dedicatedRoot.namePath, runtime)
         throwForEnvelope(upload.envelope)
       }
       const refs = operationRefs(upload.envelope)
@@ -307,7 +307,7 @@ export class CmCloudBackupService {
         finalEnvelope = checked.envelope
       }
       if (envelopeStatus(finalEnvelope) !== 'SUCCESS') throwForEnvelope(finalEnvelope)
-      return await this.finishSuccess(active.projectId, request.projectSession, finalEnvelope, dedicatedRoot.namePath)
+      return this.finishSuccess(active.projectId, finalEnvelope, dedicatedRoot.namePath, runtime)
     } catch (error) {
       const failure = this.asServiceError(error)
       try {
@@ -360,17 +360,19 @@ export class CmCloudBackupService {
     this.pendingTimers.set(input.projectId, timer)
   }
 
-  private async finishSuccess(projectId: string, session: CmCloudProjectSessionContext, envelope: CmCloudEnvelope, dedicatedRootName: string | null): Promise<CmCloudBackupSuccess> {
+  private finishSuccess(projectId: string, envelope: CmCloudEnvelope, dedicatedRootName: string | null,
+    runtime: { available: boolean; pythonCommand: string | null }): CmCloudBackupSuccess {
     const backupAt = new Date().toISOString()
     const uploadedName = uploadName(envelope)
-    this.configStore.save(projectId, {
+    const config = this.configStore.save(projectId, {
       state: 'backup-complete',
       lastBackupAt: backupAt,
       lastFileName: uploadedName ?? null,
       lastErrorCode: null,
       dedicatedRootName,
     })
-    return { uploadedName, backupAt, status: await this.status(session) }
+    // The upload has committed even if the author switched projects meanwhile.
+    return { uploadedName, backupAt, status: statusFromConfig(config, runtime, true) }
   }
 
   private assertSession(session: CmCloudProjectSessionContext) {

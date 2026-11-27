@@ -1,3 +1,6 @@
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { CmCloudProjectSessionContext } from '../../../src/shared/cm-cloud'
@@ -94,5 +97,46 @@ describe('cm-cloud login binds the credential to the profile backups actually re
       state: 'pending',
       authPageUrl: 'https://cloud.example/auth',
     })
+  })
+
+  it('keeps a committed backup successful when the author switched projects during upload', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-novel-cm-cloud-completion-'))
+    let savedConfig = config('work')
+    const authStatus = vi.fn(async () => { throw new Error('AUTH_PROBE_SHOULD_NOT_RUN_AFTER_COMMIT') })
+    const service = new CmCloudBackupService({
+      cli: {
+        runtime: async () => ({ available: true, pythonCommand: 'python' }),
+        agentInfo: async () => ({ envelope: { status: 'SUCCESS', data: {
+          dedicatedRoot: { rootRef: 'backup-root', namePath: '/backups' },
+        } } }),
+        upload: async () => {
+          mocks.activeRootPath = '/tmp/project-b'
+          return { envelope: { status: 'SUCCESS', data: { fileName: 'committed.ainovel' } } }
+        },
+        authStatus,
+      } as unknown as CmCloudCli,
+      configStore: {
+        get: () => ({ ...savedConfig }),
+        save: (_projectId: string, patch: Partial<CmCloudProjectConfig>) => {
+          savedConfig = { ...savedConfig, ...patch }
+          return { ...savedConfig }
+        },
+      } as never,
+      getCurrentProjectPath: () => mocks.activeRootPath,
+      getGlobalDataRoot: () => root,
+      exportPortableProject: async () => ({} as never),
+    })
+    try {
+      await expect(service.backup({ projectSession, manual: true })).resolves.toMatchObject({
+        uploadedName: 'committed.ainovel',
+        status: { state: 'backup-complete', authenticated: true },
+      })
+      expect(savedConfig.state).toBe('backup-complete')
+      expect(savedConfig.lastErrorCode).toBeNull()
+      expect(authStatus).not.toHaveBeenCalled()
+    } finally {
+      mocks.activeRootPath = projectSession.projectPath
+      fs.rmSync(root, { recursive: true, force: true })
+    }
   })
 })

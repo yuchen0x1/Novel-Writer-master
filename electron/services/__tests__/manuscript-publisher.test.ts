@@ -1,9 +1,9 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { publishManuscript, resolveManuscriptTarget } from '../manuscript-publisher'
+import { publishManuscript, resolveManuscriptTarget, serializeManuscript } from '../manuscript-publisher'
 
 const roots: string[] = []
 
@@ -66,5 +66,38 @@ describe('manuscript publisher target seam', () => {
     await expect(publishManuscript({ projectRoot, targetFileName: '../escape.txt', chapterNumber: 3, chapterTitle: '雨夜', content: '定稿正文' }))
       .rejects.toThrow(/^MANUSCRIPT_STORED_TARGET_INVALID$/u)
     expect(fs.readFileSync(path.join(projectRoot, '第3章 雨夜.txt'), 'utf8')).toBe('作者在应用外改过的正文')
+  })
+
+  it('preserves a manuscript created after the initial target check', async () => {
+    const projectRoot = makeRoot()
+    const targetFileName = '第4章 夜航.txt'
+    const target = path.join(projectRoot, targetFileName)
+    const originalLink = fs.linkSync.bind(fs)
+    const link = vi.spyOn(fs, 'linkSync').mockImplementation((source, destination) => {
+      fs.writeFileSync(target, 'external edit won the race', { flag: 'wx' })
+      originalLink(source, destination)
+    })
+    try {
+      await expect(publishManuscript({ projectRoot, targetFileName, chapterNumber: 4,
+        chapterTitle: '夜航', content: 'finalized draft' })).rejects.toThrow('MANUSCRIPT_TARGET_CONFLICT')
+      expect(fs.readFileSync(target, 'utf8')).toBe('external edit won the race')
+      expect(fs.readdirSync(projectRoot)).toEqual([targetFileName])
+    } finally { link.mockRestore() }
+  })
+
+  it('keeps publication idempotent when another publisher installs identical content first', async () => {
+    const projectRoot = makeRoot()
+    const input = { projectRoot, targetFileName: '第5章 晨光.txt', chapterNumber: 5,
+      chapterTitle: '晨光', content: 'finalized draft' }
+    const originalLink = fs.linkSync.bind(fs)
+    const link = vi.spyOn(fs, 'linkSync').mockImplementation((source, destination) => {
+      fs.writeFileSync(destination, serializeManuscript(input), { flag: 'wx' })
+      originalLink(source, destination)
+    })
+    try {
+      await expect(publishManuscript(input)).resolves.toBeUndefined()
+      expect(fs.readFileSync(path.join(projectRoot, input.targetFileName), 'utf8')).toBe(serializeManuscript(input))
+      expect(fs.readdirSync(projectRoot)).toEqual([input.targetFileName])
+    } finally { link.mockRestore() }
   })
 })

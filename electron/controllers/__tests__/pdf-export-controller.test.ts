@@ -1,11 +1,21 @@
-import { describe, expect, it, vi } from 'vitest'
+import fs from 'node:fs/promises'
+import { pathToFileURL } from 'node:url'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('electron', () => ({
-  ipcMain: { handle: vi.fn() },
+const printHarness = vi.hoisted(() => ({
+  fromPartition: vi.fn(),
   BrowserWindow: vi.fn(),
 }))
 
-import { registerPdfExportController } from '../pdf-export-controller'
+vi.mock('electron', () => ({
+  ipcMain: { handle: vi.fn() },
+  BrowserWindow: printHarness.BrowserWindow,
+  session: { fromPartition: printHarness.fromPartition },
+}))
+
+import { registerPdfExportController, renderHtmlToPdf } from '../pdf-export-controller'
+
+afterEach(() => vi.restoreAllMocks())
 
 function register(options: Parameters<typeof registerPdfExportController>[0] = {}) {
   const handlers = new Map<string, (event: unknown, ...args: unknown[]) => Promise<unknown>>()
@@ -51,5 +61,55 @@ describe('PDF 导出控制器', () => {
 
     await expect(run({}, '<html></html>')).resolves.toEqual({ success: false, error: 'PDF_RENDER_FAILED' })
     consoleError.mockRestore()
+  })
+
+  it('uses an isolated print session that blocks every resource except the generated main document', async () => {
+    let request: (details: { url: string; resourceType: string }, callback: (result: { cancel: boolean }) => void) => void
+    let loadedFile = ''
+    const isolatedSession = {
+      webRequest: { onBeforeRequest: vi.fn(handler => { request = handler }) },
+      setPermissionRequestHandler: vi.fn(),
+      setPermissionCheckHandler: vi.fn(),
+    }
+    const window = {
+      webContents: { printToPDF: vi.fn(async () => Buffer.from('%PDF')), setWindowOpenHandler: vi.fn() },
+      loadFile: vi.fn(async (file: string) => { loadedFile = file }),
+      isDestroyed: () => false,
+      destroy: vi.fn(),
+    }
+    printHarness.fromPartition.mockReturnValue(isolatedSession)
+    printHarness.BrowserWindow.mockImplementation(function () { return window })
+
+    await expect(renderHtmlToPdf('<html><img src="https://example.com/private"></html>')).resolves.toEqual(Buffer.from('%PDF'))
+    expect(printHarness.fromPartition).toHaveBeenCalledWith(expect.stringMatching(/^ai-novel-print-/), { cache: false })
+    expect(printHarness.BrowserWindow).toHaveBeenCalledWith(expect.objectContaining({
+      webPreferences: expect.objectContaining({ session: isolatedSession, javascript: false, sandbox: true }),
+    }))
+    const allowed = vi.fn()
+    request!({ url: pathToFileURL(loadedFile).href, resourceType: 'mainFrame' }, allowed)
+    expect(allowed).toHaveBeenCalledWith({ cancel: false })
+    for (const details of [
+      { url: 'https://example.com/private', resourceType: 'image' },
+      { url: 'file:///C:/private/file.txt', resourceType: 'subFrame' },
+      { url: 'https://example.com/redirect', resourceType: 'mainFrame' },
+      { url: pathToFileURL(loadedFile).href, resourceType: 'subFrame' },
+    ]) {
+      const blocked = vi.fn()
+      request!(details, blocked)
+      expect(blocked).toHaveBeenCalledWith({ cancel: true })
+    }
+    expect(window.destroy).toHaveBeenCalledOnce()
+    await expect(fs.access(loadedFile)).rejects.toThrow()
+  })
+
+  it('cleans the temporary directory even when constructing the print window fails', async () => {
+    const root = await fs.mkdtemp((await import('node:path')).join((await import('node:os')).tmpdir(), 'pdf-window-test-'))
+    const remove = vi.spyOn(fs, 'rm')
+    const create = vi.spyOn(fs, 'mkdtemp').mockResolvedValueOnce(root)
+    printHarness.BrowserWindow.mockImplementation(function () { throw new Error('window unavailable') })
+    await expect(renderHtmlToPdf('<html></html>')).rejects.toThrow('window unavailable')
+    expect(create).toHaveBeenCalledOnce()
+    expect(remove).toHaveBeenCalledWith(root, { recursive: true, force: true })
+    await expect(fs.access(root)).rejects.toThrow()
   })
 })

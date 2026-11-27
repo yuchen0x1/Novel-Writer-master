@@ -15,6 +15,7 @@ import {
 import type { DraftStatus } from '../shared/draft-status'
 import type { AllInvokeChannels, ProjectSessionContext } from '../shared/ipc-channels'
 import {
+  projectPathKey,
   projectSessionContextFromProject,
   sameProjectPathKey,
   sameProjectSessionContext,
@@ -26,8 +27,12 @@ import { useEditorStore } from './editor-store'
 import { useLocaleStore } from './locale-store'
 
 let loadAllDraftsRequestSequence = 0
-/** 同一项目的全量草稿读取在途时，后来的调用直接搭车：打开作品期间 project-store 与流程脊各触发一次，不再重复跑同一条 IPC。 */
-const loadAllDraftsInFlight = new Map<string, Promise<void>>()
+/** 只合并当前会话、当前读取代次的请求；重开同一路径后不能搭上已作废的旧请求。 */
+const loadAllDraftsInFlight = new Map<string, {
+  projectSession: ProjectSessionContext
+  requestSequence: number
+  execution: Promise<void>
+}>()
 
 function currentDraftProjectSession(
   expectedProjectPath?: string,
@@ -265,14 +270,21 @@ export const useDraftStore = create<DraftState>()((set, get) => {
     const projectSession = currentDraftProjectSession(expectedProjectPath, expectedProjectSession)
     if (!project || !projectSession) return
     const projectPath = expectedProjectPath ?? project.path
-    const inFlight = loadAllDraftsInFlight.get(projectPath)
-    if (inFlight) return inFlight
+    const flightKey = projectPathKey(projectPath) ?? projectPath
+    const inFlight = loadAllDraftsInFlight.get(flightKey)
+    if (inFlight
+      && inFlight.requestSequence === loadAllDraftsRequestSequence
+      && sameProjectSessionContext(inFlight.projectSession, projectSession)) return inFlight.execution
     const execution = loadAllDraftsOnce(projectPath, projectSession)
-    loadAllDraftsInFlight.set(projectPath, execution)
+    loadAllDraftsInFlight.set(flightKey, {
+      projectSession,
+      requestSequence: loadAllDraftsRequestSequence,
+      execution,
+    })
     try {
       await execution
     } finally {
-      if (loadAllDraftsInFlight.get(projectPath) === execution) loadAllDraftsInFlight.delete(projectPath)
+      if (loadAllDraftsInFlight.get(flightKey)?.execution === execution) loadAllDraftsInFlight.delete(flightKey)
     }
   },
 

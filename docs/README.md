@@ -1,6 +1,6 @@
 # 项目文档导航
 
-本目录保存用户说明、领域规则、架构决定和开发证据。当前桌面版本为 `0.0.3`，是名称与版本序列重置后的稳定性维护版本。插件独立发布，不使用桌面版本号。
+本目录保存用户说明、领域规则、架构决定和开发证据。当前桌面版本为 `2.0.0`，此版本号用于衔接旧 `1.x` 与中间 `0.0.x` 安装版的应用内更新。插件独立发布，不使用桌面版本号。
 
 ## 先找到需要的文档
 
@@ -8,7 +8,7 @@
 
 - [English user guide](../README_en.md) covers the same desktop behavior in English.
 
-- [当前更新说明](releases/release-notes.md)列出用户可见变化，[0.0.3 发布核验](releases/v0.0.3-verification.md)记录当前正式 Release 的公开资产和 CI 证据，[0.0.2 发布核验](releases/v0.0.2-verification.md)与[0.0.1 发布验证](releases/v0.0.1-verification.md)保留历史安装包检查。精确发布资产以对应 Release 为准。
+- [当前更新说明](releases/release-notes.md)列出用户可见变化；[0.0.3 发布核验](releases/v0.0.3-verification.md)、[0.0.2 发布核验](releases/v0.0.2-verification.md)与[0.0.1 发布验证](releases/v0.0.1-verification.md)保留已完成的历史安装包检查。精确发布资产以对应 Release 为准。
 
 - [平台与维护范围](platforms.md)列出桌面及候选平台，[桌面发布维护](RELEASE_MAINTENANCE.md)记录 CI、资格构建和发布流程。
 

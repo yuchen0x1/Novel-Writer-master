@@ -24,6 +24,7 @@ import urllib.parse
 import uuid
 from dataclasses import dataclass
 
+from idaas_protocol_signatures import validate_request_signature
 from cmcloud_core import result as result_module
 from cmcloud_auth import idaas_profile, qr_image
 
@@ -575,9 +576,7 @@ def _query_scope_ids_via_validate(sdk, auth_profile, *, credit_token=None):
         return None
     trace_id = current_trace_id() or new_trace_id()
     timestamp = _validate_timestamp()
-    sign = hashlib.md5(
-        (client_id + interface_version + timestamp + trace_id).encode("utf-8")
-    ).hexdigest()
+    sign = validate_request_signature(client_id, interface_version, timestamp, trace_id)
     headers = {
         "clientId": client_id,
         "timestamp": timestamp,

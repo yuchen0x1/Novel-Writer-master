@@ -6,7 +6,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { Readable } from 'node:stream'
 
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   WebDavBackupService,
@@ -411,6 +411,45 @@ describe('WebDavBackupService', () => {
     dav.files.set(remoteArchive, Buffer.concat([original, Buffer.from('extra')]))
     await expect(new WebDavBackupService().listGenerations({ account: account(dav), cloudBookId: BOOK }))
       .resolves.toEqual([])
+  })
+
+  it('finishes every local write before publishing a downloaded archive', async () => {
+    const dav = new DavFixture(); await dav.listen()
+    const source = workspace()
+    await appender(dav, GEN_A, source.archive)
+    const originalOpen = fs.promises.open.bind(fs.promises)
+    const open = vi.spyOn(fs.promises, 'open').mockImplementation(async (...args) => {
+      const handle = await originalOpen(...args)
+      const originalWrite = handle.write.bind(handle)
+      handle.write = (async (buffer: Buffer, offset = 0, length = buffer.length) =>
+        originalWrite(buffer, offset, Math.min(length, 2))) as typeof handle.write
+      return handle
+    })
+    try {
+      await expect(new WebDavBackupService().downloadGeneration({
+        account: account(dav), cloudBookId: BOOK, generationId: GEN_A, targetArchivePath: source.target,
+      })).resolves.toMatchObject({ archiveByteSize: source.bytes.length })
+      expect(fs.readFileSync(source.target)).toEqual(source.bytes)
+    } finally { open.mockRestore() }
+  })
+
+  it('rejects a local write that makes no progress and leaves no downloaded target', async () => {
+    const dav = new DavFixture(); await dav.listen()
+    const source = workspace()
+    await appender(dav, GEN_A, source.archive)
+    const originalOpen = fs.promises.open.bind(fs.promises)
+    const open = vi.spyOn(fs.promises, 'open').mockImplementation(async (...args) => {
+      const handle = await originalOpen(...args)
+      handle.write = (async (buffer: Buffer) => ({ bytesWritten: 0, buffer })) as typeof handle.write
+      return handle
+    })
+    try {
+      await expect(new WebDavBackupService().downloadGeneration({
+        account: account(dav), cloudBookId: BOOK, generationId: GEN_A, targetArchivePath: source.target,
+      })).rejects.toThrow('WEBDAV_PUBLISH_FAILED')
+      expect(fs.existsSync(source.target)).toBe(false)
+      expect(fs.readdirSync(source.root).some(name => name.includes('.webdav-download-'))).toBe(false)
+    } finally { open.mockRestore() }
   })
 
   it('rejects redirects without forwarding Authorization to another origin', async () => {

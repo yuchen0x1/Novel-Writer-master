@@ -262,23 +262,26 @@ export class UpdateService {
       return this.response({ success: true, checked: false, updateAvailable: true })
     }
 
-    const now = this.now()
-    const today = localCalendarDate(now)
-    const preferences = this.readPreferences()
-    // 无法读取或保存检查时间时，不自动联网，避免每次重启都绕过“每小时一次”的上限。
-    if (!preferences) return this.response({ success: false, checked: false })
-    const lastAutomaticCheckAt = preferences.lastAutomaticCheckAt
-      ? Date.parse(preferences.lastAutomaticCheckAt)
-      : Number.NaN
-    if (Number.isFinite(lastAutomaticCheckAt)
-      && now.getTime() - lastAutomaticCheckAt < AUTOMATIC_CHECK_INTERVAL_MS) {
-      return this.response({ success: true, checked: false })
-    }
-
-    if (!this.writePreferences(preferences)) {
-      return this.response({ success: false, checked: false })
-    }
     return this.enqueueCheck(async () => {
+      // The preceding queued automatic check may have just persisted its stamp.
+      // Read and enforce the limit inside the same serialized operation.
+      const now = this.now()
+      const today = localCalendarDate(now)
+      const preferences = this.readPreferences()
+      // 无法读取或保存检查时间时，不自动联网，避免每次重启都绕过“每小时一次”的上限。
+      if (!preferences) return this.response({ success: false, checked: false })
+      const lastAutomaticCheckAt = preferences.lastAutomaticCheckAt
+        ? Date.parse(preferences.lastAutomaticCheckAt)
+        : Number.NaN
+      const elapsed = now.getTime() - lastAutomaticCheckAt
+      if (Number.isFinite(lastAutomaticCheckAt)
+        && elapsed >= 0 && elapsed < AUTOMATIC_CHECK_INTERVAL_MS) {
+        return this.response({ success: true, checked: false })
+      }
+
+      if (!this.writePreferences(preferences)) {
+        return this.response({ success: false, checked: false })
+      }
       const result = await this.performCheck('automatic', now)
       if (result.success && result.checked) {
         this.writePreferences({

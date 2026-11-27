@@ -21,7 +21,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  source:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require the trusted default-branch source
+        shell: bash
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          TRUSTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/$DEFAULT_BRANCH"
+          test "$EXPECTED_SHA" = "$TRUSTED_SHA"
+
   build:
+    needs: source
     if: inputs.qualified_run == ''
     strategy:
       fail-fast: false
@@ -38,15 +53,15 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: ${{ inputs.expected_sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
         with:
           version: 11.11.0
+      # Keep this one-off release builder cache-free across dispatch refs.
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 24.20.0
-          cache: pnpm
       - name: Verify frozen initial version
         shell: bash
         env:
@@ -127,8 +142,8 @@ jobs:
           path: release/0.0.1/qualification/
 
   publish:
-    needs: build
-    if: ${{ always() && (needs.build.result == 'success' || inputs.qualified_run != '') }}
+    needs: [source, build]
+    if: ${{ always() && needs.source.result == 'success' && (needs.build.result == 'success' || inputs.qualified_run != '') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -136,7 +151,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: ${{ inputs.expected_sha }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - name: Verify the source and all reused platform jobs
         if: inputs.qualified_run != ''

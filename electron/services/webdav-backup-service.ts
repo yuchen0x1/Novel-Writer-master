@@ -452,7 +452,14 @@ export class WebDavBackupService {
           written += chunk.length
           if (written > manifest.archive.byteSize || written > this.maxArchiveBytes) fail('WEBDAV_REMOTE_INVALID')
           digest.update(chunk)
-          await handle.write(chunk)
+          let offset = 0
+          while (offset < chunk.length) {
+            const remaining = chunk.length - offset
+            const result = await handle.write(chunk, offset, remaining)
+            if (!Number.isSafeInteger(result.bytesWritten) || result.bytesWritten <= 0
+              || result.bytesWritten > remaining) fail('WEBDAV_PUBLISH_FAILED')
+            offset += result.bytesWritten
+          }
         }
       } catch (error) {
         if (input.signal?.aborted) fail('WEBDAV_CANCELLED')

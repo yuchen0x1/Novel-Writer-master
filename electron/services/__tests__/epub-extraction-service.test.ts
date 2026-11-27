@@ -83,6 +83,35 @@ describe('EPUB chapter extraction', () => {
     ])
   })
 
+  it('extracts plain text with an HTML parser and never decodes escaped markup twice', async () => {
+    const archive = simpleBook({
+      'chapter.xhtml': `<html><head><title>Fallback &amp; title</title></head><body>
+        <!-- ignored comment -->
+        <h1>Parsed &amp; title</h1>
+        <script data-value=">">hiddenScript()</script >
+        <style>hiddenStyle{display:none}</style >
+        <p>Visible &amp;lt;script&amp;gt;text&amp;lt;/script&amp;gt;.</p>
+      </body></html>`,
+    })
+
+    await expect(extractEpubChapters(archive)).resolves.toEqual([
+      { title: 'Parsed & title', content: 'Parsed & title\n\nVisible &lt;script&gt;text&lt;/script&gt;.' },
+    ])
+  })
+
+  it('uses the document title when no visible heading exists and suppresses hidden title markup', async () => {
+    const archive = simpleBook({
+      'chapter.xhtml': `<html><head><script><h1>hidden heading</h1></script>
+        <title>Book &amp; title</title></head><body>
+        <p>First<br/>second</p><script>doNotImport()</script ><style>hidden</style>
+      </body></html>`,
+    })
+
+    await expect(extractEpubChapters(archive)).resolves.toEqual([
+      { title: 'Book & title', content: 'First\nsecond' },
+    ])
+  })
+
   it('allows an encryption.xml that declares only standard font obfuscation', async () => {
     const archive = storedZip({
       'META-INF/container.xml': '<container><rootfiles><rootfile full-path="OPS/book.opf"/></rootfiles></container>',

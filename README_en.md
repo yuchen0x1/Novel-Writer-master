@@ -30,14 +30,14 @@
 
 ## Latest update
 
-- **Novel-Writer-master 0.0.3** (2026-11-19) is the current stable release. It fixes project restore, cloud backup login and character roster parsing, and hardens archives and backups under Windows path constraints.
-- First launch follows the system language (Chinese or English), Settings can change it, and the macOS update dialog opens the official download page.
-- Windows x64, macOS Apple Silicon, and macOS Intel installers and update assets are published together from the official GitHub Release.
-- See the [0.0.3 release notes](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.3) or [full update history](docs/releases/release-notes.md).
+- **Novel-Writer-master 2.0.0** (2026-11-27) is the current stable release. It fixes project settings, manuscript import and finalization, cloud backup, WebDAV, update checks, prompt editing, and MCP transport, and hardens PDF export and model credential handling.
+- Its version is higher than both the previous `1.x` and interim `0.0.x` series, so official installed versions can detect this update.
+- Windows x64, macOS Apple Silicon, and macOS Intel installers are published together from the official GitHub Release.
+- See the [2.0.0 release notes](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v2.0.0) or [full update history](docs/releases/release-notes.md).
 
 ### Migrating from the previous brand
 
-- **Novel-Writer-master 0.0.1** started the new version sequence. Users of the previous `1.x` series should install 0.0.1 manually once; later updates follow the new sequence. Existing books and settings keep their storage locations.
+- **Version sequence compatibility**: `2.0.0` is higher than the previous `1.x` and interim `0.0.x` series, so official installed clients can detect this update. Existing books and settings keep their storage locations.
 - See the [0.0.1 release notes](https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.1) for the migration details.
 
 ## What it does
@@ -212,7 +212,7 @@ You set the total number of chapters, with no fixed limit. For each chapter, AI 
 Yes. The interface is available in Chinese and English, and each book's writing language can be Chinese or English.
 
 **How do I switch from a previous version to 0.0.1?**
-Install 0.0.1 manually once when switching from the previous 1.x series. Later releases use the new update sequence. Existing books and settings keep their storage locations. Use Import legacy project copy for older project formats.
+Version `2.0.0` bridges the previous `1.x` and interim `0.0.x` sequences. Official installs can detect this update through their existing update source; GitHub redirects the old `yuchen0x1/Pagekin` update URL to this repository. Existing books and settings keep their storage locations. Use Import legacy project copy for older project formats.
 
 **Can I import skills, such as one that removes the AI tone?**
 Yes. On the "Writing skills" settings page, choose a local skill folder or SKILL.md, or enter the skill's GitHub address, review its content, install it, and bind it to a stage such as drafting or revision. Only prompt-only SKILL.md files are supported; no scripts are installed or run.

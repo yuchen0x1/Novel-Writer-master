@@ -63,8 +63,8 @@ describe('release metadata', () => {
       'not notarized',
     ]) expect(notes).toContain(expected)
 
-    expect(chineseReadme).toContain('**Novel-Writer-master 0.0.1**')
-    expect(englishReadme).toContain('**Novel-Writer-master 0.0.1**')
+    expect(chineseReadme).toContain('`2.0.0` 高于旧 `1.x`')
+    expect(englishReadme).toContain('`2.0.0` is higher than the previous `1.x`')
     for (const readme of [chineseReadme, englishReadme]) {
       expect(readme).toContain('https://github.com/yuchen0x1/Novel-Writer-master/releases/tag/v0.0.1)')
     }

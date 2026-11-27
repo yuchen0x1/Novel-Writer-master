@@ -96,8 +96,8 @@ export function serializeManuscript(input: Omit<PublishManuscriptInput, 'project
 }
 
 /**
- * 临时文件写入后在同一目录原位 rename。若重试时发现同内容目标已存在，视为
- * 上次 rename 成功但状态回写中断，保持幂等；不同内容则永不覆盖。
+ * 临时文件写入后在同一目录独占发布。若重试时发现同内容目标已存在，视为
+ * 上次发布成功但状态回写中断，保持幂等；不同内容则永不覆盖。
  */
 export async function publishManuscript(input: PublishManuscriptInput): Promise<void> {
   const target = resolveStoredManuscriptTarget(input.projectRoot, input.targetFileName)
@@ -114,7 +114,15 @@ export async function publishManuscript(input: PublishManuscriptInput): Promise<
   )
   try {
     fs.writeFileSync(temporary.absolutePath, serialized, { encoding: 'utf8', flag: 'wx' })
-    fs.renameSync(temporary.absolutePath, target.absolutePath)
+    try {
+      // A rename can replace a file created after the existence check.
+      fs.linkSync(temporary.absolutePath, target.absolutePath)
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+      if (fs.readFileSync(target.absolutePath, 'utf8') !== serialized) {
+        throw new Error('MANUSCRIPT_TARGET_CONFLICT')
+      }
+    }
   } finally {
     if (fs.existsSync(temporary.absolutePath)) {
       fs.unlinkSync(temporary.absolutePath)

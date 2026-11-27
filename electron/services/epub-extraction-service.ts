@@ -1,5 +1,6 @@
 import path from 'node:path'
 import type { Readable } from 'node:stream'
+import { parse } from 'parse5'
 import * as yauzl from 'yauzl'
 
 export const EPUB_MAX_ARCHIVE_ENTRIES = 10_000
@@ -62,6 +63,19 @@ interface EncryptedResource {
   algorithm: string
   archivePath: string
 }
+
+interface HtmlNode {
+  nodeName: string
+  tagName?: string
+  value?: string
+  childNodes?: HtmlNode[]
+}
+
+const BLOCK_HTML_TAGS = new Set([
+  'address', 'article', 'aside', 'blockquote', 'div', 'h1', 'h2', 'h3', 'h4',
+  'h5', 'h6', 'header', 'li', 'main', 'nav', 'ol', 'p', 'pre', 'section',
+  'table', 'tr', 'ul',
+])
 
 function invalidArchive(): never {
   throw new EpubExtractionError('EPUB_INVALID_ARCHIVE')
@@ -164,13 +178,42 @@ function assertSupportedEncryption(
   }
 }
 
-function htmlToText(html: string): string {
-  return decodeEntities(html
-    .replace(/<!--[\s\S]*?-->/gu, '')
-    .replace(/<(?:script|style)\b[^>]*>[\s\S]*?<\/(?:script|style)>/giu, '')
-    .replace(/<br\s*\/?>/giu, '\n')
-    .replace(/<\/?(?:address|article|aside|blockquote|div|h[1-6]|header|li|main|nav|ol|p|pre|section|table|tr|ul)\b[^>]*>/giu, '\n\n')
-    .replace(/<[^>]+>/gu, ''))
+function htmlToText(node: HtmlNode): string {
+  if (node.nodeName === '#text') return node.value ?? ''
+  const tag = node.tagName?.toLowerCase()
+  if (tag === 'script' || tag === 'style' || tag === 'template') return ''
+  if (tag === 'br') return '\n'
+
+  const text = (node.childNodes ?? []).map(htmlToText).join('')
+  return tag && BLOCK_HTML_TAGS.has(tag) ? `\n\n${text}\n\n` : text
+}
+
+function findHtmlElement(
+  node: HtmlNode,
+  predicate: (tag: string) => boolean,
+): HtmlNode | undefined {
+  const tag = node.tagName?.toLowerCase()
+  if (tag && (tag === 'script' || tag === 'style' || tag === 'template')) return undefined
+  if (tag && predicate(tag)) return node
+  for (const child of node.childNodes ?? []) {
+    const match = findHtmlElement(child, predicate)
+    if (match) return match
+  }
+  return undefined
+}
+
+function extractBody(document: HtmlNode): HtmlNode {
+  return findHtmlElement(document, tag => tag === 'body') ?? document
+}
+
+function extractDocumentTitle(document: HtmlNode, fallback: string): string {
+  const heading = findHtmlElement(document, tag => /^h[1-6]$/u.test(tag))
+  const title = heading ?? findHtmlElement(document, tag => tag === 'title')
+  return (title ? htmlToText(title) : '').replace(/\s+/gu, ' ').trim() || fallback
+}
+
+function normalizedHtmlText(node: HtmlNode): string {
+  return htmlToText(node)
     .replace(/\r\n?/gu, '\n')
     .split('\n')
     .map(line => line.replace(/[\t ]+/gu, ' ').trim())
@@ -178,17 +221,6 @@ function htmlToText(html: string): string {
     .join('\n')
     .replace(/\n{3,}/gu, '\n\n')
     .trim()
-}
-
-function extractBody(document: string): string {
-  return /<(?:[\w-]+:)?body\b[^>]*>([\s\S]*?)<\/(?:[\w-]+:)?body>/iu.exec(document)?.[1]
-    ?? document
-}
-
-function extractDocumentTitle(document: string, fallback: string): string {
-  const heading = /<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/iu.exec(document)?.[1]
-  const title = /<(?:[\w-]+:)?title\b[^>]*>([\s\S]*?)<\/(?:[\w-]+:)?title>/iu.exec(document)?.[1]
-  return htmlToText(heading ?? title ?? '') || fallback
 }
 
 function openArchive(buffer: Buffer): Promise<yauzl.ZipFile> {
@@ -336,10 +368,11 @@ export async function extractEpubChapters(
       const documentEntry = entries.get(documentPath)
       if (!documentEntry) invalidArchive()
       const document = await readEntry(zip, documentEntry, limits, consumed)
-      const body = htmlToText(extractBody(document))
+      const parsedDocument = parse(document) as unknown as HtmlNode
+      const body = normalizedHtmlText(extractBody(parsedDocument))
       if (!body) continue
       chapters.push({
-        title: extractDocumentTitle(document, path.posix.basename(documentPath, path.posix.extname(documentPath))),
+        title: extractDocumentTitle(parsedDocument, path.posix.basename(documentPath, path.posix.extname(documentPath))),
         content: body,
       })
     }

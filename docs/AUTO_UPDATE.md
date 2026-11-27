@@ -4,11 +4,11 @@
 
 <https://github.com/yuchen0x1/Novel-Writer-master/releases>
 
-## 0.0.3 当前稳定版本
+## 2.0.0 当前稳定版本
 
-产品名称统一为 `Novel-Writer-master`，当前稳定版本为 `0.0.3`。此版本修复作品恢复、云备份登录与角色名单解析等问题，提升 Windows 路径约束下的归档与备份稳健性。首次启动按系统语言选择中文或 English；Windows x64、macOS ARM64 和 macOS Intel 安装包均已发布到同一个正式 GitHub Release。
+产品名称统一为 `Novel-Writer-master`，当前稳定版本为 `2.0.0`。此版本修复项目配置保存、稿件导入与定稿发布、云备份和 WebDAV、更新检查、提示词编辑、MCP 传输及安全文件处理等问题，并加固 PDF 导出隔离和模型凭据保存。
 
-macOS 应用内更新提醒会打开官方下载页；Windows 正式安装版按本文的 `latest.yml` 流程检查、下载和重启安装。旧 `1.x` 客户端仍需手动安装一次 `0.0.1`，后续继续使用当前仓库的更新源。
+`2.0.0` 是版本序列兼容桥接版本，语义版本高于旧 `1.x` 与中间 `0.0.x` 安装版；它们可通过现有 GitHub 更新源收到更新提示。旧 `1.x` 包使用的 `yuchen0x1/Pagekin` 更新地址由 GitHub 重定向到当前仓库。Windows 正式安装版按本文的 `latest.yml` 流程检查、下载和重启安装；macOS 应用内提醒打开官方下载页，由用户手动安装。
 
 ## 0.0.1 迁移背景
 
@@ -66,7 +66,7 @@ Beta / Dev 渠道目前没有客户端配置和发布清单，不能把带 `-bet
 
 正式发布默认需要人工启动和确认，避免普通提交意外创建 Release。所有资格构建必须来自同一个冻结的 `main` 提交 SHA。
 
-1. 在 `main` 上更新 `package.json` 版本、`CHANGELOG.md` 和 `.release/notes/`，提交并推送。
+1. 在 `main` 上更新 `package.json` 版本、`CHANGELOG.md`、README、更新指南和 `.release/notes/`，提交并推送。
 2. 手动运行以下资格工作流，输入同一个完整提交 SHA、`v<version>` 标签和版本号：
    - `.github/workflows/windows-cloud-build-test.yml`
    - `.github/workflows/macos-arm64-cloud-build.yml`

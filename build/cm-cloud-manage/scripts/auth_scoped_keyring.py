@@ -271,6 +271,8 @@ def _build_class():
                 manifest = _manifest_text(
                     generation,
                     len(chunks),
+                    # Integrity checksum only; the credential and manifest stay in
+                    # the OS keyring. This is not a password verifier or KDF.
                     hashlib.sha256(payload).hexdigest(),
                     len(payload),
                 )
@@ -302,6 +304,8 @@ def _build_class():
                 raise _keyring_error("系统凭据库分片编码损坏，无法恢复逻辑凭据") from err
             if len(payload) != manifest["utf8Bytes"]:
                 raise _keyring_error("系统凭据库分片长度不符，无法恢复逻辑凭据")
+            # Detect damaged keyring data; this digest is not used to authenticate
+            # a user or to derive a credential-encryption key.
             if hashlib.sha256(payload).hexdigest() != manifest["sha256"]:
                 raise _keyring_error("系统凭据库分片校验失败，无法恢复逻辑凭据")
             return value

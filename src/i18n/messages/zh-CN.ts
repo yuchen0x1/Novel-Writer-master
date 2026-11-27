@@ -116,6 +116,7 @@ export const zhCN = {
   'error.mcpConnectFailed': 'MCP 服务器连接失败。请检查配置里的启动命令与参数，确认它能在本机运行。',
   'error.mcpRequestTimeout': 'MCP 服务器没有及时响应。请稍后重试，或检查服务器是否仍在运行。',
   'error.mcpServerNotConnected': 'MCP 服务器没有连接。请重新连接后再试。',
+  'error.mcpToolExecutionFailed': 'MCP 工具执行失败。请检查工具返回的信息并修正请求后重试。',
   'error.kimiTemperatureInvalid': 'Kimi API 的温度必须在 0 到 1 之间。请在模型设置里调整后重试。',
   'error.modelOutputLimitInvalid': '模型的最大输出 Tokens 无效。请在设置里为这个模型填一个正整数后重试。',
   'error.importRunCheckFailed': '导入没能继续：校验没有通过（{code}）。请重试；如果仍然出现，请把这段说明反馈给我们。',

@@ -10,16 +10,16 @@
 - GitHub 的私密安全报告、推送保护和 Dependabot 安全更新由仓库管理员维护。Actions 默认只读；草稿上传任务和手动候选安装包验收任务单独授予 `contents: write`。后者用于读取草稿 API 与下载资产，不修改 Release，且只在 GitHub 托管的临时 Windows runner 上执行。
 - 每次大版本前重复[调研](research/ecosystem-2026-11.md)，每月检查重点对象的 Releases、最近提交和高频 Issues。改变第三方引用前核对 SPDX 和分发义务。
 
-## 从标签构建同一版本
+## 资格构建与正式发布
 
-1. 更新 `package.json`、`CHANGELOG.md`、`docs/releases/release-notes.md` 和 `.release/notes/v版本.md`。确认 README 下载仍指向已发布资产。
-2. 合并后确认 `Desktop PR CI (Windows)` 在将发版的提交上成功。生产依赖和变更涉及的安全检查必须通过。
-3. 在该提交创建并推送稳定格式的标签 `vMAJOR.MINOR.PATCH`。`Qualify desktop release` 拒绝已有 Release、版本不一致、未过 CI 或不在默认分支历史的提交。修复可恢复的 runner 问题后可在同一标签手动重试。
-4. 在 Windows x64、macOS Intel 和 ARM64 对应 runner 构建。Windows 检查安装、启动、卸载和更新文件，macOS 分别挂载 DMG 并运行原生检查。三者都通过后，同一运行上传已检查的资产到 Release 草稿并对照 GitHub 回传的大小与 SHA-256。
-5. 核对签名、公证及受影响的旧版数据保留场景。使用 `Windows candidate installer upgrade and manual rollback`，显式填写公开源版本、候选标签与其完整提交 SHA；该隔离流程验证安装包覆盖升级、手动覆盖回退、合成作者文件和指定全局配置保留，不代表完整 SQLite 项目降级或自动回滚。满足目标平台的正式验收后，将草稿转为正式版。公开后 `Verify public desktop release` 下载全部资产并复算校验值；CI 还会每周复查最新正式版。
-6. 两个正式 Windows 版本可用后运行 `Windows official in-app update E2E`。当前默认输入为相邻稳定版本 `v0.0.2` → `v0.0.3`，后续发布时应更新为实际版本。只有看到旧版发现更新、下载正确字节、安装并重启到指定版本，以及数据保留证据，才记为应用内更新验收通过。
+1. 在 `main` 上更新 `package.json`、`CHANGELOG.md`、`docs/releases/release-notes.md`、`.release/notes/v版本.md`、中英文 README 和当前更新说明。旧 `1.x` 用户必须被明确告知手动安装一次当前 `0.0.x` 版本；不能声称他们会收到自动更新提示。
+2. 推送后确认 `PR CI`、依赖审计和 CodeQL 在同一 `main` 提交成功。安全告警要么由源码修复后复扫关闭，要么在确认为协议限制/误报时留下具体理由。
+3. 从同一冻结的完整 `main` 提交 SHA 手动运行 Windows x64、macOS ARM64 和 macOS Intel 三个 cloud qualification 工作流。检查构建、安装启动和平台验收回执都成功，并记录每个运行的 `runId`、`run_attempt`、`artifactId`。
+4. 手动运行 `cross-platform-runtime-artifact-promotion.yml`，填写相同 `expected_sha`、`v<version>`、版本号、发布说明路径及三个资格运行的精确 artifact 信息；确认字符串必须为 `PROMOTE_QUALIFIED_DESKTOP_RELEASE`。Promotion 会验证同一来源并提升已验证字节，不重建安装包。
+5. 正式发布后用公开资产复核脚本下载并验证完整 Release、`latest.yml`、文件大小、SHA-256 和 latest 状态。保留 Windows 未签名、macOS ad-hoc 签名且未公证等已知限制。
+6. 两个正式 Windows 版本可用后运行 `Windows official in-app update E2E`。本版本默认输入为 `v0.0.3` → `v2.0.0`；后续发布应同步更新输入。只有应用内发现更新、下载正确字节、安装并重启到指定版本、数据保留检查都通过，才记录验收通过。
 
-旧的初始发布工作流和旧资格工具保留历史证据。旧 Windows 资格流程固定使用已不可从当前官方仓库取回的 v0.2.5/v1.1.0 资产，后续版本按上述标签流程制作候选包。新流程的全新安装证据不能替代旧项目迁移或正式应用内升级。
+旧的初始发布工作流和旧 Windows 资格工具保留历史证据，不作为当前资格或 promotion 流程。新流程的全新安装证据不能替代旧项目迁移或正式应用内升级。
 
 ## 出现故障时
 
@@ -34,8 +34,10 @@
 | --- | --- |
 | 正式下载、资产和历史 | [发布页](https://github.com/yuchen0x1/Novel-Writer-master/releases) |
 | 主分支与候选测试 | [PR CI](https://github.com/yuchen0x1/Novel-Writer-master/actions/workflows/pr-ci.yml) |
-| 桌面构建和草稿 | [资格工作流](https://github.com/yuchen0x1/Novel-Writer-master/actions/workflows/desktop-release.yml) |
+| Windows 资格构建 | [Windows](https://github.com/yuchen0x1/Novel-Writer-master/actions/workflows/windows-cloud-build-test.yml) |
+| macOS 资格构建 | [ARM64](https://github.com/yuchen0x1/Novel-Writer-master/actions/workflows/macos-arm64-cloud-build.yml)、[Intel](https://github.com/yuchen0x1/Novel-Writer-master/actions/workflows/macos-x64-cloud-build.yml) |
+| 正式发布提升 | [Promotion](https://github.com/yuchen0x1/Novel-Writer-master/actions/workflows/cross-platform-runtime-artifact-promotion.yml) |
 | 公开下载校验 | [每周校验](https://github.com/yuchen0x1/Novel-Writer-master/actions/workflows/verify-public-desktop-release.yml) |
 | 依赖审计 | [依赖安全](https://github.com/yuchen0x1/Novel-Writer-master/actions/workflows/dependency-security.yml) |
-| 当前版本的安装、回退与原生更新实证 | [0.0.3 证据](releases/v0.0.3-verification.md) |
+| 最近已核验版本的安装、回退与原生更新实证 | [0.0.3 证据](releases/v0.0.3-verification.md) |
 | 原始安装资格和实际范围 | [0.0.1 证据](releases/v0.0.1-verification.md) |

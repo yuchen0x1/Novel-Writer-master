@@ -157,20 +157,35 @@ async function resumeIncompleteChapterDeletions(projectRoot: string): Promise<vo
   }
 }
 
-function creativeStrategyCoreUpdate(
+function novelConfigCoreUpdate(
   novelConfig: ProjectData['novelConfig'],
-): Pick<Partial<ProjectCoreData>, 'creativeStrategy'> {
-  return novelConfig.creativeStrategy
-    ? { creativeStrategy: novelConfig.creativeStrategy }
-    : {}
-}
-
-function narrativeThreadSettingsCoreUpdate(
-  novelConfig: ProjectData['novelConfig'],
-): Pick<Partial<ProjectCoreData>, 'narrativeThreadDormantChapterThreshold'> {
-  return novelConfig.narrativeThreadDormantChapterThreshold === undefined
-    ? {}
-    : { narrativeThreadDormantChapterThreshold: novelConfig.narrativeThreadDormantChapterThreshold }
+): Partial<ProjectCoreData> {
+  const update: Partial<ProjectCoreData> = {
+    genre: novelConfig.genre,
+    subGenre: novelConfig.subGenre,
+    targetAudience: novelConfig.targetAudience,
+    totalChapters: novelConfig.totalChapters,
+    wordsPerChapter: novelConfig.wordsPerChapter,
+    creativeStrategy: novelConfig.creativeStrategy,
+    narrativeThreadDormantChapterThreshold: novelConfig.narrativeThreadDormantChapterThreshold,
+    plotStructure: novelConfig.plotStructure,
+    narrativePov: novelConfig.narrativePOV,
+    goldenFinger: novelConfig.goldenFinger,
+    globalGuidance: novelConfig.globalGuidance,
+    coreOutline: novelConfig.coreOutline,
+    worldSetting: novelConfig.worldSetting,
+    protagonistProfile: novelConfig.protagonistProfile,
+    writingStyle: novelConfig.writingStyle,
+    referenceWorks: novelConfig.referenceWorks,
+  }
+  if (novelConfig.writingLanguage !== undefined) {
+    update.writingLanguage = resolveWritingLanguage(novelConfig.writingLanguage)
+  }
+  // Omitted settings must not become SQL NULL or erase saved author text.
+  for (const field of Object.keys(update) as Array<keyof ProjectCoreData>) {
+    if (update[field] === undefined) delete update[field]
+  }
+  return update
 }
 
 /** 项目配置读写必须显式携带当前会话租约，路径本身不是授权。 */
@@ -777,27 +792,7 @@ export function registerProjectController(options: ProjectControllerOptions = {}
 
       const coreUpdate: Parameters<typeof ProjectCoreRepository.update>[0] = {}
       if (data.novelConfig) {
-        if (data.novelConfig.writingLanguage !== undefined) {
-          coreUpdate.writingLanguage = resolveWritingLanguage(data.novelConfig.writingLanguage)
-        }
-        Object.assign(coreUpdate, {
-          genre: data.novelConfig.genre,
-          subGenre: data.novelConfig.subGenre,
-          targetAudience: data.novelConfig.targetAudience,
-          totalChapters: data.novelConfig.totalChapters,
-          wordsPerChapter: data.novelConfig.wordsPerChapter,
-          ...creativeStrategyCoreUpdate(data.novelConfig),
-          ...narrativeThreadSettingsCoreUpdate(data.novelConfig),
-          plotStructure: data.novelConfig.plotStructure,
-          narrativePov: data.novelConfig.narrativePOV,
-          goldenFinger: data.novelConfig.goldenFinger,
-          globalGuidance: data.novelConfig.globalGuidance,
-          coreOutline: data.novelConfig.coreOutline,
-          worldSetting: data.novelConfig.worldSetting,
-          protagonistProfile: data.novelConfig.protagonistProfile,
-          writingStyle: data.novelConfig.writingStyle ?? '',
-          referenceWorks: data.novelConfig.referenceWorks ?? '',
-        })
+        Object.assign(coreUpdate, novelConfigCoreUpdate(data.novelConfig))
       }
 
       if (data.name) {
@@ -865,24 +860,7 @@ export function registerProjectController(options: ProjectControllerOptions = {}
       assertRequiredExpectedProjectPath(getCurrentProjectPath(), expectedProjectPath)
       assertRequiredProjectSession(_projectId, data, getCurrentProjectPath(), context)
       if (data.novelConfig) {
-        ProjectCoreRepository.update({
-          genre: data.novelConfig.genre,
-          subGenre: data.novelConfig.subGenre,
-          targetAudience: data.novelConfig.targetAudience,
-          totalChapters: data.novelConfig.totalChapters,
-          wordsPerChapter: data.novelConfig.wordsPerChapter,
-          ...creativeStrategyCoreUpdate(data.novelConfig),
-          ...narrativeThreadSettingsCoreUpdate(data.novelConfig),
-          plotStructure: data.novelConfig.plotStructure,
-          narrativePov: data.novelConfig.narrativePOV,
-          goldenFinger: data.novelConfig.goldenFinger,
-          globalGuidance: data.novelConfig.globalGuidance,
-          coreOutline: data.novelConfig.coreOutline,
-          worldSetting: data.novelConfig.worldSetting,
-          protagonistProfile: data.novelConfig.protagonistProfile,
-          writingStyle: data.novelConfig.writingStyle ?? '',
-          referenceWorks: data.novelConfig.referenceWorks ?? '',
-        })
+        ProjectCoreRepository.update(novelConfigCoreUpdate(data.novelConfig))
       }
       return { success: true }
     } catch (error) {

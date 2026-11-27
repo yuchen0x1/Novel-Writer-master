@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process'
 import { existsSync, realpathSync, statSync } from 'node:fs'
 import path from 'node:path'
+import { StringDecoder } from 'node:string_decoder'
 import * as electron from 'electron'
 
 /**
@@ -341,6 +342,7 @@ async function invokeBundledHelper(
 
   return new Promise<HelperResponse>((resolve, reject) => {
     const child = spawnPlatformHelper(platform, helperPath)
+    const decoder = new StringDecoder('utf8')
     let output = ''
     let settled = false
     const finish = (callback: () => void) => {
@@ -355,9 +357,10 @@ async function invokeBundledHelper(
     }, timeoutMs)
 
     child.once('error', () => finish(() => reject(secureError('SECURE_FS_HELPER_UNAVAILABLE'))))
+    child.stdin.on('error', () => finish(() => reject(secureError('SECURE_FS_HELPER_UNAVAILABLE'))))
     child.stdout.on('data', (chunk: Buffer) => {
       if (settled) return
-      output += chunk.toString('utf8')
+      output += decoder.write(chunk)
       if (Buffer.byteLength(output, 'utf8') > MAX_HELPER_RESPONSE_BYTES) {
         child.kill()
         finish(() => reject(secureError('SECURE_FS_HELPER_INVALID_RESPONSE')))
@@ -368,6 +371,7 @@ async function invokeBundledHelper(
     child.stderr.resume()
     child.once('close', () => finish(() => {
       try {
+        output += decoder.end()
         resolve(parseResponse(output.trim()))
       } catch (error) {
         reject(error)
@@ -396,6 +400,7 @@ async function invokeBundledAtomicWrite(
 
   return new Promise<HelperResponse>((resolve, reject) => {
     const child = spawnPlatformHelper(platform, helperPath)
+    const decoder = new StringDecoder('utf8')
     let outputBuffer = ''
     let finalResponse: HelperResponse | null = null
     let ready = false
@@ -416,6 +421,7 @@ async function invokeBundledAtomicWrite(
       )))
     }, timeoutMs)
     const sendCommand = (command: 'commit' | 'cancel') => {
+      if (settled) return
       if (!child.stdin.destroyed) {
         if (command === 'commit') commitSent = true
         child.stdin.end(`${JSON.stringify({ command })}\n`, 'utf8')
@@ -447,9 +453,13 @@ async function invokeBundledAtomicWrite(
       secureError('SECURE_FS_HELPER_UNAVAILABLE'),
       commitSent ? 'unknown' : 'not_committed',
     ))))
+    child.stdin.on('error', () => finish(() => reject(atomicWriteError(
+      secureError('SECURE_FS_HELPER_UNAVAILABLE'),
+      commitSent ? 'unknown' : 'not_committed',
+    ))))
     child.stdout.on('data', (chunk: Buffer) => {
       if (settled) return
-      outputBuffer += chunk.toString('utf8')
+      outputBuffer += decoder.write(chunk)
       if (Buffer.byteLength(outputBuffer, 'utf8') > MAX_HELPER_RESPONSE_BYTES) {
         child.kill()
         finish(() => reject(atomicWriteError(
@@ -478,6 +488,7 @@ async function invokeBundledAtomicWrite(
         return
       }
       try {
+        outputBuffer += decoder.end()
         if (outputBuffer.trim()) handleLine(outputBuffer.trim())
         if (!finalResponse) throw atomicWriteError(
           secureError('SECURE_FS_HELPER_INVALID_RESPONSE'),

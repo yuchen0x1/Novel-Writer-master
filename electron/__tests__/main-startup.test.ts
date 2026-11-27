@@ -47,6 +47,7 @@ const mocks = vi.hoisted(() => {
       getVersion: () => '0.7.0',
       isPackaged: false,
       requestSingleInstanceLock: vi.fn(() => true),
+      disableHardwareAcceleration: vi.fn(() => calls.push('disable-hardware-acceleration')),
       on: vi.fn(),
       whenReady: vi.fn(() => Promise.resolve()),
       quit: vi.fn(),
@@ -111,6 +112,8 @@ describe('interactive Electron startup', () => {
     mocks.openExternal.mockClear()
     mocks.BrowserWindow.mockClear()
     mocks.app.requestSingleInstanceLock.mockReturnValue(true)
+    mocks.app.disableHardwareAcceleration.mockClear()
+    mocks.app.whenReady.mockImplementation(() => Promise.resolve())
     const fixtureBase = path.resolve('.runtime/.cache/main-startup-tests')
     fs.mkdirSync(fixtureBase, { recursive: true })
     fixtureRoot = fs.mkdtempSync(path.join(fixtureBase, 'run-'))
@@ -151,6 +154,24 @@ describe('interactive Electron startup', () => {
     expect(fs.readFileSync(path.join(mocks.userData, 'retained.json'), 'utf8')).toBe('original Chromium profile')
   })
 
+  it('applies a verified hardware acceleration preference before Electron is ready', async () => {
+    fs.writeFileSync(
+      path.join(legacy, 'config.json'),
+      JSON.stringify({ hardwareAcceleration: false }),
+    )
+    mocks.app.whenReady.mockImplementation(() => {
+      mocks.calls.push('electron-ready')
+      return Promise.resolve()
+    })
+
+    await import('../main')
+    await vi.waitFor(() => expect(mocks.calls).toContain('electron-ready'))
+
+    expect(mocks.app.disableHardwareAcceleration).toHaveBeenCalledOnce()
+    expect(mocks.calls.indexOf('disable-hardware-acceleration'))
+      .toBeLessThan(mocks.calls.indexOf('electron-ready'))
+  })
+
   it('starts with the default Chromium profile without changing its existing data', async () => {
     vi.stubEnv('AI_NOVEL_APP_DATA_HOME', '')
     mocks.userData = path.join(mocks.appData, 'ai-novel-writer')
@@ -177,6 +198,7 @@ describe('interactive Electron startup', () => {
     expect(fs.existsSync(canonical)).toBe(false)
     expect(fs.readFileSync(path.join(legacy, 'config.json'), 'utf8')).toBe('{corrupt')
     expect(mocks.BrowserWindow).toHaveBeenCalledWith(expect.objectContaining({ frame: true }))
+    expect(mocks.app.disableHardwareAcceleration).not.toHaveBeenCalled()
   })
 
   it.each(['{"version":1,"activeSkin":"anime"}', '{"version":1,"activeSkin":"custom"}', '{broken'])('旧版本留下的皮肤清单 %s 不再读取，不阻断启动，原样带进新数据目录', async manifest => {

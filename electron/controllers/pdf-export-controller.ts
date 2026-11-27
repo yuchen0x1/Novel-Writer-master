@@ -1,8 +1,10 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { randomUUID } from 'node:crypto'
 
-import { BrowserWindow, ipcMain } from 'electron'
+import { BrowserWindow, ipcMain, session } from 'electron'
 
 /** 32 MB 的 HTML 相当于一两百万字，超过这个量级基本是调用方传错了内容。 */
 const MAX_HTML_BYTES = 32 * 1024 * 1024
@@ -20,24 +22,35 @@ export type PdfRenderResult = PdfRenderSuccess | PdfRenderFailure
 export async function renderHtmlToPdf(html: string): Promise<Buffer> {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'ai-novel-print-'))
   const file = path.join(directory, 'manuscript.html')
-  const win = new BrowserWindow({
-    show: false,
-    width: 794,
-    height: 1123,
-    webPreferences: {
-      sandbox: true,
-      contextIsolation: true,
-      nodeIntegration: false,
-      javascript: false,
-      webviewTag: false,
-    },
-  })
+  let win: BrowserWindow | undefined
   try {
+    const printSession = session.fromPartition(`ai-novel-print-${randomUUID()}`, { cache: false })
+    const documentUrl = pathToFileURL(file).href
+    // IPC input must not inherit renderer cookies or fetch local/remote resources.
+    printSession.webRequest.onBeforeRequest((details, callback) => {
+      callback({ cancel: details.resourceType !== 'mainFrame' || details.url !== documentUrl })
+    })
+    printSession.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false))
+    printSession.setPermissionCheckHandler(() => false)
+    win = new BrowserWindow({
+      show: false,
+      width: 794,
+      height: 1123,
+      webPreferences: {
+        session: printSession,
+        sandbox: true,
+        contextIsolation: true,
+        nodeIntegration: false,
+        javascript: false,
+        webviewTag: false,
+      },
+    })
+    win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
     await fs.writeFile(file, html, 'utf8')
     await win.loadFile(file)
     return await win.webContents.printToPDF({ printBackground: true, preferCSSPageSize: true })
   } finally {
-    if (!win.isDestroyed()) win.destroy()
+    if (win && !win.isDestroyed()) win.destroy()
     await fs.rm(directory, { recursive: true, force: true }).catch(() => {})
   }
 }

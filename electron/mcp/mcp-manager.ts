@@ -14,6 +14,7 @@ import { spawn, type ChildProcess } from 'child_process'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { isDeepStrictEqual } from 'node:util'
+import { StringDecoder } from 'node:string_decoder'
 import { VELA_HOME } from '../utils/config-utils'
 import { assertGlobalDataReady } from '../services/app-data-locator'
 import type {
@@ -87,12 +88,14 @@ interface MCPServerRuntime {
   error?: string
   /** 消息缓冲区（用于解析 JSON-RPC） */
   buffer: string
+  decoder: StringDecoder
   /** 请求 ID 计数器 */
   nextRequestId: number
   /** 待响应的请求回调 */
   pendingRequests: Map<number, {
     resolve: (result: unknown) => void
     reject: (error: Error) => void
+    timer: ReturnType<typeof setTimeout>
   }>
 }
 
@@ -217,6 +220,7 @@ class MCPManagerImpl {
       tools: [],
       resources: [],
       buffer: '',
+      decoder: new StringDecoder('utf8'),
       nextRequestId: 1,
       pendingRequests: new Map(),
     }
@@ -232,21 +236,27 @@ class MCPManagerImpl {
 
       // 初始化 MCP 会话
       await this.initializeSession(runtime)
+      this.assertActiveRuntime(runtime)
 
       // 发现工具
       await this.discoverTools(runtime)
+      this.assertActiveRuntime(runtime)
 
       // 发现资源
       await this.discoverResources(runtime)
+      this.assertActiveRuntime(runtime)
 
       runtime.status = 'connected'
       this.notifyStatusChange(config.id, 'connected')
       this.notifyToolsChange()
     } catch {
-      runtime.process?.kill()
-      runtime.pendingRequests.forEach(p => p.reject(new Error('MCP_CONNECT_FAILED')))
-      runtime.pendingRequests.clear()
+      this.rejectPendingRequests(runtime, 'MCP_CONNECT_FAILED')
+      if (this.servers.get(config.id) !== runtime || runtime.status === 'disconnected') {
+        runtime.process?.kill()
+        throw new Error('MCP_CONNECT_FAILED')
+      }
       runtime.status = 'error'
+      runtime.process?.kill()
       runtime.error = 'MCP_CONNECT_FAILED'
       this.notifyStatusChange(config.id, 'error', runtime.error)
       throw new Error(runtime.error)
@@ -270,7 +280,7 @@ class MCPManagerImpl {
 
     // 监听 stdout（JSON-RPC 消息）
     proc.stdout?.on('data', (data: Buffer) => {
-      runtime.buffer += data.toString()
+      runtime.buffer += runtime.decoder.write(data)
       this.processBuffer(runtime)
     })
 
@@ -279,24 +289,46 @@ class MCPManagerImpl {
       console.warn(`[MCP:${runtime.config.id}] stderr:`, data.toString())
     })
 
-    // 监听进程退出
-    proc.on('exit', (code) => {
+    // Drain stdout before rejecting requests: exit can precede the final data event.
+    proc.on('close', (code) => {
       console.log(`[MCP:${runtime.config.id}] 进程退出，code=${code}`)
-      if (runtime.status === 'error') return
+      this.rejectPendingRequests(runtime, 'MCP_SERVER_NOT_CONNECTED')
+      if (this.servers.get(runtime.config.id) !== runtime || runtime.status === 'error' || runtime.status === 'disconnected') return
       runtime.status = 'disconnected'
+      runtime.tools = []
+      runtime.resources = []
       this.notifyStatusChange(runtime.config.id, 'disconnected')
+      this.notifyToolsChange()
     })
 
-    proc.on('error', () => {
-      if (runtime.status === 'connecting') {
-        runtime.pendingRequests.forEach(p => p.reject(new Error('MCP_CONNECT_FAILED')))
-        runtime.pendingRequests.clear()
-        return
-      }
+    const onProcessError = () => {
+      this.rejectPendingRequests(runtime, 'MCP_CONNECT_FAILED')
+      if (this.servers.get(runtime.config.id) !== runtime || runtime.status === 'error' || runtime.status === 'disconnected') return
       runtime.status = 'error'
       runtime.error = 'MCP_CONNECT_FAILED'
+      runtime.tools = []
+      runtime.resources = []
       this.notifyStatusChange(runtime.config.id, 'error', runtime.error)
-    })
+      this.notifyToolsChange()
+    }
+    proc.on('error', onProcessError)
+    // A broken pipe is emitted by stdin, not necessarily by ChildProcess.
+    proc.stdin?.on('error', onProcessError)
+  }
+
+  private assertActiveRuntime(runtime: MCPServerRuntime): void {
+    if (this.servers.get(runtime.config.id) !== runtime
+      || (runtime.status !== 'connecting' && runtime.status !== 'connected')) {
+      throw new Error('MCP_SERVER_NOT_CONNECTED')
+    }
+  }
+
+  private rejectPendingRequests(runtime: MCPServerRuntime, code: string): void {
+    for (const pending of runtime.pendingRequests.values()) {
+      clearTimeout(pending.timer)
+      pending.reject(new Error(code))
+    }
+    runtime.pendingRequests.clear()
   }
 
   /** 处理 JSON-RPC 消息缓冲区 */
@@ -325,6 +357,7 @@ class MCPManagerImpl {
       const pending = runtime.pendingRequests.get(msg.id as number)
       if (pending) {
         runtime.pendingRequests.delete(msg.id as number)
+        clearTimeout(pending.timer)
         if ('error' in msg) {
           const err = msg.error as { message?: string }
           pending.reject(new Error(err?.message ?? 'MCP error'))
@@ -339,8 +372,13 @@ class MCPManagerImpl {
   /** 发送 JSON-RPC 请求 */
   private sendRequest(runtime: MCPServerRuntime, method: string, params?: unknown): Promise<unknown> {
     return new Promise((resolve, reject) => {
+      this.assertActiveRuntime(runtime)
+      const stdin = runtime.process?.stdin
+      if (!stdin || stdin.destroyed || stdin.writableEnded) {
+        reject(new Error('MCP_SERVER_NOT_CONNECTED'))
+        return
+      }
       const id = runtime.nextRequestId++
-      runtime.pendingRequests.set(id, { resolve, reject })
 
       const msg = JSON.stringify({
         jsonrpc: '2.0',
@@ -349,16 +387,27 @@ class MCPManagerImpl {
         params: params ?? {},
       })
 
-      runtime.process?.stdin?.write(msg + '\n')
-
       // 超时 10 秒
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         if (runtime.pendingRequests.has(id)) {
           runtime.pendingRequests.delete(id)
           console.warn(`[MCP:${runtime.config.id}] request timed out`, { method })
           reject(new Error('MCP_REQUEST_TIMEOUT'))
         }
       }, 10000)
+      runtime.pendingRequests.set(id, { resolve, reject, timer })
+      try {
+        stdin.write(msg + '\n', (error?: Error | null) => {
+          if (!error || !runtime.pendingRequests.has(id)) return
+          clearTimeout(timer)
+          runtime.pendingRequests.delete(id)
+          reject(new Error('MCP_SERVER_NOT_CONNECTED'))
+        })
+      } catch {
+        clearTimeout(timer)
+        runtime.pendingRequests.delete(id)
+        reject(new Error('MCP_SERVER_NOT_CONNECTED'))
+      }
     })
   }
 
@@ -424,14 +473,16 @@ class MCPManagerImpl {
       const result = await this.sendRequest(runtime, 'tools/call', {
         name: toolName,
         arguments: args,
-      }) as { content?: Array<{ type: string; text?: string }> }
+      }) as { content?: Array<{ type: string; text?: string }>; isError?: boolean }
 
       const textParts = (result?.content ?? [])
         .filter(c => c.type === 'text')
         .map(c => c.text ?? '')
         .join('\n')
 
-      return { success: true, content: textParts }
+      return result?.isError === true
+        ? { success: false, content: textParts, error: textParts || 'MCP_TOOL_EXECUTION_FAILED' }
+        : { success: true, content: textParts }
     } catch (error) {
       return { success: false, content: '', error: String(error) }
     }
@@ -442,10 +493,10 @@ class MCPManagerImpl {
     const runtime = this.servers.get(serverId)
     if (!runtime) return
 
-    runtime.process?.kill()
-    runtime.pendingRequests.forEach(p => p.reject(new Error('MCP_SERVER_NOT_CONNECTED')))
-    runtime.pendingRequests.clear()
+    runtime.status = 'disconnected'
     this.servers.delete(serverId)
+    this.rejectPendingRequests(runtime, 'MCP_SERVER_NOT_CONNECTED')
+    runtime.process?.kill()
     this.notifyStatusChange(serverId, 'disconnected')
     this.notifyToolsChange()
   }

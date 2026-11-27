@@ -86,13 +86,85 @@ describe('UpdateNotifier 更新弹窗', () => {
   it('立即更新请求下载并收起弹窗', async () => {
     vi.mocked(window.aiNovelAPI!.invoke).mockImplementation(async (channel: string) => channel === 'update:get-state'
       ? availableState('9.8.8')
-      : null)
+      : { success: true, state: { ...availableState('9.8.8'), status: 'downloaded' } })
     const dialog = await renderNotifier()
     await act(async () => buttonIn(dialog, '立即更新').click())
     await vi.waitFor(() => {
       expect(vi.mocked(window.aiNovelAPI!.invoke)).toHaveBeenCalledWith('update:download')
       expect(document.querySelector('.pi-dialog')).toBeNull()
     })
+  })
+
+  it('下载失败保留弹窗并显示错误，重试成功后才收起', async () => {
+    let downloadCalls = 0
+    vi.mocked(window.aiNovelAPI!.invoke).mockImplementation(async (channel: string) => {
+      if (channel === 'update:get-state') return availableState('9.8.9')
+      downloadCalls += 1
+      return downloadCalls === 1
+        ? {
+          success: false,
+          state: availableState('9.8.9'),
+          error: {
+            code: 'DOWNLOAD_FAILED', phase: 'download', reason: 'network', retryable: true, safeTechnicalDetails: 'DNS_OR_OFFLINE',
+          },
+        }
+        : { success: true, state: { ...availableState('9.8.9'), status: 'downloaded' } }
+    })
+    const dialog = await renderNotifier()
+
+    await act(async () => buttonIn(dialog, '立即更新').click())
+    await vi.waitFor(() => {
+      expect(document.querySelector('.pi-dialog')).toBeTruthy()
+      expect(document.querySelector('[role="alert"]')?.textContent).toContain('无法连接更新服务')
+    })
+    await act(async () => buttonIn(document.querySelector('.pi-dialog') as HTMLElement, '立即更新').click())
+
+    await vi.waitFor(() => expect(document.querySelector('.pi-dialog')).toBeNull())
+    expect(downloadCalls).toBe(2)
+  })
+
+  it('打开 macOS 下载页失败时不把该版本标记为已忽略', async () => {
+    vi.mocked(window.aiNovelAPI!.invoke).mockImplementation(async (channel: string) => {
+      if (channel === 'update:get-state') return { ...availableState('9.8.10'), updateAction: 'open-release' }
+      throw new Error('browser unavailable')
+    })
+    const dialog = await renderNotifier()
+
+    await act(async () => buttonIn(dialog, '打开下载页').click())
+    await vi.waitFor(() => {
+      expect(document.querySelector('.pi-dialog')).toBeTruthy()
+      expect(document.querySelector('[role="alert"]')?.textContent).toContain('无法打开更新下载页')
+    })
+    await act(async () => root.unmount())
+    root = createRoot(container)
+    await renderNotifier()
+    expect(document.querySelector('.pi-dialog')?.textContent).toContain('发现新版本 v9.8.10')
+  })
+
+  it.each(['stale', 'failed'] as const)('实时更新不被随后%s的初始化请求覆盖', async (outcome) => {
+    let completeInitial!: (value: unknown) => void
+    let failInitial!: (error: Error) => void
+    let publishState!: (value: unknown) => void
+    vi.mocked(window.aiNovelAPI!.invoke).mockImplementation(() => new Promise((resolve, reject) => {
+      completeInitial = resolve
+      failInitial = reject
+    }))
+    vi.mocked(window.aiNovelAPI!.on).mockImplementation((_channel: string, listener: (value: unknown) => void) => {
+      publishState = listener
+      return () => {}
+    })
+    const { UpdateNotifier } = await import('../UpdateNotifier')
+    await act(async () => root.render(<UpdateNotifier />))
+    await act(async () => publishState(availableState('9.8.11')))
+    expect(document.querySelector('.pi-dialog')?.textContent).toContain('发现新版本 v9.8.11')
+
+    await act(async () => {
+      if (outcome === 'stale') completeInitial({ status: 'idle', currentVersion: '0.9.2', isReminderDeferred: false })
+      else failInitial(new Error('initial request failed'))
+      await Promise.resolve()
+    })
+
+    expect(document.querySelector('.pi-dialog')?.textContent).toContain('发现新版本 v9.8.11')
   })
 
   it('延后提醒生效时不弹窗', async () => {

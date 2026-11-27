@@ -103,11 +103,19 @@ export function useUpdateState() {
     if (!ipc.isElectron) return undefined
 
     let mounted = true
+    let receivedStateEvent = false
     const applyState = (nextState: UpdateState) => {
       if (mounted) setState(nextState)
     }
-    const unsubscribe = ipc.on('update:state', applyState)
-    void ipc.invoke('update:get-state').then(applyState).catch(() => applyState(disabledState))
+    const unsubscribe = ipc.on('update:state', (nextState) => {
+      receivedStateEvent = true
+      applyState(nextState)
+    })
+    void ipc.invoke('update:get-state').then((initialState) => {
+      if (!receivedStateEvent) applyState(initialState)
+    }).catch(() => {
+      if (!receivedStateEvent) applyState(disabledState)
+    })
 
     return () => {
       mounted = false
@@ -174,26 +182,30 @@ export function useUpdateState() {
   }, [presentation.canDefer])
 
   const downloadUpdate = useCallback(async () => {
-    if (!presentation.canDownload || !ipc.isElectron) return
+    if (!presentation.canDownload || !ipc.isElectron) return false
     setManualActionError(undefined)
     try {
       const response = await ipc.invoke('update:download')
       setState(response.state)
       setManualActionError(response.error)
+      return response.success
     } catch {
       setManualActionError(fallbackDownloadError)
+      return false
     }
   }, [presentation.canDownload])
 
   const openRelease = useCallback(async () => {
-    if (!presentation.canOpenRelease || !ipc.isElectron) return
+    if (!presentation.canOpenRelease || !ipc.isElectron) return false
     setManualActionError(undefined)
     try {
       const response = await ipc.invoke('update:open-release')
       setState(response.state)
       setManualActionError(response.error)
+      return response.success
     } catch {
       setManualActionError(fallbackOpenReleaseError)
+      return false
     }
   }, [presentation.canOpenRelease])
 

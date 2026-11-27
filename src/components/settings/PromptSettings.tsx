@@ -24,7 +24,7 @@ import { captureProjectSession, isProjectSessionCurrent } from '../project-sessi
 import { Button } from '../ui/Button'
 import { cn } from '../../lib/utils'
 import { useLocaleStore } from '../../stores/locale-store'
-import { useUnsavedSettings } from './unsaved-settings'
+import { leaveSettings, useUnsavedSettings } from './unsaved-settings'
 
 // ==================== 来源标签配置 ====================
 
@@ -82,7 +82,7 @@ export default function PromptSettings() {
     : projectWritingLanguage
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
   // 强制刷新用（保存/恢复后 getPromptSource 的结果会变）
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [, setRefreshKey] = useState(0)
   const [globalLoadError, setGlobalLoadError] = useState<string | null>(null)
   const [projectLoadError, setProjectLoadError] = useState<{
     projectId: string
@@ -144,7 +144,7 @@ export default function PromptSettings() {
   const triggerRefresh = useCallback(() => setRefreshKey((k) => k + 1), [])
 
   return (
-    <div className="settings-prompt-page space-y-2" key={refreshKey}>
+    <div className="settings-prompt-page space-y-2">
       {globalLoadError && (
         <div className="px-3 py-2 rounded-lg text-xs bg-[var(--color-error-soft)] text-[var(--color-error-text)] border border-[var(--color-error-line)]">
           <AlertTriangle size={13} className="inline mr-1" />
@@ -181,10 +181,12 @@ export default function PromptSettings() {
         </span>
         <select
           value={editingLanguage}
-          onChange={(event) => setLanguageSelection({
-            projectId: projectId ?? null,
-            writingLanguage: event.target.value as WritingLanguage,
-          })}
+          onChange={(event) => {
+            const writingLanguage = event.target.value as WritingLanguage
+            const stay = () => setLanguageSelection({ projectId: projectId ?? null, writingLanguage: editingLanguage })
+            stay()
+            leaveSettings(() => setLanguageSelection({ projectId: projectId ?? null, writingLanguage }), stay)
+          }}
           className="rounded-md px-2.5 py-1.5 text-xs bg-[var(--color-panel)] text-[var(--color-text)] border border-[var(--color-border)]"
           aria-label={text('编辑的写作语言', 'Writing language to edit')}
         >
@@ -246,24 +248,20 @@ function TemplateItem({
   const [saveResult, setSaveResult] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const [prevExpanded, setPrevExpanded] = useState(isExpanded)
-  const [prevContent, setPrevContent] = useState(currentTemplate.content)
+  const currentRole = currentTemplate.systemRole ?? ''
+  const currentGuidance = currentTemplate.taskGuidance ?? (source === 'builtin' ? '' : currentTemplate.content)
+  const [baseline, setBaseline] = useState({ role: currentRole, guidance: currentGuidance })
 
-  // 展开时重置编辑内容
-  if (isExpanded !== prevExpanded || currentTemplate.content !== prevContent) {
-    if (isExpanded) {
-      setEditRole(currentTemplate.systemRole ?? '')
-      setEditGuidance(currentTemplate.taskGuidance ?? (source === 'builtin' ? '' : currentTemplate.content))
-      setSaveResult(null)
+  // 资料载入或保存后只刷新干净表单；折叠、别的模板保存以及较晚的载入不能抹掉作者输入。
+  if (currentRole !== baseline.role || currentGuidance !== baseline.guidance) {
+    if (editRole === baseline.role && editGuidance === baseline.guidance) {
+      setEditRole(currentRole)
+      setEditGuidance(currentGuidance)
     }
-    setPrevExpanded(isExpanded)
-    setPrevContent(currentTemplate.content)
+    setBaseline({ role: currentRole, guidance: currentGuidance })
   }
 
-  useUnsavedSettings(isExpanded && (
-    editRole !== (currentTemplate.systemRole ?? '')
-    || editGuidance !== (currentTemplate.taskGuidance ?? (source === 'builtin' ? '' : currentTemplate.content))
-  ))
+  useUnsavedSettings(editRole !== currentRole || editGuidance !== currentGuidance)
 
   const sourceConf = SOURCE_CONFIG[source]
 

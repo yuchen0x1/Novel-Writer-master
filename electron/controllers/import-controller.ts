@@ -270,7 +270,7 @@ function splitSingleFileContent(content: string, maxChapters: number): ParsedCha
     } else {
       // 在第一个章节标题之前的内容 → 创建前言/序章
       if (!currentChapter) {
-        currentChapter = { headerLine: line, lines: [] }
+        currentChapter = { headerLine: line, lines: [line] }
       }
     }
   }

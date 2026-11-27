@@ -348,6 +348,66 @@ describe('project refresh context', () => {
     expect(invoke).toHaveBeenCalledWith('db:draft-list-all', project('A').path)
   })
 
+  it('shares one in-flight draft read within the same current project session', async () => {
+    const response = deferred<unknown[]>()
+    invoke.mockImplementation((channel: string) => channel === 'db:draft-list-all'
+      ? response.promise
+      : Promise.resolve([]))
+
+    const first = useDraftStore.getState().loadAllDrafts(project('A').path)
+    const second = useDraftStore.getState().loadAllDrafts('c:/NOVELS/A/')
+    expect(invoke.mock.calls.filter(([channel]) => channel === 'db:draft-list-all')).toHaveLength(1)
+
+    response.resolve([])
+    await Promise.all([first, second])
+    expect(useDraftStore.getState().loading).toBe(false)
+  })
+
+  it('loads a reopened same-path session independently of its obsolete in-flight draft read', async () => {
+    const oldResponse = deferred<unknown[]>()
+    const newResponse = deferred<unknown[]>()
+    invoke.mockImplementationOnce(() => oldResponse.promise)
+      .mockImplementationOnce(() => newResponse.promise)
+
+    const oldRead = useDraftStore.getState().loadAllDrafts(project('A').path)
+    useDraftStore.getState().beginProjectLoad(project('A').path)
+    useProjectStore.setState({ currentProject: { ...project('A'), sessionLease: 'lease-A-reopened' } })
+    const newRead = useDraftStore.getState().loadAllDrafts(project('A').path)
+
+    expect(invoke.mock.calls.filter(([channel]) => channel === 'db:draft-list-all')).toHaveLength(2)
+    newResponse.resolve([{ id: 2, chapterNumber: 2, version: 1, status: 'draft' }])
+    await newRead
+    oldResponse.resolve([{ id: 1, chapterNumber: 1, version: 1, status: 'draft' }])
+    await oldRead
+
+    expect(useDraftStore.getState()).toMatchObject({
+      loading: false,
+      dataProjectSession: { leaseId: 'lease-A-reopened' },
+      draftsByChapter: { 2: [{ id: 2 }] },
+    })
+    expect(useDraftStore.getState().draftsByChapter[1]).toBeUndefined()
+  })
+
+  it('starts a fresh draft read after a reset invalidated a same-session request', async () => {
+    const oldResponse = deferred<unknown[]>()
+    const newResponse = deferred<unknown[]>()
+    invoke.mockImplementationOnce(() => oldResponse.promise)
+      .mockImplementationOnce(() => newResponse.promise)
+
+    const oldRead = useDraftStore.getState().loadAllDrafts(project('A').path)
+    useDraftStore.getState().reset()
+    const newRead = useDraftStore.getState().loadAllDrafts(project('A').path)
+
+    expect(invoke.mock.calls.filter(([channel]) => channel === 'db:draft-list-all')).toHaveLength(2)
+    oldResponse.resolve([{ id: 1, chapterNumber: 1, version: 1, status: 'draft' }])
+    await oldRead
+    expect(useDraftStore.getState().loading).toBe(true)
+    newResponse.resolve([{ id: 2, chapterNumber: 2, version: 1, status: 'draft' }])
+    await newRead
+    expect(useDraftStore.getState()).toMatchObject({ loading: false, draftsByChapter: { 2: [{ id: 2 }] } })
+    expect(useDraftStore.getState().draftsByChapter[1]).toBeUndefined()
+  })
+
   it('discovers finalized author manuscript chapters even when the project has no blueprints', async () => {
     invoke.mockImplementation((channel: string) => {
       if (channel === 'db:draft-list-all') {

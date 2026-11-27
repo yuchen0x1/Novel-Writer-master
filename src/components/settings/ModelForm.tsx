@@ -65,6 +65,7 @@ export function ModelForm({
 
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<{ success: boolean, error?: string } | null>(null)
+  const testRevision = useRef(0)
   const testResultTimer = useRef<number | undefined>(undefined)
   const testFailure = testResult && !testResult.success ? displayedErrorMessage(locale, testResult.error) : ''
   const testConnection = useLLMStore(s => s.testConnection)
@@ -92,6 +93,7 @@ export function ModelForm({
   const autoDiscoveryTimer = useRef<number | undefined>(undefined)
   useEffect(() => () => {
     discoveryRevision.current += 1
+    testRevision.current += 1
     window.clearTimeout(autoDiscoveryTimer.current)
     window.clearTimeout(testResultTimer.current)
   }, [])
@@ -200,9 +202,17 @@ export function ModelForm({
   }
 
   const handleTest = async () => {
+    const requestRevision = ++testRevision.current
+    window.clearTimeout(testResultTimer.current)
     setTesting(true)
     setTestResult(null)
-    const result = await testConnection(model)
+    let result: { success: boolean; error?: string }
+    try {
+      result = await testConnection(model)
+    } catch (error) {
+      result = { success: false, error: error instanceof Error ? error.message : String(error) }
+    }
+    if (testRevision.current !== requestRevision) return
     setTestResult(result)
     setTesting(false)
     // 记下这次结果对应的定时器：3 秒内再点一次测试时，旧定时器会把新结果提前清掉。

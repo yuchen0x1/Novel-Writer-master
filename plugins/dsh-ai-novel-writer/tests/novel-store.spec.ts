@@ -763,13 +763,19 @@ describe('NovelStore SQLite core', () => {
     await expect(openNovelStore(linkedRoot, WORKSPACE_ID)).rejects.toMatchObject({ code: 'PATH_REJECTED' })
   })
 
-  it('rejects a linked database file even when its target is a valid project', async () => {
+  it('rejects a linked database file even when its target is a valid project', async (context) => {
     const databasePath = join(root, '.ai-novel', 'novel.db')
     const outsideDatabase = join(await makeTestWorkspace('novel-store-db-target-'), 'novel.db')
     await store.dispose()
     await copyFile(databasePath, outsideDatabase)
     await rm(databasePath)
-    await symlink(outsideDatabase, databasePath, 'file')
+    try {
+      await symlink(outsideDatabase, databasePath, 'file')
+    } catch (error) {
+      if (process.platform !== 'win32' || (error as NodeJS.ErrnoException).code !== 'EPERM') throw error
+      context.skip(true, 'Creating file symlinks requires Windows Developer Mode or elevation')
+      return
+    }
 
     await expect(openNovelStore(root, WORKSPACE_ID)).rejects.toMatchObject({ code: 'PATH_REJECTED' })
   })

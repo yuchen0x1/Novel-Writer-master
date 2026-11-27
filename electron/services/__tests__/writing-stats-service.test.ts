@@ -171,6 +171,21 @@ describe('writingStatsOverview', () => {
     expect(stats.totalWords).toBe(0)
     expect(stats.daily).toEqual([])
   })
+
+  it('ignores archived versions when selecting current chapters and totals', () => {
+    const db = seedWritingDatabase()
+    const archived = db.prepare('INSERT INTO contents (body) VALUES (?)').run('discarded manuscript').lastInsertRowid
+    db.prepare('INSERT INTO drafts (chapter_number, version, status, content_id, word_count) VALUES (?, ?, ?, ?, ?)')
+      .run(1, 3, 'archived', archived, 5000)
+    db.prepare('INSERT INTO drafts (chapter_number, version, status, content_id, word_count) VALUES (?, ?, ?, ?, ?)')
+      .run(9, 1, 'archived', archived, 5000)
+
+    const stats = writingStatsOverview(db)
+
+    expect(stats.chapters.map(chapter => chapter.chapterNumber)).toEqual([1, 2, 5])
+    expect(stats.chapters[0]).toMatchObject({ status: 'revised', wordCount: 850 })
+    expect(stats.totalWords).toBe(850 + 1200 + 100)
+  })
 })
 
 describe('searchBook', () => {
@@ -195,5 +210,15 @@ describe('searchBook', () => {
 
   it('returns an empty result without a database', () => {
     expect(searchBook('灯塔', null).totalMatches).toBe(0)
+  })
+
+  it('searches the latest active manuscript instead of a newer archived version', () => {
+    const db = seedWritingDatabase()
+    const archived = db.prepare('INSERT INTO contents (body) VALUES (?)').run('archived-only-token').lastInsertRowid
+    db.prepare('INSERT INTO drafts (chapter_number, version, status, content_id, word_count) VALUES (?, ?, ?, ?, ?)')
+      .run(1, 3, 'archived', archived, 5000)
+
+    expect(searchBook('archived-only-token', db).totalMatches).toBe(0)
+    expect(searchBook('雾钟', db).hits.some(hit => hit.scope === 'chapter' && hit.chapterNumber === 1)).toBe(true)
   })
 })

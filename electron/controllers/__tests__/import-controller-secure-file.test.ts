@@ -119,6 +119,28 @@ describe('novel import external-file capability', () => {
     expect(inspections.activeCount()).toBe(1)
   })
 
+  it.each([
+    ['single-line', '这段前言必须保留。'],
+    ['multi-line', '这段前言的第一行必须保留。\n这是第二行。'],
+  ])('preserves all %s preface text before the first chapter heading', async (name, preface) => {
+    const selected = path.join(temporaryRoot, `preface-${name}.txt`)
+    const body = '故事从这里开始。'
+    fs.writeFileSync(selected, `${preface}\n第1章 开始\n${body}`, 'utf8')
+    mocks.showOpenDialog.mockResolvedValue({ canceled: false, filePaths: [selected] })
+
+    const result = await handler('dialog:select-novel-files')(event()) as {
+      success: boolean
+      inspection: { inspectionId: string; chapterCount: number; totalWords: number }
+    }
+
+    expect(result).toMatchObject({
+      success: true,
+      inspection: { chapterCount: 2, totalWords: countDraftUnits(preface) + countDraftUnits(body) },
+    })
+    const inspected = inspections.peek(result.inspection.inspectionId, 29)
+    expect(inspected.chapters.map(chapter => chapter.content)).toEqual([preface, body])
+  })
+
   it('reads EPUB bytes and splits multiple chapter headings inside one spine document', async () => {
     const selected = path.join(temporaryRoot, '长篇参考.epub')
     const archive = storedZip({

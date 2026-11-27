@@ -25,4 +25,17 @@ describe('plainReleaseNotes', () => {
   it('leaves plain markdown input untouched by the HTML path', () => {
     expect(plainReleaseNotes('第一行\n第二行')).toBe('第一行\n第二行')
   })
+
+  it('suppresses script and style contents even with whitespace before closing delimiters', () => {
+    const html = '<p>安全说明</p><script data-value=">">steal()</script >'
+      + '<style>hide{display:none}</style ><!-- ignored -->'
+      + '<p>后续说明</p>'
+
+    expect(plainReleaseNotes(html)).toBe('安全说明\n后续说明')
+  })
+
+  it('decodes HTML entities only once so encoded markup stays text', () => {
+    expect(plainReleaseNotes('<p>&amp;lt;script&amp;gt;literal&amp;lt;/script&amp;gt;</p>'))
+      .toBe('&lt;script&gt;literal&lt;/script&gt;')
+  })
 })

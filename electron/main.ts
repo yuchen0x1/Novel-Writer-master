@@ -69,6 +69,7 @@ let startupBlockedCode: StartupBlockedCode | undefined
 let startupHasSettled = false
 let ownsInstanceLock = false
 let startupMigrationNotice: StartupMigrationNotice | undefined
+let globalRuntimeState: 'pending' | 'ready' | 'blocked' = 'pending'
 
 // Qualification already supplies this Chromium profile flag. Keep the same profile
 // in Electron's locator too; ordinary launches retain their existing userData path.
@@ -80,16 +81,6 @@ if (explicitUserData) {
   // 必须早于下面的单实例锁：锁按 userData 路径区分，新旧版本要锁同一处才会互斥。
   app.setPath('userData', resolveDefaultUserData(app.getPath('appData')))
 }
-
-// 硬件加速开关必须在 app ready 之前决定。默认开启；用户在「设置 · 外观」里关闭后
-// 走软件渲染——当机器的 GPU 进程起不来或驱动异常导致整体卡顿时，软件渲染反而更稳更顺。
-try {
-  const accelerationConfig = tryReadJsonFile<{ hardwareAcceleration?: boolean }>(GLOBAL_CONFIG_PATH)
-  if (accelerationConfig.status === 'ok' && accelerationConfig.value?.hardwareAcceleration === false) {
-    app.disableHardwareAcceleration()
-    console.warn('[Novel-Writer-master] 硬件加速已关闭（设置 · 外观），本次启动使用软件渲染。')
-  }
-} catch { /* 配置读不到时按默认开启处理 */ }
 
 // The installed-package vector qualification is deliberately opt-in and
 // fail-closed. A command-line request without the matching environment token
@@ -110,6 +101,11 @@ const applicationInstanceAccepted = configureSingleInstanceRuntime({
   onSecondInstance: listener => { app.on('second-instance', () => listener()) },
   getWindow: () => win,
 })
+// 普通启动在持有单实例锁后立即完成受验证的全局数据切换。这样硬件加速偏好
+// 可以在 app ready 前从已激活的 canonical 配置中读取，同时不绕过全局数据安全门。
+if (applicationInstanceAccepted && !releaseSmokeRequested) prepareGlobalRuntime()
+applyHardwareAccelerationPreference()
+
 let releaseSmokeStage = 'not-requested'
 let releaseSmokeTimeout: NodeJS.Timeout | undefined
 
@@ -141,6 +137,18 @@ function publishUpdateState(state: UpdateState): void {
     if (target.isDestroyed() || target.webContents.isDestroyed()) continue
     target.webContents.send('update:state', state)
   }
+}
+
+/** 硬件加速必须在 app ready 前决定；无法安全读取时保持默认开启。 */
+function applyHardwareAccelerationPreference(): void {
+  if (globalRuntimeState !== 'ready') return
+  try {
+    const accelerationConfig = tryReadJsonFile<{ hardwareAcceleration?: boolean }>(GLOBAL_CONFIG_PATH)
+    if (accelerationConfig.status === 'ok' && accelerationConfig.value?.hardwareAcceleration === false) {
+      app.disableHardwareAcceleration()
+      console.warn('[Novel-Writer-master] 硬件加速已关闭（设置 · 外观），本次启动使用软件渲染。')
+    }
+  } catch { /* 配置读不到时按默认开启处理 */ }
 }
 
 /** 读取渲染进程镜像进 config.json 的主题；读不到或值非法时按外观默认的浅色。 */
@@ -337,18 +345,27 @@ app.whenReady().then(async () => {
 })
 
 function prepareGlobalRuntime(): boolean {
-  const migrated = runGlobalDataMigration({
-    ...resolveGlobalDataRoots(app.getPath('userData'), () => app.getPath('appData')),
-    exclusiveAccess: ownsInstanceLock,
-  })
-  if (migrated.state !== 'ready') {
-    startupBlockedCode = migrated.code === 'GLOBAL_MODEL_CREDENTIALS_DIFFER' ? migrated.code : 'GLOBAL_DATA_BLOCKED'
+  if (globalRuntimeState !== 'pending') return globalRuntimeState === 'ready'
+  try {
+    const migrated = runGlobalDataMigration({
+      ...resolveGlobalDataRoots(app.getPath('userData'), () => app.getPath('appData')),
+      exclusiveAccess: ownsInstanceLock,
+    })
+    if (migrated.state !== 'ready') {
+      globalRuntimeState = 'blocked'
+      startupBlockedCode = migrated.code === 'GLOBAL_MODEL_CREDENTIALS_DIFFER' ? migrated.code : 'GLOBAL_DATA_BLOCKED'
+      return false
+    }
+    activateGlobalData(migrated)
+    ensureVelaHome()
+    globalRuntimeState = 'ready'
+    startupGeneration = migrated.globalGeneration
+    startupMigrationNotice = { legacySourceIgnored: migrated.legacySourceIgnored, preservedUnknownCount: migrated.preservedUnknownCount }
+    startupBlockedCode = undefined
+    return true
+  } catch {
+    globalRuntimeState = 'blocked'
+    startupBlockedCode = 'GLOBAL_DATA_BLOCKED'
     return false
   }
-  activateGlobalData(migrated)
-  ensureVelaHome()
-  startupGeneration = migrated.globalGeneration
-  startupMigrationNotice = { legacySourceIgnored: migrated.legacySourceIgnored, preservedUnknownCount: migrated.preservedUnknownCount }
-  startupBlockedCode = undefined
-  return true
 }

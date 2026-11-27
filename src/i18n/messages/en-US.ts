@@ -114,6 +114,7 @@ export const enUS = {
   'error.mcpConnectFailed': 'Could not connect to the MCP server. Check the start command and arguments in the configuration, and make sure the server runs on this computer.',
   'error.mcpRequestTimeout': 'The MCP server did not respond in time. Try again later, or check that the server is still running.',
   'error.mcpServerNotConnected': 'The MCP server is not connected. Reconnect it, then try again.',
+  'error.mcpToolExecutionFailed': 'The MCP tool failed to run. Check the tool output, correct the request, and try again.',
   'error.kimiTemperatureInvalid': 'The Kimi API only accepts a temperature from 0 to 1. Adjust it in the model settings, then try again.',
   'error.modelOutputLimitInvalid': 'The model’s max output tokens setting is invalid. Enter a positive whole number for this model in Settings, then try again.',
   'error.importRunCheckFailed': 'The import could not continue because a check failed ({code}). Try again; if it keeps happening, send us this message.',

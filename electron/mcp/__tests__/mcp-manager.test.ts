@@ -16,11 +16,18 @@ let fixtureRoot = ''
 let velaHome = ''
 let mcpManager: Manager
 
-function createMcpProcess(options: { initializeError?: string; failToStart?: boolean; neverRespond?: boolean } = {}) {
+function createMcpProcess(options: {
+  initializeError?: string
+  failToStart?: boolean
+  neverRespond?: boolean
+  toolResult?: { content: Array<{ type: string; text: string }>; isError?: boolean }
+  splitToolResponse?: boolean
+  holdMethod?: string
+} = {}) {
   const processEmitter = new EventEmitter()
   const stdout = new EventEmitter()
   const stderr = new EventEmitter()
-  const stdin = {
+  const stdin = Object.assign(new EventEmitter(), {
     write: vi.fn((raw: string) => {
       const request = JSON.parse(raw) as { id?: number; method: string }
       if (request.id === undefined) return true
@@ -28,7 +35,7 @@ function createMcpProcess(options: { initializeError?: string; failToStart?: boo
         queueMicrotask(() => processEmitter.emit('error', new Error('SECRET_CHILD_ERROR_MARKER')))
         return true
       }
-      if (options.neverRespond) return true
+      if (options.neverRespond || request.method === options.holdMethod) return true
 
       const payload = request.method === 'initialize' && options.initializeError
         ? { error: { message: options.initializeError } }
@@ -37,18 +44,27 @@ function createMcpProcess(options: { initializeError?: string; failToStart?: boo
               ? { tools: [] }
               : request.method === 'resources/list'
                 ? { resources: [] }
-                : {},
+                : request.method === 'tools/call'
+                  ? options.toolResult ?? {}
+                  : {},
           }
       queueMicrotask(() => {
-        stdout.emit('data', Buffer.from(`${JSON.stringify({
+        const bytes = Buffer.from(`${JSON.stringify({
           jsonrpc: '2.0',
           id: request.id,
           ...payload,
-        })}\n`))
+        })}\n`)
+        if (request.method === 'tools/call' && options.splitToolResponse) {
+          const split = bytes.indexOf(Buffer.from('中')) + 1
+          stdout.emit('data', bytes.subarray(0, split))
+          stdout.emit('data', bytes.subarray(split))
+        } else {
+          stdout.emit('data', bytes)
+        }
       })
       return true
     }),
-  }
+  })
 
   return Object.assign(processEmitter, {
     stdout,
@@ -301,5 +317,108 @@ describe('MCP trusted configuration boundary', () => {
     expect(mcpManager.getServersStatus()).toEqual([
       expect.objectContaining({ id: 'silent', status: 'error' }),
     ])
+  })
+
+  it('preserves tool execution errors instead of presenting them as success', async () => {
+    writeConfig({ mcpServers: { tools: { command: 'node' } } })
+    spawnMock.mockReturnValue(createMcpProcess({
+      toolResult: { isError: true, content: [{ type: 'text', text: 'The requested file does not exist' }] },
+    }))
+    await mcpManager.loadConfig()
+    await mcpManager.connect('tools')
+
+    await expect(mcpManager.callTool('tools', 'read', {})).resolves.toEqual({
+      success: false,
+      content: 'The requested file does not exist',
+      error: 'The requested file does not exist',
+    })
+  })
+
+  it('decodes UTF-8 tool results split inside a multibyte character', async () => {
+    writeConfig({ mcpServers: { tools: { command: 'node' } } })
+    spawnMock.mockReturnValue(createMcpProcess({
+      toolResult: { content: [{ type: 'text', text: '中文小说' }] },
+      splitToolResponse: true,
+    }))
+    await mcpManager.loadConfig()
+    await mcpManager.connect('tools')
+
+    await expect(mcpManager.callTool('tools', 'read', {})).resolves.toEqual({ success: true, content: '中文小说' })
+  })
+
+  it('clears request deadlines after successful responses', async () => {
+    vi.useFakeTimers()
+    writeConfig({ mcpServers: { tools: { command: 'node' } } })
+    spawnMock.mockReturnValue(createMcpProcess())
+    await mcpManager.loadConfig()
+    await mcpManager.connect('tools')
+    await mcpManager.callTool('tools', 'read', {})
+
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('rejects an in-flight call immediately when the child exits', async () => {
+    vi.useFakeTimers()
+    writeConfig({ mcpServers: { tools: { command: 'node' } } })
+    const process = createMcpProcess({ holdMethod: 'tools/call' })
+    spawnMock.mockReturnValue(process)
+    await mcpManager.loadConfig()
+    await mcpManager.connect('tools')
+
+    const call = mcpManager.callTool('tools', 'read', {})
+    process.emit('close', 1)
+
+    await expect(call).resolves.toMatchObject({ success: false, error: 'Error: MCP_SERVER_NOT_CONNECTED' })
+    expect(mcpManager.getServersStatus()).toEqual([expect.objectContaining({ status: 'disconnected' })])
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('does not reconnect a runtime whose child exited during discovery', async () => {
+    vi.useFakeTimers()
+    writeConfig({ mcpServers: { tools: { command: 'node' } } })
+    const process = createMcpProcess({ holdMethod: 'tools/list' })
+    spawnMock.mockReturnValue(process)
+    await mcpManager.loadConfig()
+
+    const connection = expect(mcpManager.connect('tools')).rejects.toThrow('MCP_CONNECT_FAILED')
+    await vi.waitFor(() => expect(process.stdin.write).toHaveBeenCalledWith(expect.stringContaining('tools/list'), expect.any(Function)))
+    process.emit('close', 1)
+
+    await connection
+    expect(mcpManager.getServersStatus()).toEqual([expect.objectContaining({ status: 'disconnected' })])
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('handles stdin broken-pipe errors without leaving calls pending', async () => {
+    vi.useFakeTimers()
+    writeConfig({ mcpServers: { tools: { command: 'node' } } })
+    const process = createMcpProcess({ holdMethod: 'tools/call' })
+    spawnMock.mockReturnValue(process)
+    await mcpManager.loadConfig()
+    await mcpManager.connect('tools')
+
+    const call = mcpManager.callTool('tools', 'read', {})
+    expect(() => process.stdin.emit('error', new Error('EPIPE'))).not.toThrow()
+
+    await expect(call).resolves.toMatchObject({ success: false, error: 'Error: MCP_CONNECT_FAILED' })
+    expect(mcpManager.getServersStatus()).toEqual([expect.objectContaining({ status: 'error' })])
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('ignores late exit events from a replaced process', async () => {
+    writeConfig({ mcpServers: { tools: { command: 'node' } } })
+    const oldProcess = createMcpProcess()
+    spawnMock.mockReturnValueOnce(oldProcess).mockReturnValueOnce(createMcpProcess())
+    const onStatusChange = vi.fn()
+    mcpManager.setCallbacks({ onStatusChange })
+    await mcpManager.loadConfig()
+    await mcpManager.connect('tools')
+    await mcpManager.connect('tools')
+    onStatusChange.mockClear()
+
+    oldProcess.emit('close', 0)
+
+    expect(onStatusChange).not.toHaveBeenCalled()
+    expect(mcpManager.getServersStatus()).toEqual([expect.objectContaining({ status: 'connected' })])
   })
 })

@@ -1113,6 +1113,42 @@ describe('project controller project identity', () => {
     }))
   })
 
+  it('persists a confirmed writing language change through the partial config endpoint', async () => {
+    const data = {
+      path: projectA,
+      sessionLease: 'lease-project-A',
+      novelConfig: { writingLanguage: 'zh-CN' },
+    }
+
+    await expect(handler('project:update-config')({}, 'project-A', data, projectA, projectSession()))
+      .resolves.toEqual({ success: true })
+    expect(mocks.projectCoreUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      writingLanguage: 'zh-CN',
+    }))
+  })
+
+  it.each(['project:save', 'project:update-config'])(
+    'does not clear omitted author settings or send undefined database values through %s',
+    async channel => {
+      const data = { path: projectA, novelConfig: { genre: 'mystery' } }
+
+      await expect(handler(channel)({}, 'project-A', data, projectA, projectSession()))
+        .resolves.toMatchObject({ success: true })
+      expect(mocks.projectCoreUpdate).toHaveBeenCalledWith({ genre: 'mystery' })
+    },
+  )
+
+  it.each(['project:save', 'project:update-config'])(
+    'keeps explicit author-text clears writable through %s',
+    async channel => {
+      const data = { path: projectA, novelConfig: { writingStyle: '', referenceWorks: '' } }
+
+      await expect(handler(channel)({}, 'project-A', data, projectA, projectSession()))
+        .resolves.toMatchObject({ success: true })
+      expect(mocks.projectCoreUpdate).toHaveBeenCalledWith({ writingStyle: '', referenceWorks: '' })
+    },
+  )
+
   it('does not reset a saved creative strategy during an unrelated partial config write', async () => {
     const data = {
       path: projectA,
@@ -1124,6 +1160,7 @@ describe('project controller project identity', () => {
       .resolves.toEqual({ success: true })
     expect(mocks.projectCoreUpdate).toHaveBeenCalledOnce()
     expect(mocks.projectCoreUpdate.mock.calls[0]?.[0]).not.toHaveProperty('creativeStrategy')
+    expect(mocks.projectCoreUpdate.mock.calls[0]?.[0]).not.toHaveProperty('writingLanguage')
   })
 
   it('rejects a supplied stale session lease before a project config write commits', async () => {

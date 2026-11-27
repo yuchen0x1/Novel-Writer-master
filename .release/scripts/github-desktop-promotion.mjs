@@ -499,12 +499,18 @@ async function findRelease(api, repository, tag) {
 
 export function expectedReleaseProvenance(tag, expectedSha, assets, qualifications, releaseNotes) {
   if (typeof releaseNotes !== "string" || releaseNotes.trim().length === 0) throw new Error("release notes must not be empty");
+  const expectedNotesHeading = `# ${tag.replace(/^v/u, "")}`;
+  const sourceNotes = releaseNotes.trim();
+  const notesBody = sourceNotes.startsWith(`${expectedNotesHeading}\n`)
+    ? sourceNotes.slice(expectedNotesHeading.length).trimStart()
+    : sourceNotes;
+  if (!notesBody) throw new Error("release notes body must not be empty");
   const lines = [...assets.values()].sort((a, b) => a.name.localeCompare(b.name)).map((asset) => `- ${asset.name}: sha256:${asset.sha256}`);
   const signingLines = [...qualifications].sort((a, b) => a.platform.localeCompare(b.platform)).map((qualification) =>
     `- ${qualification.platform}: ${qualification.signing.status}; validation=${qualification.signing.validationResult}; unsigned-impact=${qualification.signing.unsignedDistributionImpact}`);
   return {
-    title: tag,
-    body: [releaseNotes.trim(), "", "---", "", `Qualified desktop release ${tag}`, "", `Source: ${expectedSha}`, "", "Verified assets:", ...lines, "", "Signing and notarization disclosure:", ...signingLines].join("\n"),
+    title: `Novel-Writer-master ${tag}`,
+    body: [notesBody, "", "---", "", `Qualified desktop release ${tag}`, "", `Source: ${expectedSha}`, "", "Verified assets:", ...lines, "", "Signing and notarization disclosure:", ...signingLines].join("\n"),
   };
 }
 

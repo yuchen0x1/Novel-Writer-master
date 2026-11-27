@@ -291,7 +291,7 @@ describe('explicit V1 migration', () => {
     const root = await makeTestWorkspace('v1-migrate-root-symlink-')
     await createV1Project(root)
     const alias = `${root}-alias`
-    await symlink(root, alias, 'dir')
+    await symlink(root, alias, process.platform === 'win32' ? 'junction' : 'dir')
 
     await expect(previewV1NovelMigration(alias, signal)).rejects.toMatchObject({
       code: 'PATH_REJECTED',

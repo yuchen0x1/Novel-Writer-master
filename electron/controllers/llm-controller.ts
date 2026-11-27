@@ -7,7 +7,12 @@ import {
   GLOBAL_CONFIG_PATH,
   DEFAULT_GLOBAL_CONFIG,
 } from '../utils/config-utils'
-import { protectModelApiKey, unprotectModelApiKey, ModelCredentialProtectionUnavailableError } from '../utils/model-credential-security'
+import {
+  ENCRYPTED_KEY_PREFIX,
+  protectModelApiKey,
+  unprotectModelApiKey,
+  ModelCredentialProtectionUnavailableError,
+} from '../utils/model-credential-security'
 import type { GlobalConfig, LLMFinishReason, LLMRequest, LLMResponse, ModelDiscoveryRequest, ModelProfile, TokenUsage } from '../../src/shared/ipc-channels'
 import { REDACTED_MODEL_API_KEY } from '../../src/shared/ipc-channels'
 import { knownAppErrorMessage } from '../../src/i18n/app-errors'
@@ -36,6 +41,26 @@ const CONNECTION_TEST_MAX_TOKENS = 1024
 const LOCAL_CONNECTION_TEST_TIMEOUT_MS = 120_000
 const CLOUD_CONNECTION_TEST_TIMEOUT_MS = 30_000
 
+type LoadedModelConfig = {
+  model: ModelProfile
+  storedApiKey: string
+  decryptedApiKey: string
+  decryptionFailed: boolean
+}
+
+function mapLoadedModelConfigs(models: ModelProfile[]): LoadedModelConfig[] {
+  return models.map((model) => {
+    const storedApiKey = typeof model.apiKey === 'string' ? model.apiKey : ''
+    const decryptedApiKey = unprotectModelApiKey(storedApiKey)
+    return {
+      model: { ...model, apiKey: decryptedApiKey },
+      storedApiKey,
+      decryptedApiKey,
+      decryptionFailed: storedApiKey.startsWith(ENCRYPTED_KEY_PREFIX) && decryptedApiKey === '',
+    }
+  })
+}
+
 /** 本机模型冷启动要先把权重载入显存，常常超过 30 秒；云端卡住多是网络或代理问题，早点报出来。 */
 function connectionTestTimeoutMs(model: ModelProfile): number {
   return isLocalModelEndpoint(model) ? LOCAL_CONNECTION_TEST_TIMEOUT_MS : CLOUD_CONNECTION_TEST_TIMEOUT_MS
@@ -45,16 +70,14 @@ const CLOSED_EXECUTION_LEASE_TOMBSTONE_TTL_MS = 5 * 60_000
 
 function loadModelConfigs(): ModelProfile[] {
   const models = readJsonFile<ModelProfile[]>(MODELS_CONFIG_PATH, [])
-  return models.map(m => ({
-    ...m,
-    apiKey: unprotectModelApiKey(m.apiKey),
-  }))
+  return mapLoadedModelConfigs(models).map(({ model }) => model)
 }
 
 function loadModelConfigsForRenderer(): ModelProfile[] {
-  return loadModelConfigs().map(model => ({
+  const models = readJsonFile<ModelProfile[]>(MODELS_CONFIG_PATH, [])
+  return mapLoadedModelConfigs(models).map(({ model, storedApiKey }) => ({
     ...model,
-    apiKey: model.apiKey ? REDACTED_MODEL_API_KEY : '',
+    apiKey: storedApiKey ? REDACTED_MODEL_API_KEY : '',
   }))
 }
 
@@ -70,9 +93,9 @@ function loadModelConfigsForUpdate(): ModelProfile[] {
     throw new Error('LLM_MODEL_CONFIG_CORRUPT', { cause: result.error })
   }
   const models = result.status === 'ok' ? result.value : []
-  return models.map(m => ({
-    ...m,
-    apiKey: unprotectModelApiKey(m.apiKey),
+  return mapLoadedModelConfigs(models).map(({ model, storedApiKey, decryptedApiKey, decryptionFailed }) => ({
+    ...model,
+    apiKey: decryptionFailed ? storedApiKey : decryptedApiKey,
   }))
 }
 
